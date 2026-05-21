@@ -1,0 +1,1 @@
+﻿const { Client } = require("pg"); const c = new Client({ host: "127.0.0.1", port: 5432, user: "postgres", password: "password", database: "terangatable" }); c.connect().then(() => { console.log("OK"); c.end(); }).catch(e => console.error("ERR:", e.message));

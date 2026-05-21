@@ -1,0 +1,26 @@
+{
+  "name": "terangatable",
+  "version": "0.0.1",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+"scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check",
+    "test": "turbo run test",
+    "test:coverage": "pnpm --filter api test:coverage",
+    "test:e2e": "pnpm --filter web test:e2e",
+    "db:migrate": "pnpm --filter @terangatable/database db:migrate",
+    "db:seed": "pnpm --filter @terangatable/database db:seed",
+    "db:studio": "pnpm --filter @terangatable/database db:studio",
+    "docker:up": "docker compose -f infrastructure/docker-compose.yml up -d",
+    "docker:down": "docker compose -f infrastructure/docker-compose.yml down",
+    "docker:logs": "docker compose -f infrastructure/docker-compose.yml logs -f"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "typescript": "^5.4.5",
+    "prettier": "^3.2.5"
+  }
+}

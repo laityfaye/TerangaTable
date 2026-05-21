@@ -1,0 +1,8 @@
+# Ce fichier a été déplacé vers infrastructure/docker-compose.yml
+# Utilisez les commandes depuis le package.json :
+#   pnpm docker:up   → docker compose -f infrastructure/docker-compose.yml up -d
+#   pnpm docker:down → docker compose -f infrastructure/docker-compose.yml down
+#   pnpm docker:logs → docker compose -f infrastructure/docker-compose.yml logs -f
+
+include:
+  - infrastructure/docker-compose.yml

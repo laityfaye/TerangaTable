@@ -1,0 +1,29 @@
+services:
+  postgres:
+    extends:
+      file: docker-compose.yml
+      service: postgres
+    ports:
+      - "5432:5432"
+
+  redis:
+    extends:
+      file: docker-compose.yml
+      service: redis
+
+  rabbitmq:
+    extends:
+      file: docker-compose.yml
+      service: rabbitmq
+
+  meilisearch:
+    extends:
+      file: docker-compose.yml
+      service: meilisearch
+    environment:
+      MEILI_ENV: development
+
+  minio:
+    extends:
+      file: docker-compose.yml
+      service: minio
