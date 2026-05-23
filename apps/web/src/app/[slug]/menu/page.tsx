@@ -6,6 +6,7 @@ export const revalidate = 60;
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ table?: string }>;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -21,8 +22,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 }
 
-export default async function MenuPage({ params }: Props) {
+export default async function MenuPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const { table } = await searchParams;
 
   let data;
   let categories;
@@ -36,14 +38,15 @@ export default async function MenuPage({ params }: Props) {
   }
 
   return (
-    <div className="pt-16">
-      <MenuClient
-        categories={categories}
-        currencySymbol={data.region.currencySymbol}
-        slug={slug}
-        primaryColor={data.website_settings?.primary_color ?? '#C8553D'}
-        restaurantName={data.name}
-      />
-    </div>
+    <MenuClient
+      categories={categories}
+      currencySymbol={data.region.currencySymbol}
+      slug={slug}
+      primaryColor={data.website_settings?.primary_color ?? '#C8553D'}
+      restaurantName={data.name}
+      heroImageUrl={data.website_settings?.hero_image_url ?? null}
+      logoUrl={data.website_settings?.logo_url ?? null}
+      tableNumber={table ?? null}
+    />
   );
 }

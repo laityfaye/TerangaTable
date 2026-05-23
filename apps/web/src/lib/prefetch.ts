@@ -3,10 +3,10 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { apiClient } from './api';
 
-// Stale times aligned with the hooks
 const STALE_30S = 30_000;
-const STALE_1M  = 60_000;
+const STALE_2M  = 2 * 60_000;
 const STALE_5M  = 5 * 60_000;
+const STALE_10M = 10 * 60_000;
 
 // Query key builders — must match what the hooks use exactly
 const QK = {
@@ -59,13 +59,13 @@ const QF = {
   websiteThemes:   () => () =>
     apiClient.get<{ data: unknown[] }>('/website/themes').then(r => r.data.data),
   deliveryKpis:    () => () =>
-    apiClient.get('/delivery/kpis').then(r => r.data),
+    apiClient.get<{ data: unknown }>('/delivery/kpis').then(r => r.data.data),
   deliveryActive:  () => () =>
-    apiClient.get('/delivery/active').then(r => r.data),
+    apiClient.get<{ data: unknown }>('/delivery/active').then(r => r.data.data),
   deliveryZones:   () => () =>
-    apiClient.get('/delivery/zones').then(r => r.data),
+    apiClient.get<{ data: unknown }>('/delivery/zones').then(r => r.data.data),
   deliveryDrivers: () => () =>
-    apiClient.get('/delivery/drivers').then(r => r.data),
+    apiClient.get<{ data: unknown }>('/delivery/drivers').then(r => r.data.data),
   settings:        () => () =>
     apiClient.get('/settings').then(r => r.data),
 };
@@ -77,17 +77,17 @@ export function prefetchRoute(href: string, qc: QueryClient): void {
       void qc.prefetchQuery({ queryKey: QK.summary({ period: 'today' }),                      queryFn: QF.summary({ period: 'today' }),                    staleTime: STALE_5M });
       void qc.prefetchQuery({ queryKey: QK.revenue({ period: '7d', granularity: 'day' }),     queryFn: QF.revenue({ period: '7d', granularity: 'day' }),   staleTime: STALE_5M });
       void qc.prefetchQuery({ queryKey: QK.peakHours(7),                                       queryFn: QF.peakHours(7),                                    staleTime: STALE_5M });
-      void qc.prefetchQuery({ queryKey: QK.orders({ limit: 5 }),                               queryFn: QF.orders({ limit: 5 }),                            staleTime: STALE_1M });
+      void qc.prefetchQuery({ queryKey: QK.orders({ limit: 5 }),                               queryFn: QF.orders({ limit: 5 }),                            staleTime: STALE_2M });
       break;
 
     case '/dashboard/orders':
-      void qc.prefetchQuery({ queryKey: QK.orders({ limit: 200 }),   queryFn: QF.orders({ limit: 200 }),   staleTime: STALE_1M });
-      void qc.prefetchQuery({ queryKey: QK.workflows(),               queryFn: QF.workflows(),               staleTime: STALE_5M });
+      void qc.prefetchQuery({ queryKey: QK.orders({ limit: 200 }),   queryFn: QF.orders({ limit: 200 }),   staleTime: STALE_2M });
+      void qc.prefetchQuery({ queryKey: QK.workflows(),               queryFn: QF.workflows(),               staleTime: STALE_10M });
       break;
 
     case '/dashboard/pos':
       void qc.prefetchQuery({ queryKey: QK.posSession(), queryFn: QF.posSession(), staleTime: STALE_30S });
-      void qc.prefetchQuery({ queryKey: QK.orders({ limit: 50, status: 'open' }), queryFn: QF.orders({ limit: 50, status: 'open' }), staleTime: STALE_1M });
+      void qc.prefetchQuery({ queryKey: QK.orders({ limit: 50, status: 'open' }), queryFn: QF.orders({ limit: 50, status: 'open' }), staleTime: STALE_2M });
       break;
 
     case '/dashboard/reservations':
@@ -95,7 +95,7 @@ export function prefetchRoute(href: string, qc: QueryClient): void {
       break;
 
     case '/dashboard/menu':
-      void qc.prefetchQuery({ queryKey: QK.categories(), queryFn: QF.categories(), staleTime: STALE_1M });
+      void qc.prefetchQuery({ queryKey: QK.categories(), queryFn: QF.categories(), staleTime: STALE_10M });
       break;
 
     case '/dashboard/customers':
@@ -104,7 +104,7 @@ export function prefetchRoute(href: string, qc: QueryClient): void {
 
     case '/dashboard/payments':
       void qc.prefetchQuery({ queryKey: QK.payments(),        queryFn: QF.payments({}),        staleTime: STALE_30S });
-      void qc.prefetchQuery({ queryKey: QK.paymentsSummary(), queryFn: QF.paymentsSummary({}), staleTime: STALE_1M });
+      void qc.prefetchQuery({ queryKey: QK.paymentsSummary(), queryFn: QF.paymentsSummary({}), staleTime: STALE_2M });
       break;
 
     case '/dashboard/analytics':
@@ -115,19 +115,19 @@ export function prefetchRoute(href: string, qc: QueryClient): void {
 
     case '/dashboard/website':
       void qc.prefetchQuery({ queryKey: QK.websiteSettings(), queryFn: QF.websiteSettings(), staleTime: STALE_30S });
-      void qc.prefetchQuery({ queryKey: QK.websiteThemes(),   queryFn: QF.websiteThemes(),   staleTime: STALE_5M });
+      void qc.prefetchQuery({ queryKey: QK.websiteThemes(),   queryFn: QF.websiteThemes(),   staleTime: STALE_10M });
       break;
 
     case '/dashboard/delivery':
       void qc.prefetchQuery({ queryKey: QK.deliveryKpis(),    queryFn: QF.deliveryKpis(),    staleTime: STALE_30S });
       void qc.prefetchQuery({ queryKey: QK.deliveryActive(),  queryFn: QF.deliveryActive(),  staleTime: STALE_30S });
-      void qc.prefetchQuery({ queryKey: QK.deliveryZones(),   queryFn: QF.deliveryZones(),   staleTime: STALE_1M  });
+      void qc.prefetchQuery({ queryKey: QK.deliveryZones(),   queryFn: QF.deliveryZones(),   staleTime: STALE_2M  });
       void qc.prefetchQuery({ queryKey: QK.deliveryDrivers(), queryFn: QF.deliveryDrivers(), staleTime: STALE_30S });
       break;
 
     case '/dashboard/settings':
     case '/dashboard/settings/users':
-      void qc.prefetchQuery({ queryKey: QK.settings(), queryFn: QF.settings(), staleTime: STALE_5M });
+      void qc.prefetchQuery({ queryKey: QK.settings(), queryFn: QF.settings(), staleTime: STALE_10M });
       break;
   }
 }

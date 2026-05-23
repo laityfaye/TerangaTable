@@ -322,12 +322,14 @@ export class TenantsService {
       },
     });
 
-    // 4. Créer les 4 rôles par défaut
+    // 4. Créer les rôles par défaut
     const defaultRoles = [
       { name: 'Propriétaire', slug: 'restaurant_owner', description: 'Accès complet au restaurant' },
       { name: 'Manager', slug: 'manager', description: 'Gestion opérationnelle' },
-      { name: 'Serveur', slug: 'server', description: 'Prise de commandes' },
-      { name: 'Caissier', slug: 'cashier', description: 'Encaissements' },
+      { name: 'Serveur', slug: 'serveur', description: 'Prise de commandes' },
+      { name: 'Caissier', slug: 'caissier', description: 'Encaissements' },
+      { name: 'Cuisinier', slug: 'cuisinier', description: 'Préparation des plats' },
+      { name: 'Livreur', slug: 'livreur', description: 'Livraisons' },
     ];
 
     const createdRoles: Record<string, string> = {};

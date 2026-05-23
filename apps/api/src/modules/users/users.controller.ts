@@ -39,7 +39,7 @@ interface JwtUser {
 @ApiBearerAuth()
 @Controller('users')
 @UseGuards(JwtAuthGuard, TenantGuard, RolesGuard)
-@Roles('manager', 'super_admin')
+@Roles('manager', 'super_admin', 'restaurant_owner')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 

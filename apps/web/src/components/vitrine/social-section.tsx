@@ -1,9 +1,15 @@
+'use client';
+
+import { motion } from 'framer-motion';
+import type { Variants } from 'framer-motion';
 import type { SocialLinks } from '@/types/vitrine';
 
 interface Props {
   socialLinks: SocialLinks;
   primaryColor: string;
 }
+
+// ── Social platform config ────────────────────────────────────────────────────
 
 const SOCIAL_CONFIG: Record<string, { label: string; icon: React.ReactNode }> = {
   facebook: {
@@ -56,45 +62,112 @@ const SOCIAL_CONFIG: Record<string, { label: string; icon: React.ReactNode }> = 
   },
 };
 
+// ── Variants ─────────────────────────────────────────────────────────────────
+
+const EASE = [0.22, 1, 0.36, 1] as const;
+
+const headerVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.12 } },
+};
+
+const fadeUp = {
+  hidden:  { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE } },
+};
+
+const buttonContainer = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.08, delayChildren: 0.15 } },
+};
+
+const bounceIn: Variants = {
+  hidden:  { opacity: 0, scale: 0.75, y: 16 },
+  visible: {
+    opacity: 1, scale: 1, y: 0,
+    transition: { type: 'spring' as const, damping: 18, stiffness: 200 },
+  },
+};
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
 export default function SocialSection({ socialLinks, primaryColor }: Props) {
   const entries = Object.entries(socialLinks).filter(([, v]) => !!v);
   if (entries.length === 0) return null;
 
   return (
-    <section className="py-16 px-4 sm:px-6 bg-[#FAFAF8] border-t border-[#E7E5E4]">
+    <section className="py-20 px-4 sm:px-6 bg-[#FAFAF8] border-t border-[#E7E5E4] overflow-hidden">
       <div className="max-w-6xl mx-auto text-center">
-        <h2
-          className="text-2xl font-bold text-[#1C1917] mb-2"
-          style={{ fontFamily: 'var(--font-heading)' }}
-        >
-          Suivez-nous
-        </h2>
-        <p className="text-[#57534E] text-sm mb-8">Retrouvez-nous sur les réseaux sociaux</p>
 
-        <div className="flex flex-wrap items-center justify-center gap-4">
+        {/* Header */}
+        <motion.div
+          variants={headerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-60px' }}
+        >
+          <motion.div variants={fadeUp} className="inline-flex items-center gap-3 mb-4">
+            <div className="h-px w-8 bg-[#E7E5E4]" />
+            <span className="text-[11px] uppercase tracking-[0.3em] font-semibold text-[#57534E]">
+              Réseaux sociaux
+            </span>
+            <div className="h-px w-8 bg-[#E7E5E4]" />
+          </motion.div>
+
+          <motion.h2
+            variants={fadeUp}
+            className="text-2xl sm:text-3xl font-bold text-[#1C1917] mb-2"
+            style={{ fontFamily: 'var(--font-heading)' }}
+          >
+            Suivez-nous
+          </motion.h2>
+
+          <motion.p variants={fadeUp} className="text-[#57534E] text-sm mb-10 max-w-xs mx-auto">
+            Retrouvez-nous sur les réseaux sociaux pour ne rien manquer
+          </motion.p>
+        </motion.div>
+
+        {/* Buttons */}
+        <motion.div
+          className="flex flex-wrap items-center justify-center gap-3"
+          variants={buttonContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-40px' }}
+        >
           {entries.map(([platform, url]) => {
             const config = SOCIAL_CONFIG[platform];
             if (!config) return null;
 
-            const href = platform === 'whatsapp' && !url.startsWith('http')
-              ? `https://wa.me/${url.replace(/[^0-9]/g, '')}`
-              : url;
+            const href =
+              platform === 'whatsapp' && !url.startsWith('http')
+                ? `https://wa.me/${url.replace(/[^0-9]/g, '')}`
+                : url;
 
             return (
-              <a
+              <motion.a
                 key={platform}
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium text-white transition-opacity hover:opacity-85"
+                variants={bounceIn}
+                whileHover={{ scale: 1.06, y: -3 }}
+                whileTap={{ scale: 0.96 }}
+                transition={{ type: 'spring', damping: 18, stiffness: 260 }}
+                className="group relative overflow-hidden flex items-center gap-2.5 px-6 py-3 rounded-full text-sm font-semibold text-white shadow-md"
                 style={{ backgroundColor: primaryColor }}
               >
-                {config.icon}
-                {config.label}
-              </a>
+                {/* Shimmer */}
+                <span
+                  className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12"
+                  style={{ background: 'linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent)' }}
+                />
+                <span className="relative">{config.icon}</span>
+                <span className="relative">{config.label}</span>
+              </motion.a>
             );
           })}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

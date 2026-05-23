@@ -115,4 +115,30 @@ export class WebsiteDashboardController {
     const url = await this.storageService.uploadWebsiteAsset(tenant.id, file, 'favicon');
     return { image_url: url };
   }
+
+  @Post('upload-about')
+  @UseInterceptors(FileInterceptor('image'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Upload de l\'image "À propos" (JPEG, PNG, WebP — max 3 Mo)' })
+  async uploadAbout(
+    @CurrentTenant() tenant: TenantCtx,
+    @UploadedFile() file: Express.Multer.File | undefined,
+  ) {
+    if (!file) throw new BadRequestException('Aucun fichier fourni');
+    const url = await this.storageService.uploadWebsiteAsset(tenant.id, file, 'about');
+    return { image_url: url };
+  }
+
+  @Post('upload-gallery')
+  @UseInterceptors(FileInterceptor('image'))
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Upload d\'une image de galerie (JPEG, PNG, WebP — max 3 Mo)' })
+  async uploadGallery(
+    @CurrentTenant() tenant: TenantCtx,
+    @UploadedFile() file: Express.Multer.File | undefined,
+  ) {
+    if (!file) throw new BadRequestException('Aucun fichier fourni');
+    const url = await this.storageService.uploadWebsiteAsset(tenant.id, file, 'gallery');
+    return { image_url: url };
+  }
 }

@@ -34,6 +34,42 @@ export default async function TenantVitrinePage({ params }: Props) {
   const primaryColor = ws?.primary_color ?? '#C8553D';
   const currencySymbol = data.region.currencySymbol;
 
+  // ── sections_config: determine visibility and order ───────────────────────
+  type SectionItem = { visible: boolean; order: number };
+  const defaultConfig: Record<string, SectionItem> = {
+    hero:        { visible: true, order: 0 },
+    specialites: { visible: true, order: 1 },
+    about:       { visible: true, order: 2 },
+    horaires:    { visible: true, order: 3 },
+    galerie:     { visible: true, order: 4 },
+    contact:     { visible: true, order: 5 },
+  };
+  const rawConfig = (ws?.sections_config ?? {}) as Record<string, SectionItem>;
+  const sectionsConfig: Record<string, SectionItem> = {
+    ...defaultConfig,
+    ...rawConfig,
+  };
+
+  function isVisible(key: string): boolean {
+    return sectionsConfig[key]?.visible !== false;
+  }
+
+  // Collect gallery images: manual gallery first, then featured products, then hero fallback
+  const manualGallery = settings.gallery_images ?? [];
+  const productImages: string[] = featured
+    .flatMap((p) => [p.imageUrl, ...(Array.isArray(p.images) ? p.images : [])])
+    .filter((img): img is string => typeof img === 'string' && img.length > 0);
+  const galleryImages: string[] = [...new Set([...manualGallery, ...productImages])]
+    .slice(0, 6);
+  if (galleryImages.length === 0 && ws?.hero_image_url) {
+    galleryImages.push(ws.hero_image_url);
+  }
+
+  // Ordered section keys (non-hero)
+  const orderedSections = Object.keys(sectionsConfig)
+    .filter((k) => k !== 'hero')
+    .sort((a, b) => (sectionsConfig[a]?.order ?? 99) - (sectionsConfig[b]?.order ?? 99));
+
   const jsonLd = buildRestaurantJsonLd(data, settings, featured, currencySymbol);
 
   return (
@@ -43,6 +79,7 @@ export default async function TenantVitrinePage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
+      {/* Hero is always first */}
       <HeroSection
         restaurantName={data.name}
         tagline={settings.description}
@@ -52,41 +89,66 @@ export default async function TenantVitrinePage({ params }: Props) {
         primaryColor={primaryColor}
       />
 
-      {featured.length > 0 && (
-        <SpecialitesSection
-          products={featured}
-          currencySymbol={currencySymbol}
-          slug={slug}
-          primaryColor={primaryColor}
-        />
-      )}
+      {orderedSections.map((key) => {
+        if (!isVisible(key)) return null;
 
-      {(settings.about_text || settings.about_chef) && (
-        <AboutSection
-          restaurantName={data.name}
-          aboutText={settings.about_text}
-          aboutChef={settings.about_chef}
-          aboutImage={settings.about_image ?? null}
-          primaryColor={primaryColor}
-        />
-      )}
+        switch (key) {
+          case 'specialites':
+            return featured.length > 0 ? (
+              <SpecialitesSection
+                key="specialites"
+                products={featured}
+                currencySymbol={currencySymbol}
+                slug={slug}
+                primaryColor={primaryColor}
+              />
+            ) : null;
 
-      {settings.opening_hours && (
-        <HorairesSection
-          openingHours={settings.opening_hours}
-          address={settings.address}
-          phone={settings.phone}
-          email={settings.email}
-        />
-      )}
+          case 'about':
+            return settings.about_text || settings.about_chef ? (
+              <AboutSection
+                key="about"
+                restaurantName={data.name}
+                aboutText={settings.about_text}
+                aboutChef={settings.about_chef}
+                aboutImage={settings.about_image ?? null}
+                primaryColor={primaryColor}
+              />
+            ) : null;
 
-      {ws?.hero_image_url && (
-        <GalerieSection heroImageUrl={ws.hero_image_url} restaurantName={data.name} />
-      )}
+          case 'horaires':
+            return settings.opening_hours ? (
+              <HorairesSection
+                key="horaires"
+                openingHours={settings.opening_hours}
+                address={settings.address}
+                phone={settings.phone}
+                email={settings.email}
+              />
+            ) : null;
 
-      {ws?.social_links && Object.keys(ws.social_links).length > 0 && (
-        <SocialSection socialLinks={ws.social_links} primaryColor={primaryColor} />
-      )}
+          case 'galerie':
+            return galleryImages.length > 0 ? (
+              <GalerieSection
+                key="galerie"
+                images={galleryImages}
+                restaurantName={data.name}
+              />
+            ) : null;
+
+          case 'contact':
+            return ws?.social_links && Object.keys(ws.social_links).length > 0 ? (
+              <SocialSection
+                key="contact"
+                socialLinks={ws.social_links}
+                primaryColor={primaryColor}
+              />
+            ) : null;
+
+          default:
+            return null;
+        }
+      })}
     </>
   );
 }

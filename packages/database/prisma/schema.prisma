@@ -751,6 +751,8 @@ model WebsiteSettings {
   socialLinks    Json     @default("{}") @map("social_links")
   fontHeading    String   @default("Plus Jakarta Sans") @map("font_heading") @db.VarChar(100)
   fontBody       String   @default("DM Sans") @map("font_body") @db.VarChar(100)
+  isMaintenance  Boolean  @default(false) @map("is_maintenance")
+  contentConfig  Json     @default("{}") @map("content_config")
 
   tenant Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   theme  Theme?  @relation(fields: [themeId], references: [id], onDelete: SetNull)

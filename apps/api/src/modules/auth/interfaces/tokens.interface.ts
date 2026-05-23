@@ -13,5 +13,7 @@ export interface AuthResponse extends Tokens {
     tenantSlug: string | null;
     roles: string[];
     regionSlug: string | null;
+    /** Slugs des modules actifs pour ce tenant (ex: ['menu', 'orders', 'delivery']) */
+    activeModules: string[];
   };
 }

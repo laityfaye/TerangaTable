@@ -12,20 +12,13 @@ export class RolesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(tenantId: string) {
-    const [systemRoles, tenantRoles] = await Promise.all([
-      this.prisma.role.findMany({
-        where: { isSystem: true, tenantId: null },
-        include: { rolePermissions: { include: { permission: true } } },
-        orderBy: { name: 'asc' },
-      }),
-      this.prisma.role.findMany({
-        where: { tenantId },
-        include: { rolePermissions: { include: { permission: true } } },
-        orderBy: { createdAt: 'asc' },
-      }),
-    ]);
+    const roles = await this.prisma.role.findMany({
+      where: { tenantId },
+      include: { rolePermissions: { include: { permission: true } } },
+      orderBy: { createdAt: 'asc' },
+    });
 
-    return [...systemRoles, ...tenantRoles].map(this.formatRole);
+    return roles.map(this.formatRole);
   }
 
   async findAllPermissions() {

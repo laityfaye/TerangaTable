@@ -4,6 +4,23 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ListProductsDto } from './dto/list-products.dto';
 
+type PrismaOptionItem = {
+  id: string;
+  name: string;
+  priceDelta: { toNumber(): number } | number;
+  isDefault?: boolean;
+};
+
+type PrismaOptionGroup = {
+  id: string;
+  name: string;
+  type: string;
+  isRequired: boolean;
+  minSelections: number;
+  maxSelections: number;
+  options: PrismaOptionItem[];
+};
+
 type PrismaProduct = {
   id: string;
   name: string;
@@ -19,6 +36,7 @@ type PrismaProduct = {
   allergens: string[];
   nutritionalInfo: Record<string, unknown> | null;
   category?: { id: string; name: string } | null;
+  optionGroups?: PrismaOptionGroup[];
 };
 
 @Injectable()
@@ -46,6 +64,20 @@ export class ProductsService {
       carbs: info['carbs'] as number | undefined,
       fats: info['fats'] as number | undefined,
       serving_size: info['serving_size'] as string | undefined,
+      option_groups: (p.optionGroups ?? []).map((g) => ({
+        id: g.id,
+        name: g.name,
+        type: g.type as 'single' | 'multiple',
+        is_required: g.isRequired,
+        min_selections: g.minSelections,
+        max_selections: g.maxSelections,
+        options: g.options.map((o) => ({
+          id: o.id,
+          name: o.name,
+          price_delta: typeof o.priceDelta === 'number' ? o.priceDelta : o.priceDelta.toNumber(),
+          is_default: o.isDefault ?? false,
+        })),
+      })),
     };
   }
 
@@ -183,12 +215,7 @@ export class ProductsService {
 
   async remove(tenantId: string, id: string) {
     await this.findOne(tenantId, id);
-    const deleted = await this.prisma.product.update({
-      where: { id },
-      data: { isAvailable: false },
-      include: { category: { select: { id: true, name: true } } },
-    });
-    return this.toDto(deleted as unknown as PrismaProduct);
+    await this.prisma.product.delete({ where: { id } });
   }
 
   async toggleAvailability(tenantId: string, id: string, isAvailable: boolean) {

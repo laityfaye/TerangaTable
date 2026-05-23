@@ -11,6 +11,24 @@ import { CloseSessionDto } from './dto/close-session.dto';
 export class PosService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async getHistory(tenantId: string, page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const [sessions, total] = await Promise.all([
+      this.prisma.posSession.findMany({
+        where: { tenantId, status: 'closed' },
+        orderBy: { closedAt: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          openedBy: { select: { id: true, firstName: true, lastName: true } },
+          closedBy: { select: { id: true, firstName: true, lastName: true } },
+        },
+      }),
+      this.prisma.posSession.count({ where: { tenantId, status: 'closed' } }),
+    ]);
+    return { data: sessions, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+  }
+
   async getCurrent(tenantId: string) {
     const session = await this.prisma.posSession.findFirst({
       where: { tenantId, status: 'open' },
@@ -42,6 +60,45 @@ export class PosService {
         openedBy: { select: { id: true, firstName: true, lastName: true } },
       },
     });
+  }
+
+  async getStats(tenantId: string) {
+    const session = await this.prisma.posSession.findFirst({
+      where: { tenantId, status: 'open' },
+      orderBy: { openedAt: 'desc' },
+    });
+    if (!session) throw new NotFoundException('Aucune session de caisse ouverte');
+
+    const [orders, paymentsByMethod] = await Promise.all([
+      this.prisma.order.count({
+        where: { tenantId, paidAt: { gte: session.openedAt } },
+      }),
+      this.prisma.payment.groupBy({
+        by: ['method'],
+        where: {
+          tenantId,
+          status: 'completed',
+          createdAt: { gte: session.openedAt },
+        },
+        _sum: { amount: true },
+      }),
+    ]);
+
+    const salesByMethod: Record<string, number> = {};
+    let totalSales = 0;
+    for (const row of paymentsByMethod) {
+      const amt = parseFloat((row._sum.amount ?? 0).toString());
+      salesByMethod[row.method] = amt;
+      totalSales += amt;
+    }
+
+    return {
+      openingAmount: parseFloat(session.openingAmount.toString()),
+      openedAt:      session.openedAt,
+      totalOrders:   orders,
+      totalSales,
+      salesByMethod,
+    };
   }
 
   async close(tenantId: string, userId: string, dto: CloseSessionDto) {

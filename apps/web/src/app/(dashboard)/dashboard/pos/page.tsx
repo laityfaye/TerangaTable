@@ -10,10 +10,20 @@ import {
   LogOut,
   Percent,
   Check,
+  Receipt,
+  RefreshCw,
+  History,
 } from 'lucide-react';
+import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth.store';
-import { useCreateOrder, type OptionSelection } from '@/hooks/orders/use-orders';
+import {
+  useCreateOrder,
+  useOrders,
+  type OptionSelection,
+  type Order,
+} from '@/hooks/orders/use-orders';
+import { type PaymentSuccess } from '@/components/payments/payment-modal';
 import { usePosCurrentSession } from '@/hooks/pos/use-pos-session';
 import { PaymentModal } from '@/components/payments/payment-modal';
 import { SessionOpenModal } from './_components/session-open-modal';
@@ -24,6 +34,7 @@ import {
   type ProductOptionGroup,
 } from './_components/product-options-modal';
 import { printTicket } from './utils/ticket-printer';
+import { toast } from 'sonner';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -51,6 +62,15 @@ interface Discount {
   value: number;
 }
 
+// ── Constants ──────────────────────────────────────────────────────────────────
+
+const POS_TYPE_META: Record<string, { icon: string; label: string }> = {
+  dine_in:  { icon: '🍽️', label: 'Sur place' },
+  takeaway: { icon: '🥡', label: 'À emporter' },
+  delivery: { icon: '🛵', label: 'Livraison' },
+  online:   { icon: '💻', label: 'En ligne' },
+};
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function fmtPrice(v: number) {
@@ -68,6 +88,12 @@ function cartItemLineTotal(item: CartItem): number {
 
 function optionsSummary(options: OptionSelection[]): string {
   return options.map((o) => o.option_name).join(', ');
+}
+
+function orderAlreadyPaid(order: Order): number {
+  return order.payments
+    .filter((p) => p.status === 'completed' || p.status === 'paid')
+    .reduce((s, p) => s + Number(p.amount), 0);
 }
 
 // ── Clock ──────────────────────────────────────────────────────────────────────
@@ -288,6 +314,75 @@ function CartItemRow({
   );
 }
 
+// ── Pending order card ──────────────────────────────────────────────────────────
+
+function PendingOrderCard({
+  order,
+  onSelect,
+}: {
+  order:    Order;
+  onSelect: (order: Order) => void;
+}) {
+  const meta      = POS_TYPE_META[order.type] ?? { icon: '📋', label: order.type };
+  const paid      = orderAlreadyPaid(order);
+  const remaining = Number(order.total) - paid;
+  const visibleItems = order.items.slice(0, 3);
+  const extraCount   = order.items.length - visibleItems.length;
+
+  return (
+    <button
+      onClick={() => onSelect(order)}
+      className="w-full text-left bg-white border border-slate-200 rounded-xl p-3 hover:border-terracotta/60 hover:shadow-md transition-all active:scale-[0.98]"
+    >
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="font-mono text-xs font-bold text-slate-900 tracking-tight">
+          {order.order_number}
+        </span>
+        <span className="font-mono text-sm font-bold text-terracotta">
+          {fmtPrice(remaining)}
+        </span>
+      </div>
+
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <span className="text-[11px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium">
+          {meta.icon} {meta.label}
+        </span>
+        {order.table && (
+          <span className="text-[11px] text-slate-500">Table {order.table.number}</span>
+        )}
+        {order.workflow_state && (
+          <span
+            className="text-[11px] font-medium px-1.5 py-0.5 rounded"
+            style={{
+              color:           order.workflow_state.color,
+              backgroundColor: order.workflow_state.color + '18',
+            }}
+          >
+            {order.workflow_state.name}
+          </span>
+        )}
+      </div>
+
+      <p className="text-[11px] text-slate-400 line-clamp-1">
+        {visibleItems.map((item, i) => (
+          <span key={item.id}>
+            {i > 0 ? ', ' : ''}
+            {item.quantity > 1 ? `${item.quantity}× ` : ''}
+            {item.productName}
+          </span>
+        ))}
+        {extraCount > 0 && ` +${extraCount} autre${extraCount > 1 ? 's' : ''}`}
+      </p>
+
+      {paid > 0 && (
+        <p className="text-[11px] text-green-600 mt-1">
+          Déjà payé : {fmtPrice(paid)}
+        </p>
+      )}
+    </button>
+  );
+}
+
 // ── Main page ───────────────────────────────────────────────────────────────────
 
 export default function POSPage() {
@@ -307,6 +402,10 @@ export default function POSPage() {
     }
   }, [sessionLoading, session]);
 
+  // ── Panel tabs ──
+  const [activeTab, setActiveTab]             = useState<'cart' | 'checkout'>('cart');
+  const [orderTypeFilter, setOrderTypeFilter] = useState<string | null>(null);
+
   // ── Catalog state ──
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery]       = useState('');
@@ -315,6 +414,7 @@ export default function POSPage() {
   const [cart, setCart]           = useState<CartItem[]>([]);
   const [orderType, setOrderType] = useState<'dine_in' | 'takeaway'>('dine_in');
   const [tableId, setTableId]     = useState('');
+  const [orderNotes, setOrderNotes] = useState('');
   const [discount, setDiscount]   = useState<Discount | null>(null);
   const [showDiscount, setShowDiscount] = useState(false);
 
@@ -325,12 +425,14 @@ export default function POSPage() {
   const [showPayment, setShowPayment] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [selectedExistingOrder, setSelectedExistingOrder] = useState<Order | null>(null);
 
   // ── Order number counter (local) ──
-  const [orderSeq, setOrderSeq] = useState(() => {
+  const [orderSeq, setOrderSeq] = useState(1);
+  useEffect(() => {
     const stored = sessionStorage.getItem('pos_order_seq');
-    return stored ? parseInt(stored, 10) : 1;
-  });
+    if (stored) setOrderSeq(parseInt(stored, 10));
+  }, []);
 
   const { mutate: createOrder, isPending: creatingOrder } = useCreateOrder();
 
@@ -351,32 +453,34 @@ export default function POSPage() {
     queryFn: async () => {
       const params: Record<string, unknown> = {
         limit: 100,
-        is_available: undefined, // show all, overlay handles unavailable
         include_options: true,
       };
       if (activeCategory) params.category_id = activeCategory;
       const { data } = await apiClient.get('/products', { params });
       const raw = (data as { data?: unknown[] }).data ?? data ?? [];
-      return (raw as Array<Record<string, unknown>>).map((p) => ({
-        id:           p.id as string,
-        name:         p.name as string,
-        basePrice:    parseFloat((p.basePrice ?? p.base_price ?? 0) as string),
-        imageUrl:     (p.imageUrl ?? p.image_url ?? null) as string | null,
-        isAvailable:  (p.isAvailable ?? p.is_available ?? true) as boolean,
-        optionGroups: ((p.optionGroups ?? []) as Array<Record<string, unknown>>).map((g) => ({
-          id:            g.id as string,
-          name:          g.name as string,
-          type:          (g.type as 'single' | 'multiple'),
-          isRequired:    (g.isRequired ?? g.is_required ?? false) as boolean,
-          minSelections: (g.minSelections ?? g.min_selections ?? 0) as number,
-          maxSelections: (g.maxSelections ?? g.max_selections ?? 0) as number,
-          options:       ((g.options ?? []) as Array<Record<string, unknown>>).map((o) => ({
-            id:         o.id as string,
-            name:       o.name as string,
-            priceDelta: parseFloat((o.priceDelta ?? o.price_delta ?? 0) as string),
-          })),
-        })) as ProductOptionGroup[],
-      }));
+      return (raw as Array<Record<string, unknown>>).map((p) => {
+        const groups = (p.option_groups ?? p.optionGroups ?? []) as Array<Record<string, unknown>>;
+        return {
+          id:          p.id as string,
+          name:        p.name as string,
+          basePrice:   parseFloat((p.base_price ?? p.basePrice ?? 0) as string),
+          imageUrl:    (p.image_url ?? p.imageUrl ?? null) as string | null,
+          isAvailable: (p.is_available ?? p.isAvailable ?? true) as boolean,
+          optionGroups: groups.map((g) => ({
+            id:            g.id as string,
+            name:          g.name as string,
+            type:          (g.type as 'single' | 'multiple'),
+            isRequired:    (g.is_required ?? g.isRequired ?? false) as boolean,
+            minSelections: (g.min_selections ?? g.minSelections ?? 0) as number,
+            maxSelections: (g.max_selections ?? g.maxSelections ?? 0) as number,
+            options: ((g.options ?? []) as Array<Record<string, unknown>>).map((o) => ({
+              id:         o.id as string,
+              name:       o.name as string,
+              priceDelta: parseFloat((o.price_delta ?? o.priceDelta ?? 0) as string),
+            })),
+          })) as ProductOptionGroup[],
+        };
+      });
     },
     staleTime: 30_000,
   });
@@ -389,6 +493,13 @@ export default function POSPage() {
     },
     staleTime: 60_000,
   });
+
+  // ── Pending orders for checkout ──
+  const { data: pendingOrdersData, refetch: refetchPendingOrders } = useOrders({ limit: 100 });
+  const pendingOrders = (pendingOrdersData?.data ?? []).filter((o) => !o.paid_at);
+  const filteredPendingOrders = orderTypeFilter
+    ? pendingOrders.filter((o) => o.type === orderTypeFilter)
+    : pendingOrders;
 
   const filteredProducts = searchQuery
     ? products.filter((p) =>
@@ -403,8 +514,11 @@ export default function POSPage() {
       ? Math.round(subtotal * discount.value / 100)
       : discount.value
     : 0;
-  const total         = Math.max(0, subtotal - discountAmt);
-  const cartCount     = cart.reduce((s, i) => s + i.quantity, 0);
+  const total = Math.max(0, subtotal - discountAmt);
+
+  // ── Payment modal amounts (cart vs existing order) ──
+  const paymentAlreadyPaid = selectedExistingOrder ? orderAlreadyPaid(selectedExistingOrder) : 0;
+  const paymentOrderTotal  = selectedExistingOrder ? Number(selectedExistingOrder.total) : total;
 
   // ── Cart actions ──
   function addToCart(product: POSProduct, options: OptionSelection[], qty = 1) {
@@ -439,6 +553,7 @@ export default function POSPage() {
     setCart([]);
     setDiscount(null);
     setTableId('');
+    setOrderNotes('');
     setOrderType('dine_in');
   }
 
@@ -453,7 +568,7 @@ export default function POSPage() {
     }
   }
 
-  // ── Checkout ──
+  // ── Checkout (new cart-based order) ──
   function handleCheckout() {
     if (cart.length === 0 || !sessionOpen) return;
 
@@ -461,7 +576,8 @@ export default function POSPage() {
       {
         type: orderType,
         ...(orderType === 'dine_in' && tableId ? { table_id: tableId } : {}),
-        ...(discountAmt > 0 ? {} : {}), // discount applied post-creation if needed
+        ...(discountAmt > 0 ? { discount_amount: discountAmt } : {}),
+        ...(orderNotes.trim() ? { notes: orderNotes.trim() } : {}),
         items: cart.map((item) => ({
           product_id: item.product.id,
           quantity:   item.quantity,
@@ -470,49 +586,122 @@ export default function POSPage() {
       },
       {
         onSuccess: (order) => {
+          if (!order?.id) {
+            toast.error('Erreur : commande créée mais ID manquant');
+            return;
+          }
           setCurrentOrderId(order.id);
+          setSelectedExistingOrder(null);
           setShowPayment(true);
-          // Advance order sequence
           const next = orderSeq + 1;
           setOrderSeq(next);
           sessionStorage.setItem('pos_order_seq', next.toString());
+        },
+        onError: () => {
+          toast.error('Impossible de créer la commande. Vérifiez la connexion.');
         },
       },
     );
   }
 
+  // ── Checkout (existing order from list) ──
+  function handleSelectExistingOrder(order: Order) {
+    setSelectedExistingOrder(order);
+    setCurrentOrderId(order.id);
+    setShowPayment(true);
+  }
+
+  // ── Icons for payment methods ──
+  const PAYMENT_ICONS: Record<string, string> = {
+    cash:         '💵',
+    mobile_money: '📱',
+    card:         '💳',
+    online:       '🌐',
+    voucher:      '🎟️',
+  };
+
   // ── After payment success ──
-  function handlePaymentSuccess() {
-    // Print ticket
-    if (currentOrderId) {
-      const tenantName = user?.firstName ?? 'Restaurant';
-      const tableNum = tableId ? tables.find((t) => t.id === tableId)?.number : undefined;
+  function handlePaymentSuccess(payment: PaymentSuccess) {
+    const tenantName = user?.firstName ?? 'Restaurant';
+
+    if (selectedExistingOrder) {
+      // Print ticket for existing order
+      const paid    = orderAlreadyPaid(selectedExistingOrder);
+      const typeMeta = POS_TYPE_META[selectedExistingOrder.type] ?? { label: selectedExistingOrder.type };
       printTicket({
-        restaurantName: tenantName,
-        orderNumber:    `N°${orderSeq - 1}`,
-        orderType:      orderType === 'dine_in' ? 'Sur place' : 'À emporter',
-        ...(tableNum ? { tableNumber: tableNum } : {}),
-        items: cart.map((item) => {
-          const opts = optionsSummary(item.options);
+        restaurantName:    tenantName,
+        orderNumber:       selectedExistingOrder.order_number,
+        orderType:         typeMeta.label,
+        ...(selectedExistingOrder.table ? { tableNumber: selectedExistingOrder.table.number } : {}),
+        ...(selectedExistingOrder.customer
+          ? { customerName: `${selectedExistingOrder.customer.firstName} ${selectedExistingOrder.customer.lastName}` }
+          : {}),
+        items: selectedExistingOrder.items.map((item) => {
+          const opts = (item.options as { option_name?: string }[])
+            ?.map((o) => o.option_name)
+            .filter(Boolean)
+            .join(', ');
           return {
-            name:      item.product.name,
+            name:      item.productName,
             ...(opts ? { options: opts } : {}),
             quantity:  item.quantity,
-            unitPrice: item.unitPrice,
-            lineTotal: cartItemLineTotal(item),
+            unitPrice: Number(item.unitPrice),
+            lineTotal: Number(item.lineTotal),
           };
         }),
-        subtotal,
-        ...(discountAmt > 0 ? { discountAmount: discountAmt } : {}),
-        total,
-        paymentMethod: 'Paiement',
-        amountPaid:    total,
+        subtotal:      Number(selectedExistingOrder.subtotal),
+        ...(Number(selectedExistingOrder.discount_amount) > 0
+          ? { discountAmount: Number(selectedExistingOrder.discount_amount) }
+          : {}),
+        total:             Number(selectedExistingOrder.total) - paid,
+        paymentMethod:     payment.methodLabel,
+        paymentMethodIcon: PAYMENT_ICONS[payment.method] ?? '💳',
+        amountPaid:        payment.amountPaid,
+        ...(payment.change > 0 ? { change: payment.change } : {}),
         currencyCode: 'XOF',
         locale:       'fr-SN',
       });
+
+      setShowPayment(false);
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        setSelectedExistingOrder(null);
+        setCurrentOrderId(null);
+        refetchPendingOrders();
+        qc.invalidateQueries({ queryKey: ['orders'] });
+      }, 2000);
+      return;
     }
 
-    // Show success then reset
+    // Cart-based order: print ticket
+    const tableNum = tableId ? tables.find((t) => t.id === tableId)?.number : undefined;
+    printTicket({
+      restaurantName:    tenantName,
+      orderNumber:       `N°${orderSeq - 1}`,
+      orderType:         orderType === 'dine_in' ? 'Sur place' : 'À emporter',
+      ...(tableNum ? { tableNumber: tableNum } : {}),
+      items: cart.map((item) => {
+        const opts = optionsSummary(item.options);
+        return {
+          name:      item.product.name,
+          ...(opts ? { options: opts } : {}),
+          quantity:  item.quantity,
+          unitPrice: item.unitPrice,
+          lineTotal: cartItemLineTotal(item),
+        };
+      }),
+      subtotal,
+      ...(discountAmt > 0 ? { discountAmount: discountAmt } : {}),
+      total,
+      paymentMethod:     payment.methodLabel,
+      paymentMethodIcon: PAYMENT_ICONS[payment.method] ?? '💳',
+      amountPaid:        payment.amountPaid,
+      ...(payment.change > 0 ? { change: payment.change } : {}),
+      currencyCode: 'XOF',
+      locale:       'fr-SN',
+    });
+
     setShowPayment(false);
     setShowSuccess(true);
     setTimeout(() => {
@@ -555,16 +744,24 @@ export default function POSPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Rechercher…"
-              className="hidden sm:block w-40 rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta/30"
+              className="w-32 sm:w-44 rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta/30"
             />
+
+            <Link
+              href="/dashboard/pos/sessions"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:border-slate-300 transition-colors flex-shrink-0"
+            >
+              <History size={14} />
+              <span className="hidden sm:inline">Historique</span>
+            </Link>
 
             <button
               onClick={() => setShowCloseModal(true)}
               disabled={!sessionOpen}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:border-red-300 hover:text-red-600 hover:bg-red-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-200 bg-red-50 text-xs font-semibold text-red-600 hover:bg-red-100 hover:border-red-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
             >
               <LogOut size={14} />
-              <span className="hidden sm:inline">Fermer caisse</span>
+              <span>Fermer caisse</span>
             </button>
           </div>
 
@@ -603,7 +800,7 @@ export default function POSPage() {
                 <p className="text-sm">Aucun produit</p>
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {filteredProducts.map((product) => (
                   <ProductCard
                     key={product.id}
@@ -616,148 +813,268 @@ export default function POSPage() {
           </div>
         </div>
 
-        {/* ────── RIGHT PANEL — Commande ────── */}
+        {/* ────── RIGHT PANEL — Commande / Encaisser ────── */}
         <div className="w-[380px] flex-shrink-0 bg-white border-l border-slate-200 flex flex-col">
 
-          {/* Order header */}
-          <div className="px-4 py-3 border-b border-slate-100 flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ShoppingCart size={16} className="text-slate-500" />
-                <span className="font-semibold text-slate-900 text-sm">Commande</span>
-                <span className="text-xs text-slate-400 font-mono">N°{orderSeq}</span>
-              </div>
+          {/* Tab bar */}
+          <div className="flex border-b border-slate-200 flex-shrink-0">
+            <button
+              onClick={() => setActiveTab('cart')}
+              className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-1.5 border-b-2 transition-colors ${
+                activeTab === 'cart'
+                  ? 'border-terracotta text-terracotta'
+                  : 'border-transparent text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              <ShoppingCart size={14} />
+              Commande
               {cart.length > 0 && (
-                <button
-                  onClick={clearCart}
-                  className="text-xs text-slate-400 hover:text-red-500 transition-colors"
-                >
-                  Vider
-                </button>
+                <span className="bg-terracotta text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0">
+                  {cart.reduce((s, i) => s + i.quantity, 0)}
+                </span>
               )}
-            </div>
-
-            {/* Type tabs */}
-            <div className="flex gap-1 mt-2.5 bg-slate-100 rounded-lg p-0.5">
-              {([
-                { value: 'dine_in',  label: '🍽️ Sur place' },
-                { value: 'takeaway', label: '🥡 À emporter' },
-              ] as const).map(({ value, label }) => (
-                <button
-                  key={value}
-                  onClick={() => setOrderType(value)}
-                  className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                    orderType === value
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {/* Table select */}
-            {orderType === 'dine_in' && (
-              <select
-                value={tableId}
-                onChange={(e) => setTableId(e.target.value)}
-                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta/30"
-              >
-                <option value="">— Choisir une table —</option>
-                {tables.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    Table {t.number}
-                  </option>
-                ))}
-              </select>
-            )}
+            </button>
+            <button
+              onClick={() => { setActiveTab('checkout'); refetchPendingOrders(); }}
+              className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-1.5 border-b-2 transition-colors ${
+                activeTab === 'checkout'
+                  ? 'border-terracotta text-terracotta'
+                  : 'border-transparent text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              <Receipt size={14} />
+              Encaisser
+              {pendingOrders.length > 0 && (
+                <span className="bg-slate-200 text-slate-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0">
+                  {pendingOrders.length}
+                </span>
+              )}
+            </button>
           </div>
 
-          {/* Items list */}
-          <div className="flex-1 overflow-y-auto px-4">
-            {cart.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-slate-300 py-8">
-                <ShoppingCart size={40} strokeWidth={1} />
-                <p className="text-sm mt-3">Panier vide</p>
-                <p className="text-xs mt-1">Sélectionnez des produits</p>
+          {/* ── Tab: Commande (cart) ── */}
+          {activeTab === 'cart' && (
+            <>
+              {/* Order header */}
+              <div className="px-4 py-3 border-b border-slate-100 flex-shrink-0">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-slate-900 text-sm">Commande</span>
+                    <span className="text-xs text-slate-400 font-mono">N°{orderSeq}</span>
+                  </div>
+                  {cart.length > 0 && (
+                    <button
+                      onClick={clearCart}
+                      className="text-xs text-slate-400 hover:text-red-500 transition-colors"
+                    >
+                      Vider
+                    </button>
+                  )}
+                </div>
+
+                {/* Type tabs */}
+                <div className="flex gap-1 mt-2.5 bg-slate-100 rounded-lg p-0.5">
+                  {([
+                    { value: 'dine_in',  label: '🍽️ Sur place' },
+                    { value: 'takeaway', label: '🥡 À emporter' },
+                  ] as const).map(({ value, label }) => (
+                    <button
+                      key={value}
+                      onClick={() => setOrderType(value)}
+                      className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                        orderType === value
+                          ? 'bg-white text-slate-900 shadow-sm'
+                          : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Table select */}
+                {orderType === 'dine_in' && (
+                  <select
+                    value={tableId}
+                    onChange={(e) => setTableId(e.target.value)}
+                    className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta/30"
+                  >
+                    <option value="">— Choisir une table —</option>
+                    {tables.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        Table {t.number}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
-            ) : (
-              <div>
-                {cart.map((item) => (
-                  <CartItemRow
-                    key={item.key}
-                    item={item}
-                    onQtyChange={changeQty}
-                    onRemove={removeItem}
+
+              {/* Items list */}
+              <div className="flex-1 overflow-y-auto px-4">
+                {cart.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-slate-300 py-8">
+                    <ShoppingCart size={40} strokeWidth={1} />
+                    <p className="text-sm mt-3">Panier vide</p>
+                    <p className="text-xs mt-1">Sélectionnez des produits</p>
+                  </div>
+                ) : (
+                  <div>
+                    {cart.map((item) => (
+                      <CartItemRow
+                        key={item.key}
+                        item={item}
+                        onQtyChange={changeQty}
+                        onRemove={removeItem}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Notes */}
+              {cart.length > 0 && (
+                <div className="px-4 pb-2 flex-shrink-0">
+                  <textarea
+                    value={orderNotes}
+                    onChange={(e) => setOrderNotes(e.target.value)}
+                    placeholder="Notes pour la commande…"
+                    rows={2}
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-700 resize-none focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta/30 placeholder:text-slate-400"
                   />
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Footer / Caisse */}
-          <div className="px-4 py-4 border-t border-slate-100 flex-shrink-0 space-y-3">
-            {/* Totals */}
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-sm text-slate-500">
-                <span>Sous-total</span>
-                <span className="font-mono">{fmtPrice(subtotal)}</span>
-              </div>
-              {discountAmt > 0 && (
-                <div className="flex justify-between text-sm text-green-600">
-                  <span>Remise {discount?.type === 'percent' ? `(${discount.value}%)` : ''}</span>
-                  <span className="font-mono">−{fmtPrice(discountAmt)}</span>
                 </div>
               )}
-              <div className="flex justify-between items-center pt-1.5 border-t border-slate-100">
-                <span className="font-heading font-bold text-slate-900 text-base">TOTAL</span>
-                <span className="font-heading font-bold text-terracotta text-2xl font-mono">
-                  {fmtPrice(total)}
-                </span>
+
+              {/* Footer / Caisse */}
+              <div className="px-4 py-4 border-t border-slate-100 flex-shrink-0 space-y-3">
+                {/* Totals */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-sm text-slate-500">
+                    <span>Sous-total</span>
+                    <span className="font-mono">{fmtPrice(subtotal)}</span>
+                  </div>
+                  {discountAmt > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Remise {discount?.type === 'percent' ? `(${discount.value}%)` : ''}</span>
+                      <span className="font-mono">−{fmtPrice(discountAmt)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center pt-1.5 border-t border-slate-100">
+                    <span className="font-heading font-bold text-slate-900 text-base">TOTAL</span>
+                    <span className="font-heading font-bold text-terracotta text-2xl font-mono">
+                      {fmtPrice(total)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Remise button */}
+                <button
+                  onClick={() => setShowDiscount(true)}
+                  disabled={cart.length === 0}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-600 hover:border-terracotta hover:text-terracotta hover:bg-terracotta/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <Percent size={14} />
+                  {discount ? `Remise appliquée (${discount.type === 'percent' ? `${discount.value}%` : fmtPrice(discount.value)})` : 'Remise'}
+                </button>
+
+                {/* ENCAISSER */}
+                <button
+                  onClick={handleCheckout}
+                  disabled={cart.length === 0 || !sessionOpen || creatingOrder}
+                  className="w-full h-14 bg-terracotta text-white rounded-xl font-bold text-lg font-heading hover:bg-terracotta-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {creatingOrder ? 'Création…' : !sessionOpen ? 'Caisse fermée' : 'ENCAISSER'}
+                </button>
+
+                {!sessionOpen && !sessionLoading && (
+                  <button
+                    onClick={() => setShowOpenModal(true)}
+                    className="w-full py-2.5 rounded-xl border-2 border-terracotta/50 text-terracotta text-sm font-semibold hover:bg-terracotta/5 transition-colors"
+                  >
+                    Ouvrir la caisse
+                  </button>
+                )}
               </div>
-            </div>
+            </>
+          )}
 
-            {/* Remise button */}
-            <button
-              onClick={() => setShowDiscount(true)}
-              disabled={cart.length === 0}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-600 hover:border-terracotta hover:text-terracotta hover:bg-terracotta/5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <Percent size={14} />
-              {discount ? `Remise appliquée (${discount.type === 'percent' ? `${discount.value}%` : fmtPrice(discount.value)})` : 'Remise'}
-            </button>
+          {/* ── Tab: Encaisser (existing orders) ── */}
+          {activeTab === 'checkout' && (
+            <>
+              {/* Type filter + refresh */}
+              <div className="px-3 py-2.5 flex items-center gap-1.5 overflow-x-auto scrollbar-none border-b border-slate-100 flex-shrink-0">
+                <button
+                  onClick={() => setOrderTypeFilter(null)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 transition-colors ${
+                    orderTypeFilter === null
+                      ? 'bg-terracotta text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  Tout
+                </button>
+                {Object.entries(POS_TYPE_META).map(([type, meta]) => (
+                  <button
+                    key={type}
+                    onClick={() => setOrderTypeFilter(orderTypeFilter === type ? null : type)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 transition-colors ${
+                      orderTypeFilter === type
+                        ? 'bg-terracotta text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {meta.icon} {meta.label}
+                  </button>
+                ))}
+                <button
+                  onClick={() => refetchPendingOrders()}
+                  className="ml-auto p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors flex-shrink-0"
+                  title="Actualiser"
+                >
+                  <RefreshCw size={13} />
+                </button>
+              </div>
 
-            {/* ENCAISSER */}
-            <button
-              onClick={handleCheckout}
-              disabled={cart.length === 0 || !sessionOpen || creatingOrder}
-              className="w-full h-14 bg-terracotta text-white rounded-xl font-bold text-lg font-heading hover:bg-terracotta-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {creatingOrder ? 'Création…' : !sessionOpen ? 'Caisse fermée' : 'ENCAISSER'}
-            </button>
+              {/* Orders list */}
+              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                {filteredPendingOrders.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-slate-300 py-10">
+                    <Receipt size={40} strokeWidth={1} />
+                    <p className="text-sm mt-3">
+                      {orderTypeFilter
+                        ? `Aucune commande ${POS_TYPE_META[orderTypeFilter]?.label ?? ''}`
+                        : 'Aucune commande en attente'}
+                    </p>
+                    <p className="text-xs mt-1">Toutes les commandes sont réglées</p>
+                  </div>
+                ) : (
+                  filteredPendingOrders.map((order) => (
+                    <PendingOrderCard
+                      key={order.id}
+                      order={order}
+                      onSelect={handleSelectExistingOrder}
+                    />
+                  ))
+                )}
+              </div>
 
-            {!sessionOpen && !sessionLoading && (
-              <button
-                onClick={() => setShowOpenModal(true)}
-                className="w-full py-2.5 rounded-xl border-2 border-terracotta/50 text-terracotta text-sm font-semibold hover:bg-terracotta/5 transition-colors"
-              >
-                Ouvrir la caisse
-              </button>
-            )}
-          </div>
+              {/* Footer info */}
+              <div className="px-4 py-3 border-t border-slate-100 flex-shrink-0">
+                <p className="text-xs text-slate-400 text-center">
+                  {filteredPendingOrders.length} commande{filteredPendingOrders.length !== 1 ? 's' : ''} en attente de paiement
+                </p>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
       {/* ────── Modals ────── */}
 
-      {/* Session open */}
       <SessionOpenModal
         open={showOpenModal}
         onSuccess={() => setShowOpenModal(false)}
       />
 
-      {/* Session close */}
       {session && (
         <SessionCloseModal
           open={showCloseModal}
@@ -766,7 +1083,6 @@ export default function POSPage() {
         />
       )}
 
-      {/* Product options */}
       <ProductOptionsModal
         product={optionsProduct}
         onConfirm={(product, options, qty) => {
@@ -776,7 +1092,6 @@ export default function POSPage() {
         onClose={() => setOptionsProduct(null)}
       />
 
-      {/* Discount */}
       <DiscountModal
         open={showDiscount}
         subtotal={subtotal}
@@ -784,21 +1099,22 @@ export default function POSPage() {
         onClose={() => setShowDiscount(false)}
       />
 
-      {/* Payment */}
       {currentOrderId && (
         <PaymentModal
           open={showPayment}
-          onClose={() => setShowPayment(false)}
+          onClose={() => {
+            setShowPayment(false);
+            setSelectedExistingOrder(null);
+          }}
           orderId={currentOrderId}
-          orderTotal={total}
-          alreadyPaid={0}
+          orderTotal={paymentOrderTotal}
+          alreadyPaid={paymentAlreadyPaid}
           currencyCode="XOF"
           locale="fr-SN"
-          onSuccess={handlePaymentSuccess}
+          onSuccess={(payment) => handlePaymentSuccess(payment)}
         />
       )}
 
-      {/* Success animation */}
       {showSuccess && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/20 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl p-10 flex flex-col items-center gap-4 animate-fade-in-up">

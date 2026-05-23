@@ -14,6 +14,18 @@ import {
   ChevronRight,
   AlertTriangle,
 } from 'lucide-react';
+import {
+  DndContext,
+  DragOverlay,
+  useDraggable,
+  useDroppable,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core';
+import { useQueryClient } from '@tanstack/react-query';
 import { useWorkflows } from '@/hooks/workflows/use-workflows';
 import {
   useOrders,
@@ -21,6 +33,7 @@ import {
   useTransitionOrder,
   useCancelOrder,
   useOrder,
+  ORDERS_QKEY,
   type Order,
   type AvailableTransition,
 } from '@/hooks/orders/use-orders';
@@ -112,6 +125,38 @@ function QuickTransitions({
   );
 }
 
+// ── Order card ghost (DragOverlay) ────────────────────────────────────────────
+
+function OrderCardGhost({ order }: { order: Order }) {
+  const meta = TYPE_META[order.type] ?? { icon: '📋', label: order.type };
+  const stateColor = order.workflow_state?.color ?? '#94A3B8';
+  return (
+    <div
+      className="bg-white rounded-[10px] shadow-2xl select-none overflow-hidden w-72 rotate-2 opacity-95"
+      style={{ borderLeft: `4px solid ${stateColor}` }}
+    >
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-1">
+          <span className="font-mono text-xs font-bold text-slate-900 tracking-tight">
+            {order.order_number}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 mb-2">
+          <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-md font-medium">
+            {meta.icon} {meta.label}
+          </span>
+          {order.table && (
+            <span className="text-xs text-slate-500">Table {order.table.number}</span>
+          )}
+        </div>
+        <span className="font-mono text-sm font-semibold" style={{ color: '#C8553D' }}>
+          {formatXAF(Number(order.total))}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 // ── Order card ─────────────────────────────────────────────────────────────────
 
 function OrderCard({
@@ -131,18 +176,26 @@ function OrderCard({
   const extraCount = order.items.length - visibleItems.length;
   const isLate = elapsed(order.created_at) >= 15;
 
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: order.id,
+    data: { order, stateId: order.workflow_state?.id },
+  });
+
   return (
     <motion.div
+      ref={setNodeRef}
       layout
       initial={{ opacity: 0, y: -16, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
+      animate={{ opacity: isDragging ? 0.35 : 1, y: 0, scale: isDragging ? 0.98 : 1 }}
       exit={{ opacity: 0, x: 40, scale: 0.95 }}
       transition={{ type: 'spring', stiffness: 260, damping: 22 }}
-      onClick={() => onOpenDrawer(order.id)}
-      className={`bg-white rounded-[10px] shadow-md cursor-pointer select-none relative overflow-hidden ${
+      onClick={() => !isDragging && onOpenDrawer(order.id)}
+      className={`bg-white rounded-[10px] shadow-md cursor-grab active:cursor-grabbing select-none relative overflow-hidden ${
         isNew ? 'ring-2 ring-orange-400 ring-offset-1' : ''
       }`}
       style={{ borderLeft: `4px solid ${stateColor}` }}
+      {...attributes}
+      {...listeners}
     >
       {isLate && (
         <span className="absolute top-2 right-2">
@@ -223,15 +276,21 @@ function KanbanColumn({
   onOpenDrawer: (id: string) => void;
   onTransition: (orderId: string, t: AvailableTransition) => void;
 }) {
+  const { setNodeRef, isOver } = useDroppable({ id: state.id });
+
   return (
     <div
-      className="flex-shrink-0 w-72 flex flex-col rounded-xl overflow-hidden"
-      style={{ backgroundColor: state.color + '0D' }}
+      ref={setNodeRef}
+      className="flex-shrink-0 w-72 flex flex-col rounded-xl overflow-hidden transition-colors duration-150"
+      style={{ backgroundColor: isOver ? state.color + '25' : state.color + '0D' }}
     >
       {/* Column header */}
       <div
-        className="px-4 py-3 flex items-center justify-between"
-        style={{ borderTop: `3px solid ${state.color}` }}
+        className="px-4 py-3 flex items-center justify-between transition-colors duration-150"
+        style={{
+          borderTop: `3px solid ${state.color}`,
+          backgroundColor: isOver ? state.color + '15' : undefined,
+        }}
       >
         <span className="text-sm font-semibold text-slate-800">{state.name}</span>
         <span
@@ -485,34 +544,36 @@ function OrderDrawer({
       )}
 
       {/* Cancel */}
-      <div className="px-6 py-4 border-t border-slate-100 sticky bottom-0 bg-white">
-        {confirmCancel ? (
-          <div className="flex gap-2">
+      {!order.paid_at && order.status !== 'cancelled' && order.workflow_state?.slug !== 'cancelled' && (
+        <div className="px-6 py-4 border-t border-slate-100 sticky bottom-0 bg-white">
+          {confirmCancel ? (
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConfirmCancel(false)}
+                className="flex-1 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                Retour
+              </button>
+              <button
+                disabled={cancelling}
+                onClick={() => {
+                  cancelOrder(orderId, { onSuccess: onClose });
+                }}
+                className="flex-1 py-2 rounded-lg bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
+              >
+                {cancelling ? 'En cours…' : 'Confirmer l\'annulation'}
+              </button>
+            </div>
+          ) : (
             <button
-              onClick={() => setConfirmCancel(false)}
-              className="flex-1 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+              onClick={() => setConfirmCancel(true)}
+              className="w-full py-2 rounded-lg border border-red-200 text-red-500 text-sm font-medium hover:bg-red-50 transition-colors"
             >
-              Annuler
+              Annuler la commande
             </button>
-            <button
-              disabled={cancelling}
-              onClick={() => {
-                cancelOrder(orderId, { onSuccess: onClose });
-              }}
-              className="flex-1 py-2 rounded-lg bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-50"
-            >
-              {cancelling ? 'En cours…' : 'Confirmer'}
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={() => setConfirmCancel(true)}
-            className="w-full py-2 rounded-lg border border-red-200 text-red-500 text-sm font-medium hover:bg-red-50 transition-colors"
-          >
-            Annuler la commande
-          </button>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -522,8 +583,14 @@ function OrderDrawer({
 export default function OrdersPage() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [drawerOrderId, setDrawerOrderId] = useState<string | null>(null);
+  const [activeOrder, setActiveOrder] = useState<Order | null>(null);
   const newIdsRef = useRef<Set<string>>(new Set());
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
+
+  const qc = useQueryClient();
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+  );
 
   const { connected } = useOrdersWs(soundEnabled);
 
@@ -542,7 +609,6 @@ export default function OrdersPage() {
   useEffect(() => {
     if (!ordersData) return;
     const current = new Set(ordersData.data.map((o) => o.id));
-    // Orders added since last render
     for (const id of current) {
       if (!newIdsRef.current.has(id) && newIdsRef.current.size > 0) {
         setNewIds((prev) => new Set([...prev, id]));
@@ -566,6 +632,29 @@ export default function OrdersPage() {
 
   function handleTransition(orderId: string, t: AvailableTransition) {
     doTransition({ orderId, transitionId: t.id });
+  }
+
+  function handleDragStart(event: DragStartEvent) {
+    const order = (event.active.data.current as { order?: Order })?.order;
+    setActiveOrder(order ?? null);
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    setActiveOrder(null);
+    const { active, over } = event;
+    if (!over) return;
+
+    const orderId = active.id as string;
+    const targetStateId = over.id as string;
+    const currentStateId = (active.data.current as { stateId?: string })?.stateId;
+
+    if (targetStateId === currentStateId) return;
+
+    const transitions = qc.getQueryData<AvailableTransition[]>(ORDERS_QKEY.transitions(orderId));
+    const transition = transitions?.find((t) => t.toState.id === targetStateId);
+    if (transition) {
+      doTransition({ orderId, transitionId: transition.id });
+    }
   }
 
   return (
@@ -634,22 +723,28 @@ export default function OrdersPage() {
           </div>
         </div>
       ) : (
-        <div className="flex-1 overflow-x-auto pb-4">
-          <div className="flex gap-4 h-full min-w-max">
-            {states
-              .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-              .map((state) => (
-                <KanbanColumn
-                  key={state.id}
-                  state={state}
-                  orders={ordersByState.get(state.id) ?? []}
-                  newIds={newIds}
-                  onOpenDrawer={setDrawerOrderId}
-                  onTransition={handleTransition}
-                />
-              ))}
+        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+          <div className="flex-1 overflow-x-auto pb-4">
+            <div className="flex gap-4 h-full min-w-max">
+              {states
+                .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+                .map((state) => (
+                  <KanbanColumn
+                    key={state.id}
+                    state={state}
+                    orders={ordersByState.get(state.id) ?? []}
+                    newIds={newIds}
+                    onOpenDrawer={setDrawerOrderId}
+                    onTransition={handleTransition}
+                  />
+                ))}
+            </div>
           </div>
-        </div>
+
+          <DragOverlay dropAnimation={{ duration: 180, easing: 'ease' }}>
+            {activeOrder ? <OrderCardGhost order={activeOrder} /> : null}
+          </DragOverlay>
+        </DndContext>
       )}
 
       {/* Detail Drawer */}

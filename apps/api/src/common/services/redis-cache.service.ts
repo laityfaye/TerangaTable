@@ -13,6 +13,7 @@ export interface CachedTenantContext {
   timezone: string;
   status: string;
   trialEndsAt: string | null;
+  activeModules: string[];
 }
 
 @Injectable()

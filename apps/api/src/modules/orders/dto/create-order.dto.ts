@@ -77,6 +77,12 @@ export class CreateOrderDto {
   @IsObject()
   delivery_address?: Record<string, unknown>;
 
+  @ApiPropertyOptional({ minimum: 0 })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  discount_amount?: number;
+
   @ApiProperty({ type: [CreateOrderItemDto] })
   @IsArray()
   @ValidateNested({ each: true })

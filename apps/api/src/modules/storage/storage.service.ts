@@ -25,6 +25,8 @@ const WEBSITE_MAX_SIZE: Record<string, number> = {
   logo:    2 * 1024 * 1024,
   hero:    5 * 1024 * 1024,
   favicon: 0.5 * 1024 * 1024,
+  about:   3 * 1024 * 1024,
+  gallery: 3 * 1024 * 1024,
 };
 
 export interface UploadResult {
@@ -121,7 +123,7 @@ export class StorageService {
   async uploadWebsiteAsset(
     tenantId: string,
     file: Express.Multer.File,
-    assetType: 'logo' | 'hero' | 'favicon',
+    assetType: 'logo' | 'hero' | 'favicon' | 'about' | 'gallery',
   ): Promise<string> {
     if (!WEBSITE_MIME_TYPES.includes(file.mimetype)) {
       throw new BadRequestException(

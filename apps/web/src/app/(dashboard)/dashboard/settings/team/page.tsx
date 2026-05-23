@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Users, Shield, Mail, UserPlus, UserX, Pencil, X, Check,
   Loader2, ShieldCheck, Plus, Trash2, ChevronRight, Lock,
@@ -42,6 +42,18 @@ const MODULE_LABELS: Record<string, string> = {
   customers:    'Clients',
   settings:     'Paramètres',
   delivery:     'Livraison',
+};
+
+const ACTION_LABELS: Record<string, string> = {
+  view:   'Consulter',
+  create: 'Créer',
+  update: 'Modifier',
+  cancel: 'Annuler',
+  delete: 'Supprimer',
+  use:    'Utiliser',
+  refund: 'Rembourser',
+  edit:   'Configurer',
+  manage: 'Gérer',
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -341,12 +353,21 @@ function PermissionEditor({ role }: { role: Role }) {
   const setPerms = useSetRolePermissions();
   const deleteRole = useDeleteRole();
 
+  // Seuls les rôles globaux (tenantId null) sont vraiment verrouillés.
+  // Les rôles système du tenant (manager, serveur…) sont éditables.
+  const isLocked = role.tenantId === null;
+
   const selected = useMemo(
     () => new Set(role.permissions.map((p) => p.id)),
     [role.permissions],
   );
 
   const [draft, setDraft] = useState<Set<string>>(selected);
+
+  // Resync le draft quand on change de rôle sélectionné
+  useEffect(() => {
+    setDraft(new Set(role.permissions.map((p) => p.id)));
+  }, [role.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const byModule = useMemo(() => {
     if (!allPermissions) return {};
@@ -363,7 +384,7 @@ function PermissionEditor({ role }: { role: Role }) {
   }, [draft, selected]);
 
   const toggle = (id: string) => {
-    if (role.isSystem) return;
+    if (isLocked) return;
     setDraft((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
@@ -375,16 +396,23 @@ function PermissionEditor({ role }: { role: Role }) {
     setPerms.mutate({ roleId: role.id, permissionIds: [...draft] });
   };
 
+  const checkedCount = draft.size;
+  const totalCount = allPermissions?.length ?? 0;
+
   return (
-    <div className="flex-1 border border-[#E7E5E4] rounded-xl bg-white overflow-hidden">
+    <div className="flex-1 border border-[#E7E5E4] rounded-xl bg-white overflow-hidden flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-[#E7E5E4]">
         <div>
           <div className="flex items-center gap-2">
             <h3 className="font-semibold text-[#1C1917]">{role.name}</h3>
-            {role.isSystem && (
+            {isLocked ? (
               <span className="flex items-center gap-1 text-xs text-slate-400">
-                <Lock size={10} /> Système
+                <Lock size={10} /> Système global
+              </span>
+            ) : (
+              <span className="text-xs text-slate-400">
+                {checkedCount}/{totalCount} accès activés
               </span>
             )}
           </div>
@@ -401,7 +429,7 @@ function PermissionEditor({ role }: { role: Role }) {
               {deleteRole.isPending ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
             </button>
           )}
-          {!role.isSystem && isDirty && (
+          {!isLocked && isDirty && (
             <button
               onClick={save}
               disabled={setPerms.isPending}
@@ -415,38 +443,52 @@ function PermissionEditor({ role }: { role: Role }) {
       </div>
 
       {/* Permission grid */}
-      <div className="p-5 space-y-5 overflow-y-auto max-h-[calc(100vh-20rem)]">
-        {Object.entries(byModule).map(([module, perms]) => (
-          <div key={module}>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-              {MODULE_LABELS[module] ?? module}
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {perms.map((p) => {
-                const checked = draft.has(p.id);
-                return (
-                  <label
-                    key={p.id}
-                    className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border cursor-pointer transition-colors ${
-                      role.isSystem ? 'cursor-not-allowed opacity-70' : 'hover:border-terracotta/40'
-                    } ${checked ? 'border-terracotta/60 bg-terracotta/5' : 'border-[#E7E5E4] bg-[#FAFAF8]'}`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => toggle(p.id)}
-                      disabled={role.isSystem}
-                      className="accent-terracotta"
-                    />
-                    <span className="text-xs font-medium text-[#1C1917]">
-                      {p.module}.{p.action}
-                    </span>
-                  </label>
-                );
-              })}
+      <div className="p-5 space-y-5 overflow-y-auto flex-1">
+        {isLocked && (
+          <p className="text-xs text-slate-400 bg-slate-50 rounded-lg px-3 py-2 flex items-center gap-2">
+            <Lock size={11} />
+            Ce rôle est géré au niveau de la plateforme et ne peut pas être modifié.
+          </p>
+        )}
+        {Object.entries(byModule).map(([module, perms]) => {
+          const moduleChecked = perms.filter((p) => draft.has(p.id)).length;
+          return (
+            <div key={module}>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  {MODULE_LABELS[module] ?? module}
+                </p>
+                <span className="text-xs text-slate-400">{moduleChecked}/{perms.length}</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {perms.map((p) => {
+                  const checked = draft.has(p.id);
+                  return (
+                    <label
+                      key={p.id}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border transition-colors ${
+                        isLocked
+                          ? 'cursor-not-allowed opacity-70'
+                          : 'cursor-pointer hover:border-terracotta/40'
+                      } ${checked ? 'border-terracotta/60 bg-terracotta/5' : 'border-[#E7E5E4] bg-[#FAFAF8]'}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggle(p.id)}
+                        disabled={isLocked}
+                        className="accent-terracotta"
+                      />
+                      <span className="text-xs font-medium text-[#1C1917]">
+                        {ACTION_LABELS[p.action] ?? p.action}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -459,7 +501,7 @@ function RolesTab() {
 
   const selected = roles?.find((r) => r.id === selectedId) ?? null;
 
-  const systemRoles = roles?.filter((r) => r.isSystem) ?? [];
+  const presetRoles = roles?.filter((r) => r.isSystem) ?? [];
   const customRoles = roles?.filter((r) => !r.isSystem) ?? [];
 
   return (
@@ -478,17 +520,17 @@ function RolesTab() {
           <Loading small />
         ) : (
           <>
-            {systemRoles.length > 0 && (
+            {presetRoles.length > 0 && (
               <div>
-                <p className="text-xs text-slate-400 uppercase tracking-wider mb-1.5 px-1">Système</p>
-                {systemRoles.map((r) => (
+                <p className="text-xs text-slate-400 uppercase tracking-wider mb-1.5 px-1">Prédéfinis</p>
+                {presetRoles.map((r) => (
                   <RoleListItem key={r.id} role={r} active={r.id === selectedId} onClick={() => setSelectedId(r.id)} />
                 ))}
               </div>
             )}
             {customRoles.length > 0 && (
               <div>
-                <p className="text-xs text-slate-400 uppercase tracking-wider mb-1.5 px-1">Custom</p>
+                <p className="text-xs text-slate-400 uppercase tracking-wider mb-1.5 px-1">Personnalisés</p>
                 {customRoles.map((r) => (
                   <RoleListItem key={r.id} role={r} active={r.id === selectedId} onClick={() => setSelectedId(r.id)} />
                 ))}
@@ -516,6 +558,7 @@ function RolesTab() {
 }
 
 function RoleListItem({ role, active, onClick }: { role: Role; active: boolean; onClick: () => void }) {
+  const isGlobalLocked = role.tenantId === null;
   return (
     <button
       onClick={onClick}
@@ -524,7 +567,10 @@ function RoleListItem({ role, active, onClick }: { role: Role; active: boolean; 
       }`}
     >
       <div className="flex items-center gap-2 min-w-0">
-        {role.isSystem ? <Lock size={12} className={active ? 'text-white/70' : 'text-slate-400'} /> : <Shield size={12} className={active ? 'text-white/70' : 'text-slate-400'} />}
+        {isGlobalLocked
+          ? <Lock size={12} className={active ? 'text-white/70' : 'text-slate-400'} />
+          : <Shield size={12} className={active ? 'text-white/70' : 'text-slate-400'} />
+        }
         <span className="text-sm font-medium truncate">{role.name}</span>
       </div>
       <ChevronRight size={12} className={active ? 'text-white/60' : 'text-slate-300'} />

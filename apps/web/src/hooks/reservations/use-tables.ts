@@ -61,8 +61,8 @@ export function useZones() {
   return useQuery({
     queryKey: ['zones'],
     queryFn: async () => {
-      const { data } = await apiClient.get<Zone[]>('/zones');
-      return data;
+      const { data } = await apiClient.get<Zone[] | { data: Zone[] }>('/zones');
+      return (Array.isArray(data) ? data : (data as { data: Zone[] }).data) ?? [];
     },
     staleTime: 60_000,
   });
@@ -109,10 +109,10 @@ export function useTables(zoneId?: string) {
   return useQuery({
     queryKey: ['tables', { zoneId }],
     queryFn: async () => {
-      const { data } = await apiClient.get<Table[]>('/tables', {
+      const { data } = await apiClient.get<Table[] | { data: Table[] }>('/tables', {
         params: zoneId ? { zone_id: zoneId } : undefined,
       });
-      return data;
+      return (Array.isArray(data) ? data : (data as { data: Table[] }).data) ?? [];
     },
     staleTime: 30_000,
   });

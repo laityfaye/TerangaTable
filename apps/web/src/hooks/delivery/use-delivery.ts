@@ -99,8 +99,8 @@ export function useDeliveryKpis() {
   return useQuery({
     queryKey: DELIVERY_QKEY.kpis(),
     queryFn: async () => {
-      const { data } = await apiClient.get<DeliveryKpis>('/delivery/kpis');
-      return data;
+      const { data } = await apiClient.get<{ data: DeliveryKpis }>('/delivery/kpis');
+      return data.data;
     },
     refetchInterval: 30_000,
   });
@@ -112,8 +112,8 @@ export function useActiveDeliveries() {
   return useQuery({
     queryKey: DELIVERY_QKEY.active(),
     queryFn: async () => {
-      const { data } = await apiClient.get<DeliveryRecord[]>('/delivery/active');
-      return data;
+      const { data } = await apiClient.get<{ data: DeliveryRecord[] }>('/delivery/active');
+      return data.data;
     },
     refetchInterval: 15_000,
   });
@@ -125,8 +125,8 @@ export function useDeliveryZones() {
   return useQuery({
     queryKey: DELIVERY_QKEY.zones(),
     queryFn: async () => {
-      const { data } = await apiClient.get<DeliveryZone[]>('/delivery/zones');
-      return data;
+      const { data } = await apiClient.get<{ data: DeliveryZone[] }>('/delivery/zones');
+      return data.data;
     },
     staleTime: 60_000,
   });
@@ -136,7 +136,7 @@ export function useCreateZone() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateZonePayload) =>
-      apiClient.post<DeliveryZone>('/delivery/zones', payload).then((r) => r.data),
+      apiClient.post<{ data: DeliveryZone }>('/delivery/zones', payload).then((r) => r.data.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: DELIVERY_QKEY.zones() }),
   });
 }
@@ -145,7 +145,7 @@ export function useUpdateZone() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, ...payload }: Partial<CreateZonePayload> & { id: string }) =>
-      apiClient.patch<DeliveryZone>(`/delivery/zones/${id}`, payload).then((r) => r.data),
+      apiClient.patch<{ data: DeliveryZone }>(`/delivery/zones/${id}`, payload).then((r) => r.data.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: DELIVERY_QKEY.zones() }),
   });
 }
@@ -154,7 +154,7 @@ export function useDeleteZone() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
-      apiClient.delete(`/delivery/zones/${id}`).then((r) => r.data),
+      apiClient.delete<{ data: unknown }>(`/delivery/zones/${id}`).then((r) => r.data.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: DELIVERY_QKEY.zones() }),
   });
 }
@@ -165,8 +165,8 @@ export function useDeliveryDrivers() {
   return useQuery({
     queryKey: DELIVERY_QKEY.drivers(),
     queryFn: async () => {
-      const { data } = await apiClient.get<DeliveryDriver[]>('/delivery/drivers');
-      return data;
+      const { data } = await apiClient.get<{ data: DeliveryDriver[] }>('/delivery/drivers');
+      return data.data;
     },
     staleTime: 30_000,
   });
@@ -176,7 +176,7 @@ export function useCreateDriver() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateDriverPayload) =>
-      apiClient.post<DeliveryDriver>('/delivery/drivers', payload).then((r) => r.data),
+      apiClient.post<{ data: DeliveryDriver }>('/delivery/drivers', payload).then((r) => r.data.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: DELIVERY_QKEY.drivers() }),
   });
 }
@@ -185,7 +185,7 @@ export function useUpdateDriver() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, ...payload }: UpdateDriverPayload & { id: string }) =>
-      apiClient.patch<DeliveryDriver>(`/delivery/drivers/${id}`, payload).then((r) => r.data),
+      apiClient.patch<{ data: DeliveryDriver }>(`/delivery/drivers/${id}`, payload).then((r) => r.data.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: DELIVERY_QKEY.drivers() }),
   });
 }
@@ -194,7 +194,7 @@ export function useToggleDriverAvailability() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
-      apiClient.patch<DeliveryDriver>(`/delivery/drivers/${id}/availability`).then((r) => r.data),
+      apiClient.patch<{ data: DeliveryDriver }>(`/delivery/drivers/${id}/availability`).then((r) => r.data.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: DELIVERY_QKEY.drivers() }),
   });
 }
@@ -203,7 +203,7 @@ export function useDeleteDriver() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
-      apiClient.delete(`/delivery/drivers/${id}`).then((r) => r.data),
+      apiClient.delete<{ data: unknown }>(`/delivery/drivers/${id}`).then((r) => r.data.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: DELIVERY_QKEY.drivers() }),
   });
 }
@@ -214,7 +214,7 @@ export function useAssignDelivery() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: AssignPayload) =>
-      apiClient.post<DeliveryRecord>('/delivery/assign', payload).then((r) => r.data),
+      apiClient.post<{ data: DeliveryRecord }>('/delivery/assign', payload).then((r) => r.data.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: DELIVERY_QKEY.active() });
       qc.invalidateQueries({ queryKey: DELIVERY_QKEY.kpis() });
@@ -226,7 +226,7 @@ export function useAutoAssignDelivery() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (orderId: string) =>
-      apiClient.post<DeliveryRecord>(`/delivery/auto-assign/${orderId}`).then((r) => r.data),
+      apiClient.post<{ data: DeliveryRecord }>(`/delivery/auto-assign/${orderId}`).then((r) => r.data.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: DELIVERY_QKEY.active() });
       qc.invalidateQueries({ queryKey: DELIVERY_QKEY.kpis() });
@@ -239,8 +239,8 @@ export function useUpdateDeliveryStatus() {
   return useMutation({
     mutationFn: ({ id, status, notes }: { id: string; status: string; notes?: string }) =>
       apiClient
-        .patch<DeliveryRecord>(`/delivery/${id}/status`, { status, notes })
-        .then((r) => r.data),
+        .patch<{ data: DeliveryRecord }>(`/delivery/${id}/status`, { status, notes })
+        .then((r) => r.data.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: DELIVERY_QKEY.active() });
       qc.invalidateQueries({ queryKey: DELIVERY_QKEY.kpis() });

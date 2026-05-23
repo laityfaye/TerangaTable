@@ -12,14 +12,20 @@ import {
   Bar,
   Cell,
 } from 'recharts';
-import { ShoppingCart, TrendingUp, CreditCard, UserPlus, Plus, CalendarPlus } from 'lucide-react';
+import {
+  ShoppingCart, TrendingUp, CreditCard, UserPlus, Plus, CalendarPlus,
+  Clock, ChefHat, CheckCircle2, Loader2,
+} from 'lucide-react';
+import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth.store';
 import {
   useAnalyticsSummary,
   useAnalyticsRevenue,
   useAnalyticsPeakHours,
 } from '@/hooks/analytics/use-analytics';
-import { useOrders } from '@/hooks/orders/use-orders';
+import { useOrders, type Order } from '@/hooks/orders/use-orders';
+
+const OPERATIONAL_ROLES = ['serveur', 'caissier', 'cuisinier', 'livreur'];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -99,11 +105,164 @@ function SkeletonCard() {
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// ── Operational Dashboard (terrain : serveur, caissier, cuisinier, livreur) ──
 
-export default function DashboardPage() {
+const ORDER_STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
+  pending:   { label: 'En attente',    color: '#F59E0B', icon: <Clock size={16} /> },
+  preparing: { label: 'En préparation', color: '#3B82F6', icon: <ChefHat size={16} /> },
+  ready:     { label: 'Prêt',          color: '#10B981', icon: <CheckCircle2 size={16} /> },
+};
+
+function OrderStatusBadge({ order }: { order: Order }) {
+  const slug = order.workflow_state?.slug ?? order.status;
+  const cfg = ORDER_STATUS_CONFIG[slug];
+  const color = order.workflow_state?.color ?? cfg?.color ?? '#6B7280';
+  const label = order.workflow_state?.name ?? cfg?.label ?? order.status;
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium"
+      style={{ backgroundColor: color + '20', color }}
+    >
+      {label}
+    </span>
+  );
+}
+
+function OperationalDashboard({ role }: { role: string }) {
   const user = useAuthStore((s) => s.user);
 
+  const { data: pendingRes, isLoading: loadingPending } = useOrders({ status: 'pending', limit: 20 });
+  const { data: preparingRes, isLoading: loadingPreparing } = useOrders({ status: 'preparing', limit: 20 });
+  const { data: readyRes } = useOrders({ status: 'ready', limit: 20 });
+
+  const pending   = pendingRes?.data ?? [];
+  const preparing = preparingRes?.data ?? [];
+  const ready     = readyRes?.data ?? [];
+  const isLoading = loadingPending || loadingPreparing;
+
+  const greeting = () => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Bonjour';
+    if (h < 18) return 'Bon après-midi';
+    return 'Bonsoir';
+  };
+
+  const ROLE_LABELS: Record<string, string> = {
+    serveur:   'Serveur',
+    caissier:  'Caissier',
+    cuisinier: 'Cuisinier',
+    livreur:   'Livreur',
+  };
+
+  const activeOrders = role === 'cuisinier'
+    ? [...pending, ...preparing]
+    : [...pending, ...preparing, ...ready];
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-start justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="font-heading text-2xl font-bold text-[#1C1917]">
+            {greeting()}, {user?.firstName ?? ''} 👋
+          </h1>
+          <p className="mt-1 text-sm text-slate-500 font-body">
+            {ROLE_LABELS[role] ?? role} — voici l&rsquo;état des commandes en cours.
+          </p>
+        </div>
+        {(role === 'serveur' || role === 'caissier') && (
+          <Link
+            href="/dashboard/orders/new"
+            className="flex items-center gap-2 px-4 h-10 rounded-md bg-terracotta text-white text-sm font-body hover:bg-terracotta-dark transition-colors"
+          >
+            <Plus size={15} />
+            Nouvelle commande
+          </Link>
+        )}
+      </div>
+
+      {/* Status counters */}
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          { label: 'En attente', count: pending.length, color: '#F59E0B', icon: <Clock size={20} /> },
+          { label: 'En préparation', count: preparing.length, color: '#3B82F6', icon: <ChefHat size={20} /> },
+          { label: 'Prêtes', count: ready.length, color: '#10B981', icon: <CheckCircle2 size={20} /> },
+        ].map(({ label, count, color, icon }) => (
+          <div key={label} className="bg-white rounded-xl border border-[#E7E5E4] p-5 shadow-sm">
+            <div className="flex items-start justify-between">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: color + '18', color }}>
+                {icon}
+              </div>
+            </div>
+            <p className="mt-4 text-sm text-slate-500">{label}</p>
+            <p className="mt-1 text-2xl font-heading font-bold text-[#1C1917]">{count}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Active orders list */}
+      <div className="bg-white rounded-xl border border-[#E7E5E4] shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-[#E7E5E4] flex items-center justify-between">
+          <h2 className="font-heading font-semibold text-[#1C1917] text-base">Commandes actives</h2>
+          <Link href="/dashboard/orders" className="text-xs text-terracotta hover:text-terracotta-dark">
+            Voir toutes →
+          </Link>
+        </div>
+
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 size={22} className="animate-spin text-terracotta" />
+          </div>
+        ) : activeOrders.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-14 text-slate-400">
+            <CheckCircle2 size={30} className="mb-3 opacity-30" />
+            <p className="text-sm">Aucune commande active pour le moment</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-xs text-slate-400 uppercase tracking-wide border-b border-[#E7E5E4]">
+                  <th className="text-left px-5 py-3 font-medium">N°</th>
+                  <th className="text-left px-5 py-3 font-medium">Type</th>
+                  <th className="text-left px-5 py-3 font-medium">Table</th>
+                  <th className="text-right px-5 py-3 font-medium">Total</th>
+                  <th className="text-left px-5 py-3 font-medium">Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                {activeOrders.map((order, i) => (
+                  <tr key={order.id} className={`border-b border-[#E7E5E4] hover:bg-[#FAFAF8] transition-colors ${i === activeOrders.length - 1 ? 'border-0' : ''}`}>
+                    <td className="px-5 py-3.5 font-mono text-xs font-medium text-[#1C1917]">
+                      {order.order_number}
+                    </td>
+                    <td className="px-5 py-3.5 text-slate-600">
+                      {{ dine_in: 'Sur place', takeaway: 'Emporté', delivery: 'Livraison', online: 'En ligne' }[order.type] ?? order.type}
+                    </td>
+                    <td className="px-5 py-3.5 text-slate-600">
+                      {order.table ? `Table ${order.table.number}` : '—'}
+                    </td>
+                    <td className="px-5 py-3.5 text-right font-mono text-xs font-medium text-[#1C1917]">
+                      {formatXAF(order.total)}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <OrderStatusBadge order={order} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Analytics Dashboard (manager, restaurant_owner, super_admin) ──────────────
+
+function AnalyticsDashboard() {
+  const user = useAuthStore((s) => s.user);
   const { data: summary, isLoading: summaryLoading } = useAnalyticsSummary({ period: 'today' });
   const { data: revenue } = useAnalyticsRevenue({ period: '7d', granularity: 'day' });
   const { data: peakHours } = useAnalyticsPeakHours(7);
@@ -355,4 +514,16 @@ export default function DashboardPage() {
       </div>
     </div>
   );
+}
+
+// ── Page router ───────────────────────────────────────────────────────────────
+
+export default function DashboardPage() {
+  const user = useAuthStore((s) => s.user);
+  const userRole = user?.roles?.[0] ?? '';
+
+  if (OPERATIONAL_ROLES.includes(userRole)) {
+    return <OperationalDashboard role={userRole} />;
+  }
+  return <AnalyticsDashboard />;
 }

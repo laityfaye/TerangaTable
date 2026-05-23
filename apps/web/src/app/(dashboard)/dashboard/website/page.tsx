@@ -53,6 +53,9 @@ import {
   Play,
   Camera,
   Share2,
+  FileText,
+  Plus,
+  Twitter,
 } from 'lucide-react';
 import {
   useWebsiteSettings,
@@ -64,19 +67,23 @@ import {
   uploadLogo,
   uploadHero,
   uploadFavicon,
+  uploadAbout,
+  uploadGallery,
   DEFAULT_SECTIONS_CONFIG,
   type WebsiteSettingsPatch,
   type WebsiteSettingsData,
   type SectionsConfig,
   type SectionItem,
+  type ContentConfig,
 } from '@/hooks/website/use-website-settings';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-type ActiveSection = 'apparence' | 'medias' | 'sections' | 'seo' | 'social' | 'domaine';
+type ActiveSection = 'apparence' | 'contenu' | 'medias' | 'sections' | 'seo' | 'social' | 'domaine';
 
 const NAV_ITEMS: { id: ActiveSection; label: string; icon: React.ReactNode }[] = [
-  { id: 'apparence', label: 'Apparence',          icon: <Palette size={16} /> },
+  { id: 'apparence', label: 'Apparence',           icon: <Palette size={16} /> },
+  { id: 'contenu',   label: 'Contenu',             icon: <FileText size={16} /> },
   { id: 'medias',    label: 'Médias',              icon: <ImageIcon size={16} /> },
   { id: 'sections',  label: 'Sections',            icon: <LayoutGrid size={16} /> },
   { id: 'seo',       label: 'SEO',                 icon: <SearchIcon size={16} /> },
@@ -427,6 +434,129 @@ function LogoUploadZone({
   );
 }
 
+// ── Panel: Contenu ────────────────────────────────────────────────────────────
+
+function ContenuPanel({
+  form,
+  onChange,
+}: {
+  form: Partial<WebsiteSettingsData>;
+  onChange: (patch: Partial<WebsiteSettingsData>) => void;
+}) {
+  const cc: ContentConfig = form.content_config ?? {};
+
+  function patchContent(partial: Partial<ContentConfig>) {
+    onChange({ content_config: { ...cc, ...partial } });
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* Tagline / Description */}
+      <section>
+        <h3 className="text-sm font-semibold text-[#1C1917] mb-1">Tagline</h3>
+        <p className="text-xs text-slate-400 mb-3">
+          Sous-titre affiché dans le hero de la page d'accueil.
+        </p>
+        <input
+          type="text"
+          value={cc.description ?? ''}
+          onChange={(e) => patchContent({ description: e.target.value || null })}
+          placeholder="Le meilleur restaurant africain de la ville…"
+          className="w-full h-10 px-3 rounded-md border border-[#E7E5E4] text-sm text-[#1C1917] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-terracotta/20 focus:border-terracotta"
+        />
+      </section>
+
+      {/* À propos */}
+      <section>
+        <h3 className="text-sm font-semibold text-[#1C1917] mb-4">Section « À propos »</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-[#1C1917] mb-1.5">
+              Texte de présentation
+            </label>
+            <textarea
+              rows={4}
+              value={cc.about_text ?? ''}
+              onChange={(e) => patchContent({ about_text: e.target.value || null })}
+              placeholder="Racontez l'histoire de votre restaurant, vos valeurs, votre cuisine…"
+              className="w-full px-3 py-2.5 rounded-md border border-[#E7E5E4] text-sm text-[#1C1917] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-terracotta/20 focus:border-terracotta resize-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[#1C1917] mb-1.5">
+              Citation du chef <span className="text-xs text-slate-400 font-normal">(optionnel)</span>
+            </label>
+            <textarea
+              rows={2}
+              value={cc.about_chef ?? ''}
+              onChange={(e) => patchContent({ about_chef: e.target.value || null })}
+              placeholder="« Ma cuisine, c'est l'âme de l'Afrique dans chaque assiette… »"
+              className="w-full px-3 py-2.5 rounded-md border border-[#E7E5E4] text-sm text-[#1C1917] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-terracotta/20 focus:border-terracotta resize-none italic"
+            />
+          </div>
+
+          <UploadZone
+            label="Photo (chef ou restaurant)"
+            hint="Recommandé format portrait 3/4 — max 3 Mo"
+            currentUrl={cc.about_image_url ?? null}
+            accept="image/jpeg,image/png,image/webp"
+            maxMB={3}
+            onUpload={async (file, onProgress) => {
+              const url = await uploadAbout(file, onProgress);
+              patchContent({ about_image_url: url });
+              return url;
+            }}
+            onRemove={() => patchContent({ about_image_url: null })}
+          />
+        </div>
+      </section>
+
+      {/* Coordonnées */}
+      <section>
+        <h3 className="text-sm font-semibold text-[#1C1917] mb-1">Coordonnées</h3>
+        <p className="text-xs text-slate-400 mb-4">
+          Affichées dans la section Horaires &amp; Contact de la vitrine.
+        </p>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-[#1C1917] mb-1.5">Adresse</label>
+            <input
+              type="text"
+              value={cc.address ?? ''}
+              onChange={(e) => patchContent({ address: e.target.value || null })}
+              placeholder="12 rue des Almadies, Dakar"
+              className="w-full h-10 px-3 rounded-md border border-[#E7E5E4] text-sm text-[#1C1917] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-terracotta/20 focus:border-terracotta"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[#1C1917] mb-1.5">Téléphone</label>
+            <input
+              type="tel"
+              value={cc.phone ?? ''}
+              onChange={(e) => patchContent({ phone: e.target.value || null })}
+              placeholder="+221 77 000 00 00"
+              className="w-full h-10 px-3 rounded-md border border-[#E7E5E4] text-sm text-[#1C1917] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-terracotta/20 focus:border-terracotta"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[#1C1917] mb-1.5">Email de contact</label>
+            <input
+              type="email"
+              value={cc.email ?? ''}
+              onChange={(e) => patchContent({ email: e.target.value || null })}
+              placeholder="contact@monrestaurant.sn"
+              className="w-full h-10 px-3 rounded-md border border-[#E7E5E4] text-sm text-[#1C1917] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-terracotta/20 focus:border-terracotta"
+            />
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 // ── Sortable Section Item ─────────────────────────────────────────────────────
 
 function SortableSectionItem({
@@ -684,6 +814,95 @@ function ApparencePanel({
 
 // ── Panel: Médias ─────────────────────────────────────────────────────────────
 
+function GalleryManager({
+  images,
+  onChange,
+}: {
+  images: string[];
+  onChange: (imgs: string[]) => void;
+}) {
+  const [uploading, setUploading] = useState<number | null>(null);
+  const MAX_SLOTS = 6;
+  const slots = [...images, ...Array(Math.max(0, Math.min(1, MAX_SLOTS - images.length))).fill('')];
+
+  async function handleFile(file: File, index: number) {
+    setUploading(index);
+    try {
+      const url = await uploadGallery(file);
+      const next = [...images];
+      if (index < next.length) next[index] = url;
+      else next.push(url);
+      onChange(next);
+    } finally {
+      setUploading(null);
+    }
+  }
+
+  function remove(index: number) {
+    const next = images.filter((_, i) => i !== index);
+    onChange(next);
+  }
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-[#1C1917]">
+        Images de galerie <span className="text-xs text-slate-400 font-normal">(max {MAX_SLOTS})</span>
+      </label>
+      <p className="text-xs text-slate-400">
+        Ces images s'affichent en priorité dans la section Galerie. Si vide, les photos de vos produits sont utilisées.
+      </p>
+      <div className="grid grid-cols-3 gap-2">
+        {slots.map((src, i) => {
+          const isFilled = !!src;
+          const isLoading = uploading === i;
+          return (
+            <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-[#E7E5E4] bg-[#F5F4F2]">
+              {isFilled ? (
+                <>
+                  <img src={src} alt={`Galerie ${i + 1}`} className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => remove(i)}
+                    className="absolute top-1 right-1 w-5 h-5 bg-black/60 rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                  >
+                    <X size={10} className="text-white" />
+                  </button>
+                </>
+              ) : (
+                <label className="absolute inset-0 flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-[#E7E5E4] transition-colors">
+                  {isLoading ? (
+                    <Loader2 size={20} className="text-slate-400 animate-spin" />
+                  ) : (
+                    <>
+                      <Plus size={18} className="text-slate-400" />
+                      <span className="text-[10px] text-slate-400">Ajouter</span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="sr-only"
+                    disabled={isLoading}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) void handleFile(file, i);
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+          );
+        })}
+        {images.length < MAX_SLOTS && images.length > 0 && uploading === null && (
+          /* Extra "add" slot after filled ones */
+          <div />
+        )}
+      </div>
+    </div>
+  );
+}
+
 function MediasPanel({
   form,
   onChange,
@@ -691,6 +910,12 @@ function MediasPanel({
   form: Partial<WebsiteSettingsData>;
   onChange: (patch: Partial<WebsiteSettingsData>) => void;
 }) {
+  const cc: ContentConfig = form.content_config ?? {};
+
+  function patchContent(partial: Partial<ContentConfig>) {
+    onChange({ content_config: { ...cc, ...partial } });
+  }
+
   return (
     <div className="space-y-8">
       <LogoUploadZone
@@ -725,6 +950,11 @@ function MediasPanel({
           return url;
         }}
         onRemove={() => onChange({ hero_image_url: null })}
+      />
+
+      <GalleryManager
+        images={cc.gallery_images ?? []}
+        onChange={(imgs) => patchContent({ gallery_images: imgs })}
       />
     </div>
   );
@@ -926,6 +1156,7 @@ function SocialPanel({
   const FIELDS = [
     { key: 'facebook',  label: 'Facebook URL',     icon: <Share2 size={16} />,         placeholder: 'https://facebook.com/monrestaurant' },
     { key: 'instagram', label: 'Instagram URL',    icon: <Camera size={16} />,         placeholder: 'https://instagram.com/monrestaurant' },
+    { key: 'twitter',   label: 'Twitter / X URL',  icon: <Twitter size={16} />,        placeholder: 'https://x.com/monrestaurant' },
     { key: 'tiktok',    label: 'TikTok URL',       icon: <Play size={16} />,           placeholder: 'https://tiktok.com/@monrestaurant' },
     { key: 'whatsapp',  label: 'WhatsApp (numéro)',icon: <MessageCircle size={16} />,  placeholder: '+221 77 000 00 00' },
     { key: 'youtube',   label: 'YouTube URL',      icon: <Play size={16} />,           placeholder: 'https://youtube.com/@monrestaurant' },
@@ -1440,6 +1671,9 @@ export default function WebsitePage() {
             <div className="max-w-lg mx-auto px-6 py-6">
               {activeSection === 'apparence' && (
                 <ApparencePanel form={form} onChange={patchForm} />
+              )}
+              {activeSection === 'contenu' && (
+                <ContenuPanel form={form} onChange={patchForm} />
               )}
               {activeSection === 'medias' && (
                 <MediasPanel form={form} onChange={patchForm} />

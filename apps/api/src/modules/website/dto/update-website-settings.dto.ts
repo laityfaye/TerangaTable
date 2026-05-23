@@ -7,6 +7,17 @@ import {
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
+export class ContentConfigDto {
+  @IsOptional() @IsString() description?:    string | null;
+  @IsOptional() @IsString() about_text?:     string | null;
+  @IsOptional() @IsString() about_chef?:     string | null;
+  @IsOptional() @IsString() about_image_url?: string | null;
+  @IsOptional() gallery_images?:             string[];
+  @IsOptional() @IsString() phone?:          string | null;
+  @IsOptional() @IsString() address?:        string | null;
+  @IsOptional() @IsString() email?:          string | null;
+}
+
 export class UpdateWebsiteSettingsDto {
   @ApiPropertyOptional()
   @IsOptional()
@@ -99,4 +110,9 @@ export class UpdateWebsiteSettingsDto {
   @IsString()
   @MaxLength(100)
   font_body?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsObject()
+  content_config?: Record<string, unknown>;
 }

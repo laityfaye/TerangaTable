@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import {
   DndContext,
@@ -173,15 +174,20 @@ function CategoryCard({
   onEdit,
   onDelete,
   onToggle,
+  onClick,
 }: {
   category: Category;
   dragHandleProps?: Record<string, unknown> | undefined;
   onEdit: () => void;
   onDelete: () => void;
   onToggle: (active: boolean) => void;
+  onClick?: () => void;
 }) {
   return (
-    <div className={`group bg-white rounded-lg border shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 ${category.is_active ? 'border-[#E7E5E4]' : 'border-[#E7E5E4] opacity-60'}`}>
+    <div
+      onClick={onClick}
+      className={`group bg-white rounded-lg border shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer ${category.is_active ? 'border-[#E7E5E4]' : 'border-[#E7E5E4] opacity-60'}`}
+    >
       {/* Cover image */}
       <div className="aspect-video bg-slate-100 relative overflow-hidden rounded-t-lg">
         {category.image_url ? (
@@ -766,7 +772,7 @@ function AllProductsTab() {
             <button
               type="button"
               disabled={deleteProduct.isPending}
-              onClick={() => deleteProduct.mutate(deletingId, { onSuccess: () => setDeletingId(null) })}
+              onClick={() => deleteProduct.mutate(deletingId!, { onSuccess: () => setDeletingId(null) })}
               className="flex-1 h-10 rounded-md bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition-colors disabled:opacity-60"
             >
               {deleteProduct.isPending ? 'Suppression…' : 'Supprimer'}
@@ -802,6 +808,7 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 export default function MenuPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>('categories');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -946,6 +953,7 @@ export default function MenuPage() {
                       onEdit={() => openEdit(cat)}
                       onDelete={() => handleDelete(cat)}
                       onToggle={(active) => handleToggleActive(cat, active)}
+                      onClick={() => router.push(`/dashboard/menu/${cat.id}`)}
                     />
                   ))}
                   <AddCategoryCard onClick={openCreate} />

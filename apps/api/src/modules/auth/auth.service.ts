@@ -34,7 +34,15 @@ export class AuthService {
       include: {
         userRoles: { include: { role: true } },
         adminOfRegion: { select: { slug: true } },
-        tenant: { select: { slug: true } },
+        tenant: {
+          select: {
+            slug: true,
+            tenantModules: {
+              where: { isActive: true },
+              include: { module: { select: { slug: true } } },
+            },
+          },
+        },
       },
     });
   }
@@ -104,6 +112,7 @@ export class AuthService {
         tenantSlug: user.tenant?.slug ?? null,
         roles: payload.roles,
         regionSlug: this.extractRegionSlug(user),
+        activeModules: user.tenant?.tenantModules?.map((tm) => tm.module.slug) ?? [],
       },
     };
   }

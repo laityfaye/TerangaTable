@@ -6,6 +6,13 @@ import { useCreatePayment, type PaymentMethod } from '@/hooks/payments/use-payme
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
+export interface PaymentSuccess {
+  method:      PaymentMethod;
+  methodLabel: string;
+  amountPaid:  number;
+  change:      number;
+}
+
 interface PaymentModalProps {
   open:          boolean;
   onClose:       () => void;
@@ -14,7 +21,7 @@ interface PaymentModalProps {
   alreadyPaid:   number;
   currencyCode:  string;
   locale:        string;
-  onSuccess?:    () => void;
+  onSuccess?:    (payment: PaymentSuccess) => void;
 }
 
 type Step = 'method' | 'amount' | 'confirm';
@@ -302,7 +309,12 @@ export function PaymentModal({
         onSuccess: () => {
           setConfirmedAmount(numAmount);
           setStep('confirm');
-          onSuccess?.();
+          onSuccess?.({
+            method:      selectedMethod!,
+            methodLabel: methodLabel,
+            amountPaid:  numAmount,
+            change:      Math.max(0, change),
+          });
         },
       },
     );

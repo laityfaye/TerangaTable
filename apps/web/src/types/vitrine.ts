@@ -7,13 +7,14 @@ export interface VitrineRegion {
 }
 
 export interface TenantSettings {
-  address?: string;
-  phone?: string;
-  email?: string;
-  description?: string;
-  about_text?: string;
-  about_chef?: string;
-  about_image?: string;
+  address?:       string;
+  phone?:         string;
+  email?:         string;
+  description?:   string;
+  about_text?:    string;
+  about_chef?:    string;
+  about_image?:   string;
+  gallery_images?: string[];
   opening_hours?: Record<string, { open: string; close: string } | 'closed'>;
 }
 

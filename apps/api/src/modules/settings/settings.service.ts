@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { RedisCacheService } from '../../common/services/redis-cache.service';
 import { SettingType } from '@terangatable/database';
 
 export interface UpdateSettingItem {
@@ -18,7 +19,10 @@ function inferType(value: unknown): SettingType {
 
 @Injectable()
 export class SettingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redis: RedisCacheService,
+  ) {}
 
   async findAll(tenantId: string) {
     const settings = await this.prisma.setting.findMany({
@@ -90,6 +94,7 @@ export class SettingsService {
       create: { tenantId, moduleId, isActive: true },
       update: { isActive: true },
     });
+    await this.redis.invalidateTenantContext(tenantId);
     return { success: true };
   }
 
@@ -98,6 +103,7 @@ export class SettingsService {
       where: { tenantId, moduleId },
       data: { isActive: false },
     });
+    await this.redis.invalidateTenantContext(tenantId);
     return { success: true };
   }
 }

@@ -41,6 +41,41 @@ export const POS_SESSION_QKEY = {
 
 // ── Hooks ──────────────────────────────────────────────────────────────────────
 
+export interface PosSessionSummary {
+  id:             string;
+  openingAmount:  number;
+  closingAmount:  number | null;
+  totalSales:     number;
+  totalOrders:    number;
+  salesByMethod:  Record<string, number>;
+  cashDifference: number | null;
+  status:         'open' | 'closed';
+  openedAt:       string;
+  closedAt:       string | null;
+  openedBy:       { id: string; firstName: string; lastName: string };
+  closedBy:       { id: string; firstName: string; lastName: string } | null;
+}
+
+export interface PosSessionHistoryMeta {
+  total:      number;
+  page:       number;
+  limit:      number;
+  totalPages: number;
+}
+
+export function usePosSessionHistory(page = 1, limit = 20) {
+  return useQuery({
+    queryKey: ['pos', 'sessions', 'history', page, limit],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: PosSessionSummary[]; meta: PosSessionHistoryMeta }>(
+        `/pos/sessions?page=${page}&limit=${limit}`,
+      );
+      return data;
+    },
+    staleTime: 60_000,
+  });
+}
+
 export function usePosCurrentSession() {
   return useQuery({
     queryKey: POS_SESSION_QKEY.current,
@@ -63,6 +98,27 @@ export function useOpenPosSession() {
     onSuccess: (session) => {
       qc.setQueryData(POS_SESSION_QKEY.current, session);
     },
+  });
+}
+
+export interface PosSessionStats {
+  openingAmount: number;
+  openedAt:      string;
+  totalOrders:   number;
+  totalSales:    number;
+  salesByMethod: Record<string, number>;
+}
+
+export function usePosSessionStats(enabled = false) {
+  return useQuery({
+    queryKey: ['pos', 'session', 'stats'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: PosSessionStats }>('/pos/sessions/current/stats');
+      return (data as unknown as { data: PosSessionStats }).data ?? (data as unknown as PosSessionStats);
+    },
+    enabled,
+    staleTime: 0,
+    gcTime: 0,
   });
 }
 

@@ -108,8 +108,8 @@ export enum UserRole {
   REGIONAL_ADMIN = 'regional_admin',
   OWNER = 'restaurant_owner',
   MANAGER = 'manager',
-  SERVEUR = 'server',
-  CAISSIER = 'cashier',
-  CUISINIER = 'kitchen_staff',
-  LIVREUR = 'delivery_driver',
+  SERVEUR = 'serveur',
+  CAISSIER = 'caissier',
+  CUISINIER = 'cuisinier',
+  LIVREUR = 'livreur',
 }

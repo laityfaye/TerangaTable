@@ -17,6 +17,7 @@ export interface TenantContext {
   timezone: string;
   status: string;
   trialEndsAt: string | null;
+  activeModules: string[];
 }
 
 @Injectable()
@@ -73,7 +74,13 @@ export class TenantContextInterceptor implements NestInterceptor {
 
     const tenant = await this.prisma.tenant.findUnique({
       where: { id: tenantId },
-      include: { region: true },
+      include: {
+        region: true,
+        tenantModules: {
+          where: { isActive: true },
+          include: { module: { select: { slug: true } } },
+        },
+      },
     });
     if (!tenant) return null;
 
@@ -85,6 +92,7 @@ export class TenantContextInterceptor implements NestInterceptor {
       timezone: tenant.region.timezone,
       status: tenant.status,
       trialEndsAt: tenant.trialEndsAt?.toISOString() ?? null,
+      activeModules: tenant.tenantModules.map((tm) => tm.module.slug),
     };
 
     await this.redis.setTenantContext(ctx, 300);

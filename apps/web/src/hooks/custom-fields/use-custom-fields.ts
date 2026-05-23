@@ -53,10 +53,10 @@ export function useCustomFields(entityType?: string) {
   return useQuery({
     queryKey: [...QKEY, entityType],
     queryFn: async () => {
-      const { data } = await apiClient.get<CustomField[]>('/custom-fields', {
+      const { data } = await apiClient.get<{ data: CustomField[] }>('/custom-fields', {
         params: entityType ? { entity_type: entityType } : {},
       });
-      return data;
+      return data.data;
     },
   });
 }
@@ -65,10 +65,10 @@ export function useCustomFieldValues(entityType: string, entityId: string | unde
   return useQuery({
     queryKey: [...VALUES_QKEY, entityType, entityId],
     queryFn: async () => {
-      const { data } = await apiClient.get<CustomFieldWithValue[]>(
+      const { data } = await apiClient.get<{ data: CustomFieldWithValue[] }>(
         `/custom-fields/values/${entityType}/${entityId}`,
       );
-      return data;
+      return data.data;
     },
     enabled: !!entityId,
   });
@@ -78,8 +78,8 @@ export function useCreateCustomField() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: CustomFieldPayload) => {
-      const { data } = await apiClient.post<CustomField>('/custom-fields', payload);
-      return data;
+      const { data } = await apiClient.post<{ data: CustomField }>('/custom-fields', payload);
+      return data.data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: QKEY }),
   });
@@ -89,8 +89,8 @@ export function useUpdateCustomField() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, payload }: { id: string; payload: Partial<CustomFieldPayload> }) => {
-      const { data } = await apiClient.patch<CustomField>(`/custom-fields/${id}`, payload);
-      return data;
+      const { data } = await apiClient.patch<{ data: CustomField }>(`/custom-fields/${id}`, payload);
+      return data.data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: QKEY }),
   });

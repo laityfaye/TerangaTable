@@ -172,12 +172,13 @@ function ProductGridCard({
 
   return (
     <div
-      className={`group relative bg-white rounded-xl border border-[#E7E5E4] shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden ${
+      onClick={onEdit}
+      className={`group relative bg-white rounded-xl border border-[#E7E5E4] shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-pointer ${
         !product.is_available ? 'opacity-70' : ''
       }`}
     >
       {/* Image */}
-      <div className="aspect-[4/3] bg-slate-100 relative overflow-hidden">
+      <div className="aspect-[4/3] bg-slate-100 relative overflow-hidden rounded-t-xl">
         {product.image_url ? (
           <img
             src={product.image_url}
@@ -279,17 +280,28 @@ function ProductListRow({
   onEdit,
   onDelete,
   onToggle,
+  trRef,
+  trStyle,
+  trAttributes,
 }: {
   product: Product;
   dragHandleProps?: Record<string, unknown> | undefined;
   onEdit: () => void;
   onDelete: () => void;
   onToggle: (available: boolean) => void;
+  trRef?: React.Ref<HTMLTableRowElement>;
+  trStyle?: React.CSSProperties;
+  trAttributes?: Record<string, unknown>;
 }) {
   const fmt = (n: number) => new Intl.NumberFormat('fr-SN').format(n) + ' F';
 
   return (
-    <tr className="border-b border-[#E7E5E4] last:border-0 hover:bg-[#FAFAF8] transition-colors group">
+    <tr
+      ref={trRef}
+      style={trStyle}
+      {...trAttributes}
+      className="border-b border-[#E7E5E4] last:border-0 hover:bg-[#FAFAF8] transition-colors group"
+    >
       <td className="px-4 py-3 w-8">
         <div
           {...dragHandleProps}
@@ -353,27 +365,20 @@ function ProductListRow({
 }
 
 function SortableProductListRow(
-  props: Omit<React.ComponentProps<typeof ProductListRow>, 'dragHandleProps'>,
+  props: Omit<React.ComponentProps<typeof ProductListRow>, 'dragHandleProps' | 'trRef' | 'trStyle' | 'trAttributes'>,
 ) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: props.product.id,
   });
 
   return (
-    <tr
-      ref={setNodeRef as React.Ref<HTMLTableRowElement>}
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.5 : 1,
-      }}
-      {...attributes}
-    >
-      <ProductListRow
-        {...props}
-        dragHandleProps={listeners}
-      />
-    </tr>
+    <ProductListRow
+      {...props}
+      dragHandleProps={listeners}
+      trRef={setNodeRef as React.Ref<HTMLTableRowElement>}
+      trStyle={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}
+      trAttributes={attributes as Record<string, unknown>}
+    />
   );
 }
 

@@ -21,6 +21,6 @@ import { CustomFieldsModule } from '../custom-fields/custom-fields.module';
   ],
   controllers: [OrdersController],
   providers: [OrdersService, OrdersGateway, OrderPublisher],
-  exports: [OrdersService],
+  exports: [OrdersService, OrdersGateway],
 })
 export class OrdersModule {}

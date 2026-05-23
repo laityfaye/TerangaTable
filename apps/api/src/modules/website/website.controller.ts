@@ -11,6 +11,7 @@ import {
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { WebsiteService } from './website.service';
 import { CreatePublicReservationDto } from './dto/create-public-reservation.dto';
+import { CreatePublicOrderDto } from './dto/create-public-order.dto';
 
 @ApiTags('Vitrine publique')
 @Controller('public')
@@ -53,5 +54,16 @@ export class WebsiteController {
   ) {
     if (slug.includes('.')) throw new NotFoundException();
     return this.websiteService.createPublicReservation(slug, dto);
+  }
+
+  @Post(':slug/orders')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Passer une commande en ligne depuis le site vitrine' })
+  createOrder(
+    @Param('slug') slug: string,
+    @Body() dto: CreatePublicOrderDto,
+  ) {
+    if (slug.includes('.')) throw new NotFoundException();
+    return this.websiteService.createPublicOrder(slug, dto);
   }
 }

@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Body,
+  Query,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -26,10 +27,30 @@ interface UserCtx { id: string }
 export class PosController {
   constructor(private readonly posService: PosService) {}
 
+  @Get()
+  @ApiOperation({ summary: 'Historique des sessions fermées' })
+  getHistory(
+    @CurrentTenant() tenant: TenantCtx,
+    @Query('page')  page?:  string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.posService.getHistory(
+      tenant.id,
+      page  ? parseInt(page,  10) : 1,
+      limit ? parseInt(limit, 10) : 20,
+    );
+  }
+
   @Get('current')
   @ApiOperation({ summary: 'Session de caisse en cours (404 si aucune)' })
   getCurrent(@CurrentTenant() tenant: TenantCtx) {
     return this.posService.getCurrent(tenant.id);
+  }
+
+  @Get('current/stats')
+  @ApiOperation({ summary: 'Stats en temps réel de la session courante' })
+  getStats(@CurrentTenant() tenant: TenantCtx) {
+    return this.posService.getStats(tenant.id);
   }
 
   @Post('open')

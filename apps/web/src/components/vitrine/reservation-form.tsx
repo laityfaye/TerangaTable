@@ -67,7 +67,8 @@ export default function ReservationForm({ slug, primaryColor, openingHours }: Pr
         throw new Error(err.message ?? 'Une erreur est survenue.');
       }
 
-      const data = (await res.json()) as PublicReservationResult;
+      const json = (await res.json()) as { data: PublicReservationResult } | PublicReservationResult;
+      const data = 'data' in json ? json.data : json;
       setResult(data);
       setState('success');
     } catch (err) {

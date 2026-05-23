@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -21,6 +21,8 @@ import {
   X,
   Menu,
   UserCog,
+  LayoutGrid,
+  Loader2,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth.store';
@@ -39,6 +41,8 @@ interface NavGroup {
   title: string;
   items: NavItem[];
   roles?: string[]; // masque tout le groupe si aucun rôle ne correspond
+  /** Slug du module plateforme requis (ex: 'delivery'). Absent = toujours visible. */
+  module?: string;
 }
 
 const ALL_TENANT_ROLES = [
@@ -60,7 +64,7 @@ const NAV: NavGroup[] = [
         label: 'Tableau de bord',
         href: '/dashboard',
         icon: <LayoutDashboard size={18} />,
-        roles: OWNER_MANAGER,
+        roles: ALL_TENANT_ROLES,
       },
       {
         label: 'Commandes',
@@ -138,6 +142,7 @@ const NAV: NavGroup[] = [
   },
   {
     title: 'LIVRAISON',
+    module: 'delivery',
     items: [
       {
         label: 'Livraison',
@@ -159,8 +164,14 @@ const NAV: NavGroup[] = [
       },
       {
         label: 'Équipe',
-        href: '/dashboard/settings/users',
+        href: '/dashboard/settings/team',
         icon: <UserCog size={18} />,
+        roles: OWNER_MANAGER,
+      },
+      {
+        label: 'Tables',
+        href: '/dashboard/settings/tables',
+        icon: <LayoutGrid size={18} />,
         roles: OWNER_MANAGER,
       },
     ],
@@ -181,19 +192,36 @@ const ROLE_LABELS: Record<string, string> = {
 
 function NavLink({ item, active }: { item: NavItem; active: boolean }) {
   const qc = useQueryClient();
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (active) return;
+    prefetchRoute(item.href, qc);
+    startTransition(() => {
+      router.push(item.href);
+    });
+  };
+
+  const highlighted = active || isPending;
+
   return (
     <Link
       href={item.href}
       prefetch={true}
       onMouseEnter={() => prefetchRoute(item.href, qc)}
+      onClick={handleClick}
       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-body transition-all
-        ${active
+        ${highlighted
           ? 'bg-terracotta/15 text-white border-l-[3px] border-terracotta pl-[calc(0.75rem-3px)]'
           : 'text-white/60 hover:bg-white/5 hover:text-white border-l-[3px] border-transparent pl-[calc(0.75rem-3px)]'
         }`}
     >
-      <span className={active ? 'text-terracotta' : 'text-current'}>{item.icon}</span>
-      <span>{item.label}</span>
+      <span className={`transition-colors ${highlighted ? 'text-terracotta' : 'text-current'}`}>
+        {isPending ? <Loader2 size={18} className="animate-spin" /> : item.icon}
+      </span>
+      <span className={isPending ? 'opacity-70' : ''}>{item.label}</span>
     </Link>
   );
 }
@@ -204,10 +232,21 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
   const logout = useAuthStore((s) => s.logout);
 
   const userRoles = user?.roles ?? [];
+  const activeModules = user?.activeModules;
 
   const hasAccess = (roles?: string[]) => {
     if (!roles) return true;
     return roles.some((r) => userRoles.includes(r));
+  };
+
+  /**
+   * Vérifie si un module plateforme est actif pour ce tenant.
+   * Si activeModules est undefined (super admin ou données manquantes), on laisse passer.
+   */
+  const hasModule = (module?: string) => {
+    if (!module) return true;
+    if (!activeModules) return true;
+    return activeModules.includes(module);
   };
 
   const isActive = (href: string) =>
@@ -246,7 +285,7 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
-        {NAV.filter((group) => hasAccess(group.roles)).map((group) => {
+        {NAV.filter((group) => hasAccess(group.roles) && hasModule(group.module)).map((group) => {
           const visibleItems = group.items.filter((item) => hasAccess(item.roles));
           if (visibleItems.length === 0) return null;
           return (

@@ -180,6 +180,9 @@ export class OrdersService {
         };
       });
 
+      const discountAmount = parseFloat(Math.max(0, dto.discount_amount ?? 0).toFixed(2));
+      const total = parseFloat(Math.max(0, subtotal - discountAmount).toFixed(2));
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return (tx as any).order.create({
         data: {
@@ -191,7 +194,8 @@ export class OrdersService {
           customerId: dto.customer_id ?? null,
           agentId: userId,
           subtotal: subtotal.toString(),
-          total: subtotal.toString(),
+          discountAmount: discountAmount.toString(),
+          total: total.toString(),
           notes: dto.notes ?? null,
           deliveryAddress: (dto.delivery_address as object) ?? null,
           items: { create: itemsData },
@@ -248,6 +252,13 @@ export class OrdersService {
 
   async cancel(tenantId: string, id: string, userId: string) {
     const order = await this.ensureExists(tenantId, id);
+
+    if (order.status === 'cancelled') {
+      throw new BadRequestException('Cette commande est déjà annulée');
+    }
+    if (order.paidAt) {
+      throw new BadRequestException('Impossible d\'annuler une commande déjà encaissée');
+    }
 
     const cancelState = await this.prisma.workflowState.findFirst({
       where: {

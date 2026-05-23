@@ -96,6 +96,7 @@ export interface CreateOrderPayload {
   customer_id?: string;
   notes?: string;
   delivery_address?: Record<string, unknown>;
+  discount_amount?: number;
   items: Array<{
     product_id: string;
     quantity: number;
@@ -132,8 +133,8 @@ export function useOrder(id: string) {
   return useQuery({
     queryKey: ORDERS_QKEY.detail(id),
     queryFn: async () => {
-      const { data } = await apiClient.get<Order>(`/orders/${id}`);
-      return data;
+      const { data } = await apiClient.get<{ data: Order }>(`/orders/${id}`);
+      return data.data ?? (data as unknown as Order);
     },
     enabled: !!id,
   });
@@ -145,10 +146,10 @@ export function useOrderTransitions(orderId: string, enabled = false) {
   return useQuery({
     queryKey: ORDERS_QKEY.transitions(orderId),
     queryFn: async () => {
-      const { data } = await apiClient.get<AvailableTransition[]>(
+      const { data } = await apiClient.get<AvailableTransition[] | { data: AvailableTransition[] }>(
         `/orders/${orderId}/transitions`,
       );
-      return data;
+      return (Array.isArray(data) ? data : (data as { data: AvailableTransition[] }).data) ?? [];
     },
     enabled: !!orderId && enabled,
     staleTime: 10_000,
@@ -161,8 +162,11 @@ export function useCreateOrder() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: CreateOrderPayload) => {
-      const { data } = await apiClient.post<Order>('/orders', payload);
-      return data;
+      const { data } = await apiClient.post<{ data: Order } | Order>('/orders', payload);
+      // ResponseTransformInterceptor wraps the response in { data: ... }
+      return ('data' in data && data.data && typeof (data as { data: Order }).data === 'object')
+        ? (data as { data: Order }).data
+        : (data as Order);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
   });

@@ -13,6 +13,8 @@ export interface AuthUser {
   roles: string[];
   regionSlug?: string | null;
   avatarUrl?: string | null;
+  /** Slugs des modules actifs pour ce tenant (ex: ['menu', 'orders', 'delivery']) */
+  activeModules?: string[];
 }
 
 export interface LoginCredentials {
@@ -113,6 +115,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             roles: string[];
             regionSlug?: string | null;
             avatarUrl?: string | null;
+            activeModules?: string[];
           };
         };
       }>(`${API_URL}/auth/login`, { email, password });
@@ -129,6 +132,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
         roles: raw.roles,
         regionSlug: raw.regionSlug ?? null,
         avatarUrl: raw.avatarUrl ?? null,
+        activeModules: raw.activeModules ?? [],
       };
 
       get().setTokens(accessToken, refreshToken);

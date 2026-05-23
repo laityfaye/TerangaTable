@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, Search, Plus, Minus, Trash2, ShoppingCart } from 'lucide-react';
+import { ChevronLeft, Search, Plus, Minus, Trash2, ShoppingCart, Users, Check } from 'lucide-react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import { useCreateOrder, type OptionSelection } from '@/hooks/orders/use-orders';
+import { useProducts, type Product } from '@/hooks/menu/use-products';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -15,6 +16,9 @@ type OrderType = 'dine_in' | 'takeaway' | 'delivery' | 'online';
 interface Table {
   id: string;
   number: string;
+  capacity: number;
+  shape: 'round' | 'square' | 'rect';
+  zone: { id: string; name: string } | null;
 }
 
 interface CustomerResult {
@@ -22,28 +26,6 @@ interface CustomerResult {
   firstName: string;
   lastName: string;
   phone?: string | null;
-}
-
-interface ProductOption {
-  id: string;
-  name: string;
-  priceDelta: number;
-}
-
-interface OptionGroup {
-  id: string;
-  name: string;
-  type: 'single' | 'multiple';
-  isRequired: boolean;
-  options: ProductOption[];
-}
-
-interface Product {
-  id: string;
-  name: string;
-  basePrice: number;
-  imageUrl?: string | null;
-  optionGroups?: OptionGroup[];
 }
 
 interface CartItem {
@@ -69,7 +51,7 @@ function formatXAF(v: number) {
 // ── Cart item total ────────────────────────────────────────────────────────────
 
 function cartItemTotal(item: CartItem) {
-  const base = Number(item.product.basePrice);
+  const base = Number(item.product.base_price);
   const optDelta = item.options.reduce((s, o) => s + Number(o.price_delta), 0);
   return parseFloat(((base + optDelta) * item.quantity).toFixed(2));
 }
@@ -88,13 +70,22 @@ function ProductRow({
       onClick={() => onAdd(product)}
       className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors text-left border-b border-slate-100 last:border-0"
     >
-      <div>
-        <p className="text-sm font-medium text-slate-800">{product.name}</p>
-        <p className="text-xs text-terracotta font-mono mt-0.5">
-          {formatXAF(Number(product.basePrice))}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <p className={`text-sm font-medium truncate ${product.is_available ? 'text-slate-800' : 'text-slate-400'}`}>
+            {product.name}
+          </p>
+          {!product.is_available && (
+            <span className="flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-600">
+              Indispo
+            </span>
+          )}
+        </div>
+        <p className={`text-xs font-mono mt-0.5 ${product.is_available ? 'text-terracotta' : 'text-slate-400'}`}>
+          {formatXAF(Number(product.base_price))}
         </p>
       </div>
-      <Plus size={16} className="text-terracotta flex-shrink-0" />
+      <Plus size={16} className="text-terracotta flex-shrink-0 ml-2" />
     </button>
   );
 }
@@ -148,6 +139,194 @@ function CartRow({
   );
 }
 
+// ── SVG top-down table illustration ───────────────────────────────────────────
+
+function TableSVG({ shape, selected, capacity, number }: { shape: Table['shape']; selected: boolean; capacity: number; number: string }) {
+  const tableStroke = selected ? '#C8553D' : '#94A3B8';
+  const tableFill   = selected ? 'rgba(200,85,61,0.10)' : 'rgba(148,163,184,0.12)';
+  const dotColor    = '#E07A5F';
+  const textColor   = selected ? '#C8553D' : '#475569';
+  const n           = Math.min(capacity, 12);
+  const label       = number.length > 3 ? number.slice(0, 3) : number;
+
+  if (shape === 'round') {
+    const dots = Array.from({ length: n }, (_, i) => {
+      const a = (2 * Math.PI * i) / n - Math.PI / 2;
+      return { cx: +(22 + 19 * Math.cos(a)).toFixed(1), cy: +(22 + 19 * Math.sin(a)).toFixed(1) };
+    });
+    return (
+      <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+        {dots.map((d, i) => <circle key={i} cx={d.cx} cy={d.cy} r="3" fill={dotColor} />)}
+        <circle cx="22" cy="22" r="13" fill={tableFill} stroke={tableStroke} strokeWidth="1.75" />
+        <text x="22" y="26" textAnchor="middle" fontSize="9" fontWeight="700" fontFamily="system-ui,sans-serif" fill={textColor}>{label}</text>
+      </svg>
+    );
+  }
+
+  const topN = Math.ceil(n / 2);
+  const botN = n - topN;
+
+  if (shape === 'rect') {
+    const tx = 4, ty = 10, tw = 36, th = 24;
+    const top = Array.from({ length: topN }, (_, i) => ({ cx: tx + (tw / topN) * (i + 0.5), cy: ty - 5 }));
+    const bot = Array.from({ length: botN }, (_, i) => ({ cx: tx + (tw / Math.max(botN, 1)) * (i + 0.5), cy: ty + th + 5 }));
+    return (
+      <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+        {[...top, ...bot].map((d, i) => <circle key={i} cx={+d.cx.toFixed(1)} cy={+d.cy.toFixed(1)} r="3" fill={dotColor} />)}
+        <rect x={tx} y={ty} width={tw} height={th} rx="3.5" fill={tableFill} stroke={tableStroke} strokeWidth="1.75" />
+        <text x="22" y="26" textAnchor="middle" fontSize="9" fontWeight="700" fontFamily="system-ui,sans-serif" fill={textColor}>{label}</text>
+      </svg>
+    );
+  }
+
+  const tx = 9, ty = 9, tw = 26, th = 26;
+  const top = Array.from({ length: topN }, (_, i) => ({ cx: tx + (tw / topN) * (i + 0.5), cy: ty - 5 }));
+  const bot = Array.from({ length: botN }, (_, i) => ({ cx: tx + (tw / Math.max(botN, 1)) * (i + 0.5), cy: ty + th + 5 }));
+  return (
+    <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+      {[...top, ...bot].map((d, i) => <circle key={i} cx={+d.cx.toFixed(1)} cy={+d.cy.toFixed(1)} r="3" fill={dotColor} />)}
+      <rect x={tx} y={ty} width={tw} height={th} rx="3.5" fill={tableFill} stroke={tableStroke} strokeWidth="1.75" />
+      <text x="22" y="26" textAnchor="middle" fontSize="9" fontWeight="700" fontFamily="system-ui,sans-serif" fill={textColor}>{label}</text>
+    </svg>
+  );
+}
+
+// ── Table picker ──────────────────────────────────────────────────────────────
+
+function TablePicker({
+  tables,
+  selectedId,
+  onSelect,
+}: {
+  tables: Table[];
+  selectedId: string;
+  onSelect: (id: string) => void;
+}) {
+  // Build zone groups preserving insertion order
+  const groups: { key: string; name: string; tables: Table[] }[] = [];
+  const seen = new Map<string, number>();
+  for (const t of tables) {
+    const key = t.zone?.id ?? '__none__';
+    const name = t.zone?.name ?? 'Sans zone';
+    if (!seen.has(key)) {
+      seen.set(key, groups.length);
+      groups.push({ key, name, tables: [] });
+    }
+    const idx = seen.get(key);
+    if (idx !== undefined) groups[idx]?.tables.push(t);
+  }
+
+  const [activeZone, setActiveZone] = useState<string>(groups[0]?.key ?? '');
+  const currentGroup = groups.find((g) => g.key === activeZone) ?? groups[0];
+
+  if (tables.length === 0) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-10">
+        <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center">
+          <svg width="28" height="28" viewBox="0 0 44 44" fill="none">
+            <rect x="9" y="9" width="26" height="26" rx="3.5" fill="rgba(148,163,184,0.18)" stroke="#94A3B8" strokeWidth="1.75" />
+            <rect x="16" y="2" width="12" height="5" rx="1.5" fill="rgba(148,163,184,0.4)" />
+            <rect x="16" y="37" width="12" height="5" rx="1.5" fill="rgba(148,163,184,0.4)" />
+          </svg>
+        </div>
+        <div className="text-center">
+          <p className="text-sm font-medium text-slate-600">Aucune table configurée</p>
+          <p className="text-xs text-slate-400 mt-0.5">Ajoutez vos tables dans les paramètres</p>
+        </div>
+        <Link
+          href="/dashboard/settings/tables"
+          className="text-xs font-semibold text-terracotta bg-terracotta/8 hover:bg-terracotta/15 px-3 py-1.5 rounded-lg transition-colors"
+        >
+          Configurer les tables →
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {/* Zone select */}
+      {groups.length > 1 && (
+        <select
+          value={activeZone}
+          onChange={(e) => setActiveZone(e.target.value)}
+          className="w-full h-10 px-3 mb-4 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-terracotta/30 cursor-pointer"
+        >
+          {groups.map((g) => (
+            <option key={g.key} value={g.key}>
+              {g.name} ({g.tables.length} table{g.tables.length > 1 ? 's' : ''})
+            </option>
+          ))}
+        </select>
+      )}
+
+      {/* Tables — 5 visibles, scroll horizontal si plus */}
+      <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-none w-full">
+        {currentGroup?.tables.map((t) => {
+          const sel = selectedId === t.id;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => onSelect(sel ? '' : t.id)}
+              className={`group relative flex-shrink-0 w-[calc(20%-8px)] flex flex-col items-center gap-2 pt-3 pb-2.5 px-1.5 rounded-2xl border transition-all duration-150 active:scale-[0.96] ${
+                sel
+                  ? 'border-terracotta/40 bg-gradient-to-b from-terracotta/[0.06] to-terracotta/[0.02] shadow-sm'
+                  : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm hover:bg-slate-50/80'
+              }`}
+            >
+              {/* Checkmark badge */}
+              <span
+                className={`absolute top-2 right-2 w-4 h-4 rounded-full flex items-center justify-center transition-all ${
+                  sel ? 'bg-terracotta opacity-100 scale-100' : 'opacity-0 scale-75'
+                }`}
+              >
+                <Check size={8} strokeWidth={3.5} className="text-white" />
+              </span>
+
+              {/* Table SVG */}
+              <TableSVG shape={t.shape} selected={sel} capacity={t.capacity} number={t.number} />
+
+              {/* Capacity */}
+              <span className="flex items-center gap-0.5 text-[10px] text-slate-400 leading-none">
+                <Users size={8} />
+                {t.capacity}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Selected summary strip */}
+      {selectedId && (() => {
+        const t = tables.find((x) => x.id === selectedId);
+        if (!t) return null;
+        return (
+          <div className="mt-4 flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-terracotta/8 to-terracotta/4 border border-terracotta/20">
+            <div className="w-7 h-7 rounded-lg bg-terracotta flex items-center justify-center flex-shrink-0">
+              <Check size={13} strokeWidth={2.5} className="text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-terracotta leading-none">
+                Table {t.number}
+                {t.zone ? <span className="text-terracotta/60"> · {t.zone.name}</span> : null}
+              </p>
+              <p className="text-[11px] text-terracotta/60 mt-0.5">{t.capacity} couverts</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onSelect('')}
+              className="p-1 rounded-lg text-terracotta/50 hover:text-terracotta hover:bg-terracotta/10 transition-colors"
+            >
+              <Trash2 size={13} />
+            </button>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function NewOrderPage() {
@@ -166,10 +345,11 @@ export default function NewOrderPage() {
 
   // Tables
   const { data: tables = [] } = useQuery<Table[]>({
-    queryKey: ['tables'],
+    queryKey: ['tables', 'dine_in'],
     queryFn: async () => {
       const { data } = await apiClient.get('/tables', { params: { is_active: true, limit: 100 } });
-      return (data as { data?: Table[] }).data ?? data ?? [];
+      const list: Table[] = (data as { data?: Table[] }).data ?? (Array.isArray(data) ? data : []);
+      return list;
     },
     enabled: type === 'dine_in',
   });
@@ -187,18 +367,13 @@ export default function NewOrderPage() {
     enabled: customerSearch.length >= 2,
   });
 
-  // Product search
-  const { data: productResults = [] } = useQuery<Product[]>({
-    queryKey: ['products-search', productSearch],
-    queryFn: async () => {
-      if (productSearch.length < 2) return [];
-      const { data } = await apiClient.get('/products', {
-        params: { search: productSearch, is_available: true, limit: 10, include_options: true },
-      });
-      return (data as { data?: Product[] }).data ?? data ?? [];
-    },
-    enabled: productSearch.length >= 2,
-  });
+  // Tous les produits chargés une fois, filtrés côté client
+  const { data: allProducts = [] } = useProducts({ limit: 100 });
+  const productResults = useMemo(() => {
+    const q = productSearch.trim().toLowerCase();
+    if (!q) return allProducts;
+    return allProducts.filter((p) => p.name.toLowerCase().includes(q));
+  }, [allProducts, productSearch]);
 
   const addToCart = useCallback((product: Product) => {
     setCart((prev) => {
@@ -297,19 +472,8 @@ export default function NewOrderPage() {
       {/* Table selection — dine_in only */}
       {type === 'dine_in' && (
         <div className="bg-white rounded-xl border border-[#E7E5E4] p-5 shadow-sm">
-          <h2 className="text-sm font-semibold text-slate-700 mb-3">Table</h2>
-          <select
-            value={tableId}
-            onChange={(e) => setTableId(e.target.value)}
-            className="w-full h-10 px-3 rounded-lg border border-slate-200 text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-terracotta/30"
-          >
-            <option value="">— Aucune table sélectionnée —</option>
-            {tables.map((t) => (
-              <option key={t.id} value={t.id}>
-                Table {t.number}
-              </option>
-            ))}
-          </select>
+          <h2 className="text-sm font-semibold text-slate-700 mb-4">Table</h2>
+          <TablePicker tables={tables} selectedId={tableId} onSelect={setTableId} />
         </div>
       )}
 
@@ -378,21 +542,25 @@ export default function NewOrderPage() {
         <h2 className="text-sm font-semibold text-slate-700 mb-3">Articles</h2>
 
         {/* Search */}
-        <div className="relative mb-4">
+        <div className="relative mb-3">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Rechercher un produit…"
+            placeholder="Filtrer les produits…"
             value={productSearch}
             onChange={(e) => setProductSearch(e.target.value)}
             className="w-full h-10 pl-9 pr-4 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-terracotta/30"
           />
-          {productResults.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-lg border border-slate-100 z-10 overflow-hidden">
-              {productResults.map((p) => (
-                <ProductRow key={p.id} product={p} onAdd={addToCart} />
-              ))}
-            </div>
+        </div>
+
+        {/* Product list */}
+        <div className="rounded-xl border border-slate-100 overflow-hidden mb-4 max-h-52 overflow-y-auto">
+          {productResults.length === 0 ? (
+            <p className="text-sm text-slate-400 text-center py-6">Aucun produit trouvé</p>
+          ) : (
+            productResults.map((p) => (
+              <ProductRow key={p.id} product={p} onAdd={addToCart} />
+            ))
           )}
         </div>
 

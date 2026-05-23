@@ -412,51 +412,103 @@ export class AnalyticsService {
     const range = getPeriodRange(query);
 
     const rows = await this.prisma.$queryRaw<{
-      order_number: string;
-      type: string;
-      total: string;
-      paid_at: Date | null;
-      created_at: Date;
-      agent_first: string;
-      agent_last: string;
-      payment_method: string | null;
-      payment_status: string | null;
+      order_number:    string;
+      type:            string;
+      status:          string;
+      total:           string;
+      paid_at:         Date | null;
+      created_at:      Date;
+      agent_first:     string;
+      agent_last:      string;
+      customer_first:  string;
+      customer_last:   string;
+      payment_methods: string | null;
     }[]>`
       SELECT
         o.order_number,
         o.type,
+        o.status,
         o.total::text,
         o.paid_at,
         o.created_at,
-        COALESCE(u.first_name, '')   AS agent_first,
-        COALESCE(u.last_name,  '')   AS agent_last,
-        p.method                     AS payment_method,
-        p.status                     AS payment_status
+        COALESCE(u.first_name, '')  AS agent_first,
+        COALESCE(u.last_name,  '')  AS agent_last,
+        COALESCE(c.first_name, '')  AS customer_first,
+        COALESCE(c.last_name,  '')  AS customer_last,
+        (
+          SELECT STRING_AGG(DISTINCT p2.method, ' + ' ORDER BY p2.method)
+          FROM payments p2
+          WHERE p2.order_id = o.id AND p2.status = 'completed'
+        ) AS payment_methods
       FROM orders o
-      LEFT JOIN users u  ON u.id = o.agent_id
-      LEFT JOIN payments p
-        ON p.order_id = o.id AND p.status = 'completed'
+      LEFT JOIN users     u ON u.id = o.agent_id
+      LEFT JOIN customers c ON c.id = o.customer_id
       WHERE o.tenant_id = ${tenantId}::uuid
         AND o.created_at >= ${range.from}
         AND o.created_at < ${range.to}
       ORDER BY o.created_at DESC
     `;
 
-    // Build CSV
-    const headers = ['N° Commande', 'Type', 'Total', 'Agent', 'Méthode paiement', 'Date'];
-    const lines = [headers.join(',')];
+    const TYPE_FR: Record<string, string> = {
+      dine_in:  'Sur place',
+      takeaway: 'À emporter',
+      delivery: 'Livraison',
+      online:   'En ligne',
+    };
+
+    const METHOD_FR: Record<string, string> = {
+      cash:         'Espèces',
+      card:         'Carte bancaire',
+      mobile_money: 'Mobile Money',
+      online:       'En ligne',
+      voucher:      'Bon',
+    };
+
+    const STATUS_FR: Record<string, string> = {
+      pending:   'En attente',
+      cancelled: 'Annulée',
+      completed: 'Terminée',
+    };
+
+    function fmtDate(d: Date | null): string {
+      if (!d) return '';
+      const p = (n: number) => String(n).padStart(2, '0');
+      const dt = d instanceof Date ? d : new Date(d);
+      return `${p(dt.getDate())}/${p(dt.getMonth() + 1)}/${dt.getFullYear()} ${p(dt.getHours())}:${p(dt.getMinutes())}`;
+    }
+
+    function translateMethods(raw: string | null): string {
+      if (!raw) return '';
+      return raw.split(' + ').map((m) => METHOD_FR[m] ?? m).join(' + ');
+    }
+
+    const SEP = ';';
+    const headers = [
+      'N° Commande',
+      'Type',
+      'Statut',
+      'Client',
+      'Agent',
+      'Total (XOF)',
+      'Mode de paiement',
+      'Date de création',
+      'Date de paiement',
+    ];
+    const lines = [headers.join(SEP)];
 
     for (const r of rows) {
-      lines.push([
+      const cells = [
         r.order_number,
-        r.type,
-        toNumber(r.total).toFixed(2),
+        TYPE_FR[r.type]   ?? r.type,
+        STATUS_FR[r.status] ?? r.status,
+        `${r.customer_first} ${r.customer_last}`.trim(),
         `${r.agent_first} ${r.agent_last}`.trim(),
-        r.payment_method ?? '',
-        r.created_at instanceof Date
-          ? r.created_at.toISOString()
-          : String(r.created_at),
-      ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','));
+        Math.round(toNumber(r.total)).toString(),
+        translateMethods(r.payment_methods),
+        fmtDate(r.created_at),
+        fmtDate(r.paid_at),
+      ];
+      lines.push(cells.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(SEP));
     }
 
     return lines.join('\r\n');

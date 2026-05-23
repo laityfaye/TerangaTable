@@ -744,7 +744,7 @@ export default function SettingsPage() {
                 </p>
               </div>
               <Link
-                href="/dashboard/settings/users"
+                href="/dashboard/settings/team"
                 className="flex items-center gap-1.5 px-4 py-2 bg-terracotta text-white rounded-lg text-sm font-medium hover:bg-terracotta/90 transition-colors"
               >
                 Gérer l&apos;équipe
