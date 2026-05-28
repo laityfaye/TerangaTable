@@ -2,6 +2,8 @@ import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { AsyncLocalStorage } from 'async_hooks';
 import { PrismaClient } from '@terangatable/database';
 
+type PrismaTx = Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>;
+
 // Per-request tenant storage — populated by TenantContextInterceptor / middleware.
 // All Prisma operations that call setTenantContext or runWithTenant respect this.
 const tenantStorage = new AsyncLocalStorage<string | null>();
@@ -44,9 +46,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
    * Run fn() inside a transaction with super-admin RLS context.
    * Use this for auth operations that must bypass tenant isolation.
    */
-  async runAsSuperAdmin<T>(
-    fn: (tx: Parameters<Parameters<this['$transaction']>[0]>[0]) => Promise<T>,
-  ): Promise<T> {
+  async runAsSuperAdmin<T>(fn: (tx: PrismaTx) => Promise<T>): Promise<T> {
     return this.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT set_config('app.role', 'super_admin', true)`;
       return fn(tx);

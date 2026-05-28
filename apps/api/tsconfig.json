@@ -9,6 +9,7 @@
     "experimentalDecorators": true,
     "noUncheckedIndexedAccess": false,
     "exactOptionalPropertyTypes": false,
+    "noImplicitAny": false,
     "paths": {
       "@/*": ["./src/*"]
     }
