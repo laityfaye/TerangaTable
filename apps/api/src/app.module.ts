@@ -29,6 +29,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { SettingsModule } from './modules/settings/settings.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { MailModule } from './common/mail/mail.module';
+import { MarketplaceModule } from './modules/marketplace/marketplace.module';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { MailModule } from './common/mail/mail.module';
     SettingsModule,
     StorageModule,
     MailModule,
+    MarketplaceModule,
   ],
   providers: [
     // Rate limiting guard global

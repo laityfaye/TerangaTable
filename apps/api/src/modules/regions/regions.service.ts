@@ -27,7 +27,7 @@ export class RegionsService {
         },
         _count: {
           select: {
-            tenants: { where: { status: 'active' } },
+            tenants: { where: { status: { in: ['active', 'trial'] }, slug: { not: '__platform__' } } },
             tenantRequests: { where: { status: 'pending' } },
           },
         },
@@ -116,7 +116,7 @@ export class RegionsService {
         isActive: true,
         _count: {
           select: {
-            tenants: { where: { status: 'active' } },
+            tenants: { where: { status: { in: ['active', 'trial'] }, slug: { not: '__platform__' } } },
           },
         },
       },

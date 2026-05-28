@@ -174,6 +174,10 @@ function LandingNav() {
 
         {/* Nav links — desktop */}
         <nav className="hidden md:flex items-center gap-6">
+          <Link href="/decouvrir" className="text-sm text-[#E8826F] hover:text-[#C8553D] font-semibold transition-colors flex items-center gap-1">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            Découvrir
+          </Link>
           <a href="#fonctionnalites" className="text-sm text-white/70 hover:text-white transition-colors">Fonctionnalités</a>
           <a href="#tarifs" className="text-sm text-white/70 hover:text-white transition-colors">Tarifs</a>
           <a href="#regions" className="text-sm text-white/70 hover:text-white transition-colors">Régions</a>
@@ -255,12 +259,16 @@ function HeroSection() {
           >
             Commencer gratuitement
           </Link>
-          <a
-            href="#fonctionnalites"
-            className="px-8 py-3.5 rounded-full font-semibold text-white text-sm tracking-wide border-2 border-white/20 hover:border-white/50 hover:bg-white/5 transition-all"
+          <Link
+            href="/decouvrir"
+            className="px-8 py-3.5 rounded-full font-semibold text-white text-sm tracking-wide border-2 border-white/20 hover:border-white/50 hover:bg-white/5 transition-all flex items-center gap-2 justify-center"
           >
-            Voir les fonctionnalités
-          </a>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Trouver un restaurant
+          </Link>
         </div>
 
         <p className="text-white/30 text-xs mt-2">
@@ -455,6 +463,120 @@ function DashboardPreview() {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function DiscoverySection() {
+  const cities = [
+    { name: 'Dakar', slug: 'dakar', flag: '🇸🇳', count: '200+', highlight: true },
+    { name: 'Thiès', slug: 'thies', flag: '🇸🇳', count: '45+' },
+    { name: 'Saint-Louis', slug: 'saint-louis', flag: '🇸🇳', count: '30+' },
+    { name: 'Abidjan', slug: 'abidjan', flag: '🇨🇮', count: '80+' },
+    { name: 'Casablanca', slug: 'casablanca', flag: '🇲🇦', count: '60+' },
+  ];
+
+  const features = [
+    { emoji: '📍', title: 'Géolocalisation en temps réel', description: 'Restaurants les plus proches, ouverts maintenant, temps estimé de livraison' },
+    { emoji: '🤖', title: 'Recommandations par IA', description: 'Selon l\'heure, la météo, vos habitudes et les tendances du moment' },
+    { emoji: '🗺️', title: 'Carte interactive', description: 'Visualisez tous les restaurants sur la carte, cliquez pour voir les détails' },
+    { emoji: '⭐', title: 'Avis et notes vérifiés', description: 'Évaluations authentiques de vrais clients pour guider votre choix' },
+    { emoji: '📱', title: 'Commande & Réservation', description: 'Commandez en ligne ou réservez une table directement depuis la plateforme' },
+    { emoji: '💳', title: 'Paiement mobile', description: 'Wave, Orange Money, Free Money — payez comme vous le souhaitez' },
+  ];
+
+  return (
+    <section className="py-24 px-4 sm:px-6 bg-[#FAFAF8] overflow-hidden">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <div className="h-px w-12 bg-[#C8553D]" />
+            <span className="text-sm uppercase tracking-widest font-semibold text-[#C8553D]">Marketplace</span>
+            <div className="h-px w-12 bg-[#C8553D]" />
+          </div>
+          <h2
+            className="text-3xl sm:text-4xl font-bold text-[#1C1917]"
+            style={{ fontFamily: 'var(--font-heading)' }}
+          >
+            La vitrine intelligente de la restauration africaine
+          </h2>
+          <p className="text-[#57534E] text-base sm:text-lg mt-4 max-w-2xl mx-auto">
+            TerangaTable n&apos;est pas qu&apos;un outil de gestion — c&apos;est une plateforme de découverte
+            pour des millions de clients à travers l&apos;Afrique.
+          </p>
+        </div>
+
+        {/* Features grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-16">
+          {features.map((f) => (
+            <div
+              key={f.title}
+              className="bg-white rounded-xl border border-[#E7E5E4] p-5 hover:border-[#C8553D]/30 hover:shadow-md transition-all group"
+            >
+              <div className="text-3xl mb-3">{f.emoji}</div>
+              <h3 className="font-semibold text-[#1C1917] mb-2" style={{ fontFamily: 'var(--font-heading)' }}>{f.title}</h3>
+              <p className="text-[#57534E] text-sm leading-relaxed">{f.description}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Villes disponibles */}
+        <div className="bg-[#1A1A18] rounded-2xl p-8 overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-[#C8553D]/10 rounded-full blur-3xl" />
+          <div className="relative z-10">
+            <h3
+              className="text-white text-2xl font-bold mb-2"
+              style={{ fontFamily: 'var(--font-heading)' }}
+            >
+              Disponible dans vos villes
+            </h3>
+            <p className="text-white/60 text-sm mb-8">
+              Chaque ville bénéficie d&apos;une expérience localisée — langue, devises, horaires et cuisine locale.
+            </p>
+
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
+              {cities.map((city) => (
+                <Link
+                  key={city.slug}
+                  href={`/decouvrir/${city.slug}`}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all group ${
+                    city.highlight
+                      ? 'bg-[#C8553D] border border-[#C8553D]'
+                      : 'bg-white/5 border border-white/10 hover:bg-white/10 hover:border-[#C8553D]/40'
+                  }`}
+                >
+                  <span className="text-3xl">{city.flag}</span>
+                  <span className={`font-semibold text-sm ${city.highlight ? 'text-white' : 'text-white/80'}`}>
+                    {city.name}
+                  </span>
+                  <span className={`text-xs font-mono ${city.highlight ? 'text-white/80' : 'text-white/40'}`}>
+                    {city.count} restos
+                  </span>
+                </Link>
+              ))}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link
+                href="/decouvrir"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#C8553D] text-white font-semibold text-sm hover:bg-[#A33D28] transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                Explorer les restaurants
+              </Link>
+              <Link
+                href="/register"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full border border-white/20 text-white font-semibold text-sm hover:border-white/50 hover:bg-white/5 transition-all"
+              >
+                Référencer mon restaurant
+              </Link>
             </div>
           </div>
         </div>
@@ -735,6 +857,7 @@ export default function HomePage() {
         <StatsBar />
         <FeaturesSection />
         <DashboardPreview />
+        <DiscoverySection />
         <PricingSection />
         <RegionsSection />
         <CtaSection />

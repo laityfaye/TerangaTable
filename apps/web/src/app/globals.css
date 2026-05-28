@@ -109,3 +109,87 @@ html {
   background-color: var(--color-primary);
   color: #fff;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   ANIMATIONS "DING" — spring élastique
+   Courbe : dépasse légèrement la cible, se rétracte, puis se pose (ressort)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Keyframes ── */
+@keyframes spring-up {
+  0%   { opacity: 0; transform: translateY(32px) scale(0.95); }
+  55%  { opacity: 1; transform: translateY(-5px)  scale(1.015); }
+  75%  { transform: translateY(2px) scale(0.997); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes spring-down {
+  0%   { opacity: 0; transform: translateY(-24px) scale(0.96); }
+  60%  { opacity: 1; transform: translateY(4px) scale(1.01); }
+  80%  { transform: translateY(-2px) scale(0.998); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes spring-in {
+  0%   { opacity: 0; transform: scale(0.82); }
+  60%  { opacity: 1; transform: scale(1.06); }
+  80%  { transform: scale(0.97); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes spring-left {
+  0%   { opacity: 0; transform: translateX(-36px) scale(0.96); }
+  60%  { opacity: 1; transform: translateX(5px) scale(1.01); }
+  80%  { transform: translateX(-2px) scale(0.998); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes spring-right {
+  0%   { opacity: 0; transform: translateX(36px) scale(0.96); }
+  60%  { opacity: 1; transform: translateX(-5px) scale(1.01); }
+  80%  { transform: translateX(2px) scale(0.998); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes pop {
+  0%   { opacity: 0; transform: scale(0.55); }
+  65%  { opacity: 1; transform: scale(1.18); }
+  82%  { transform: scale(0.93); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes fade-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Classe de base pour les éléments qui attendent l'IntersectionObserver ── */
+/* Appliquée par JS côté client — pas de masquage côté serveur */
+[data-animate] {
+  transition: none;
+}
+
+/* ── Preset classes (utilisées par AnimateIn) ────────────────────────────────── */
+.anim-spring-up    { animation: spring-up    0.65s cubic-bezier(0.34, 1.5, 0.64, 1) both; }
+.anim-spring-down  { animation: spring-down  0.60s cubic-bezier(0.34, 1.5, 0.64, 1) both; }
+.anim-spring-in    { animation: spring-in    0.55s cubic-bezier(0.34, 1.5, 0.64, 1) both; }
+.anim-spring-left  { animation: spring-left  0.65s cubic-bezier(0.34, 1.5, 0.64, 1) both; }
+.anim-spring-right { animation: spring-right 0.65s cubic-bezier(0.34, 1.5, 0.64, 1) both; }
+.anim-pop          { animation: pop          0.50s cubic-bezier(0.34, 1.5, 0.64, 1) both; }
+.anim-fade-rise    { animation: fade-rise    0.50s cubic-bezier(0.22, 1, 0.36, 1)   both; }
+
+/* ── Micro-interactions hover ──────────────────────────────────────────────── */
+.hover-lift {
+  transition: transform 0.25s cubic-bezier(0.34, 1.4, 0.64, 1),
+              box-shadow 0.25s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.14);
+}
+
+.hover-pop {
+  transition: transform 0.2s cubic-bezier(0.34, 1.6, 0.64, 1);
+}
+.hover-pop:hover { transform: scale(1.05); }
+.hover-pop:active { transform: scale(0.95); }

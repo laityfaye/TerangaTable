@@ -377,7 +377,7 @@ function SortableProductListRow(
       dragHandleProps={listeners}
       trRef={setNodeRef as React.Ref<HTMLTableRowElement>}
       trStyle={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}
-      trAttributes={attributes as Record<string, unknown>}
+      trAttributes={attributes as unknown as Record<string, unknown>}
     />
   );
 }
@@ -407,8 +407,10 @@ export default function CategoryProductsPage({
   const reorderProducts = useReorderProducts();
 
   useEffect(() => {
-    setLocalProducts([...products].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)));
-  }, [products]);
+    const sorted = [...products].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+    setLocalProducts(sorted);
+    sorted.forEach((p) => router.prefetch(`/dashboard/menu/products/${p.id}/edit`));
+  }, [products, router]);
 
   const filteredProducts =
     search.trim()

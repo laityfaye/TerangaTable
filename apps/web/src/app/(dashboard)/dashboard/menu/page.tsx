@@ -822,8 +822,11 @@ export default function MenuPage() {
   const reorderCategories = useReorderCategories();
 
   useEffect(() => {
-    setLocalCategories([...(categories ?? [])].sort((a, b) => a.sort_order - b.sort_order));
-  }, [categories]);
+    const sorted = [...(categories ?? [])].sort((a, b) => a.sort_order - b.sort_order);
+    setLocalCategories(sorted);
+    // Prefetch toutes les pages de catégorie dès qu'elles sont visibles
+    sorted.forEach((cat) => router.prefetch(`/dashboard/menu/${cat.id}`));
+  }, [categories, router]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),

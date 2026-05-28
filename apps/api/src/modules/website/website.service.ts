@@ -1,10 +1,15 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Prisma } from '@terangatable/database';
 import { PrismaService } from '../../prisma/prisma.service';
+import { RedisCacheService } from '../../common/services/redis-cache.service';
 import { CreatePublicReservationDto } from './dto/create-public-reservation.dto';
 import { CreatePublicOrderDto } from './dto/create-public-order.dto';
 import { UpdateWebsiteSettingsDto } from './dto/update-website-settings.dto';
 import { OrdersGateway } from '../orders/orders.gateway';
+
+const PUBLIC_DATA_TTL  = 300; // 5 min — matches Next.js revalidate
+const PUBLIC_MENU_TTL  = 60;  // 1 min — menu changes more often
+const PUBLIC_FEAT_TTL  = 300;
 
 // ── Content config shape ──────────────────────────────────────────────────────
 
@@ -48,12 +53,18 @@ type WsRecord = {
 export class WebsiteService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly redis: RedisCacheService,
     private readonly ordersGateway: OrdersGateway,
   ) {}
 
   // ── Public endpoints ───────────────────────────────────────────────────────
 
   async getPublicData(slug: string) {
+    const cacheKey = `vitrine:data:${slug}`;
+    const cached = await this.redis.client.get(cacheKey).catch(() => null);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    if (cached) return JSON.parse(cached);
+
     const tenant = await this.prisma.tenant.findUnique({
       where: { slug },
       include: {
@@ -125,7 +136,7 @@ export class WebsiteService {
       ...(cc.email    != null && { email:   cc.email }),
     };
 
-    return {
+    const result = {
       id:               tenant.id,
       name:             tenant.name,
       slug:             tenant.slug,
@@ -135,9 +146,16 @@ export class WebsiteService {
       website_settings: ws ? this.formatSettings(ws, tenant.slug) : null,
       modules,
     };
+    await this.redis.client.set(cacheKey, JSON.stringify(result), 'EX', PUBLIC_DATA_TTL).catch(() => null);
+    return result;
   }
 
   async getPublicMenu(slug: string) {
+    const cacheKey = `vitrine:menu:${slug}`;
+    const cached = await this.redis.client.get(cacheKey).catch(() => null);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    if (cached) return JSON.parse(cached);
+
     const tenant = await this.prisma.tenant.findUnique({
       where: { slug },
       select: { id: true, status: true },
@@ -170,10 +188,17 @@ export class WebsiteService {
       },
     });
 
-    return categories.filter((c) => c.products.length > 0);
+    const result = categories.filter((c) => c.products.length > 0);
+    await this.redis.client.set(cacheKey, JSON.stringify(result), 'EX', PUBLIC_MENU_TTL).catch(() => null);
+    return result;
   }
 
   async getFeaturedProducts(slug: string) {
+    const cacheKey = `vitrine:featured:${slug}`;
+    const cached = await this.redis.client.get(cacheKey).catch(() => null);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    if (cached) return JSON.parse(cached);
+
     const tenant = await this.prisma.tenant.findUnique({
       where: { slug },
       select: { id: true, status: true },
@@ -183,7 +208,7 @@ export class WebsiteService {
       throw new NotFoundException('Restaurant introuvable');
     }
 
-    return this.prisma.product.findMany({
+    const result = await this.prisma.product.findMany({
       where: { tenantId: tenant.id, isAvailable: true, isFeatured: true },
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
       take: 9,
@@ -198,6 +223,8 @@ export class WebsiteService {
         allergens: true,
       },
     });
+    await this.redis.client.set(cacheKey, JSON.stringify(result), 'EX', PUBLIC_FEAT_TTL).catch(() => null);
+    return result;
   }
 
   async createPublicReservation(slug: string, dto: CreatePublicReservationDto) {
@@ -427,6 +454,11 @@ export class WebsiteService {
         ...(dto.content_config !== undefined && { contentConfig:   dto.content_config as Prisma.InputJsonValue }),
       },
     });
+
+    // Invalider le cache vitrine public à chaque mise à jour du restaurant
+    await this.redis.client
+      .del(`vitrine:data:${tenantSlug}`, `vitrine:featured:${tenantSlug}`)
+      .catch(() => null);
 
     return this.formatSettings(settings as WsRecord, tenantSlug);
   }

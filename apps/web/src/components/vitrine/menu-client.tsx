@@ -100,19 +100,6 @@ const heroItem = {
   hidden:  { opacity: 0, y: 22 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: EASE } },
 };
-const logoReveal = {
-  hidden:  { opacity: 0, scale: 0.7 },
-  visible: { opacity: 1, scale: 1, transition: { type: 'spring' as const, damping: 16, stiffness: 180 } },
-};
-const lineLeft = {
-  hidden:  { scaleX: 0, originX: 1 },
-  visible: { scaleX: 1, transition: { duration: 0.8, ease: EASE } },
-};
-const lineRight = {
-  hidden:  { scaleX: 0, originX: 0 },
-  visible: { scaleX: 1, transition: { duration: 0.8, ease: EASE } },
-};
-
 const navContainer = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.06, delayChildren: 0.3 } },
@@ -1308,14 +1295,6 @@ export default function MenuClient({
             }}
             variants={heroContainer} initial="hidden" animate="visible"
           >
-            {/* ── Logo ── */}
-            {logoUrl && (
-              <motion.div variants={logoReveal}
-                className="relative w-14 h-14 mb-4 rounded-full overflow-hidden shadow-2xl ring-2 ring-white/20">
-                <Image src={logoUrl} alt={`Logo ${restaurantName}`} fill className="object-cover" sizes="56px" />
-              </motion.div>
-            )}
-
             {/* ── Decorative label ── */}
             <motion.div variants={heroItem} className="flex justify-center mb-3">
               <motion.span
