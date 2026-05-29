@@ -25,7 +25,10 @@
     },
     "allowJs": true,
     "noEmit": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "exactOptionalPropertyTypes": false,
+    "noUncheckedIndexedAccess": false,
+    "noImplicitAny": false
   },
   "include": [
     "next-env.d.ts",

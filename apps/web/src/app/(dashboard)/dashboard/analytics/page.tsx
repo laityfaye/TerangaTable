@@ -552,7 +552,7 @@ export default function AnalyticsPage() {
                   width={110}
                 />
                 <Tooltip
-                  formatter={(value: number) => [fmt(value, locale, currencyCode), 'CA']}
+                  formatter={(value: unknown) => [fmt(Number(value), locale, currencyCode), 'CA'] as [string, string]}
                   contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #E2E8F0' }}
                 />
                 <Bar dataKey="revenue" radius={[0, 4, 4, 0]}>
@@ -613,10 +613,10 @@ export default function AnalyticsPage() {
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(v: number, _n: string, props: { payload?: OrderTypeItem }) => [
-                      `${v} (${props.payload?.pct ?? 0}%)`,
-                      ORDER_TYPE_LABELS[props.payload?.type ?? ''] ?? props.payload?.type,
-                    ]}
+                    formatter={(v: unknown, _n: unknown, props: unknown) => {
+                      const p = (props as { payload?: OrderTypeItem }).payload;
+                      return [`${Number(v)} (${p?.pct ?? 0}%)`, ORDER_TYPE_LABELS[p?.type ?? ''] ?? p?.type] as [string, string | undefined];
+                    }}
                     contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #E2E8F0' }}
                   />
                 </PieChart>

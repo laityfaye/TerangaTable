@@ -48,6 +48,7 @@ export interface Region {
   currency_symbol: string;
   locale: string;
   is_active: boolean;
+  phone_prefix?: string;
   tenants_count?: number;
   pending_requests_count?: number;
   regional_admin?: { id: string; email: string; first_name: string; last_name: string } | null;

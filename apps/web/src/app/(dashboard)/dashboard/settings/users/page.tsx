@@ -458,7 +458,7 @@ export default function TeamUsersPage() {
                 </tr>
               </thead>
               <tbody>
-                {users.map((u) => (
+                {(users ?? []).map((u) => (
                   <UserRow
                     key={u.id}
                     user={u}

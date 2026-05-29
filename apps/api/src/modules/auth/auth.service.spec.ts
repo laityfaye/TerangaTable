@@ -5,6 +5,7 @@ import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MailService } from '../../common/mail/mail.service';
 
 const MOCK_USER_ID = 'user-uuid-1';
 const MOCK_TENANT_ID = 'tenant-uuid-1';
@@ -41,6 +42,10 @@ const makeJwt = () => ({
   signAsync: jest.fn().mockResolvedValue('signed-token'),
 });
 
+const makeMail = () => ({
+  sendPasswordReset: jest.fn().mockResolvedValue(undefined),
+});
+
 const makeConfig = () => ({
   get: jest.fn((key: string, fallback?: string) => {
     const map: Record<string, string> = {
@@ -69,6 +74,7 @@ describe('AuthService', () => {
         { provide: PrismaService, useValue: prisma },
         { provide: JwtService, useValue: jwt },
         { provide: ConfigService, useValue: makeConfig() },
+        { provide: MailService, useValue: makeMail() },
       ],
     }).compile();
 

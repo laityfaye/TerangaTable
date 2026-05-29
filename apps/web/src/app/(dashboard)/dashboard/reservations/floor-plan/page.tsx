@@ -438,7 +438,7 @@ export default function FloorPlanPage() {
           >
             {tables.map((table) => {
               const pos = getTablePos(table);
-              const status = getTableStatus(table, reservationsData ?? null);
+              const status = getTableStatus(table, reservationsData ?? undefined);
               const tableWithPos = { ...table, pos_x: pos.x, pos_y: pos.y };
 
               return (
