@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigService } from '@nestjs/config';
 import { TenantContextInterceptor } from '../common/interceptors/tenant-context.interceptor';
 import { TenantResolutionMiddleware } from '../common/middleware/tenant-resolution.middleware';
 import { RedisCacheService } from '../common/services/redis-cache.service';
@@ -7,6 +6,13 @@ import { TenantsService } from '../modules/tenants/tenants.service';
 import { ReviewDecision } from '../modules/tenants/dto/review-tenant-request.dto';
 
 // ── Mocks ──────────────────────────────────────────────────────────────────
+
+const makeMailMock = () => ({
+  sendRequestConfirmation: jest.fn().mockResolvedValue(undefined),
+  sendOnboardingCredentials: jest.fn().mockResolvedValue(undefined),
+  sendAdminInvitation: jest.fn().mockResolvedValue(undefined),
+  sendPasswordReset: jest.fn().mockResolvedValue(undefined),
+});
 
 const TENANT_A = {
   id: 'aaaaaaaa-0000-0000-0000-000000000001',
@@ -317,7 +323,7 @@ describe('TenantsService — onboarding', () => {
     })
       .overrideProvider(TenantsService)
       .useFactory({
-        factory: () => new TenantsService(prismaMock as never, redisMock as never),
+        factory: () => new TenantsService(prismaMock as never, redisMock as never, makeMailMock() as never),
       })
       .compile();
 

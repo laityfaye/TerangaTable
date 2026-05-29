@@ -9,7 +9,7 @@ import {
   IsNotEmpty,
   IsIn,
 } from 'class-validator';
-import { Type, Transform } from 'class-transformer';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export const EVENT_TRIGGERS = [
