@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Save, Clock, Calendar, AlertCircle, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useZones, useTables, useDeleteTable, useDeleteZone } from '@/hooks/reservations/use-tables';
 
@@ -241,7 +242,7 @@ export default function ReservationsSettingsPage() {
         <h2 className="font-semibold text-slate-800">Zones &amp; Tables</h2>
         <p className="text-xs text-slate-400">
           Pour déplacer les tables, utilisez le{' '}
-          <a href="/dashboard/reservations/floor-plan" className="text-terracotta underline">plan de salle</a>.
+          <Link href="/dashboard/reservations/floor-plan" className="text-terracotta underline">plan de salle</Link>.
         </p>
 
         {zones.length === 0 ? (

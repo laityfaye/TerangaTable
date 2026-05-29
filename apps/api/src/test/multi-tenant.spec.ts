@@ -46,7 +46,7 @@ const makePrismaMock = () => ({
     create: jest.fn(),
     update: jest.fn(),
   },
-  user: { create: jest.fn() },
+  user: { create: jest.fn(), findUnique: jest.fn().mockResolvedValue(null) },
   role: { create: jest.fn() },
   plan: { findUnique: jest.fn(), findFirst: jest.fn() },
   module: { findMany: jest.fn() },
@@ -103,6 +103,7 @@ describe('TenantContextInterceptor', () => {
     prismaMock.tenant.findUnique.mockResolvedValue({
       ...TENANT_A,
       region: { currencyCode: 'XOF', timezone: 'Africa/Dakar' },
+      tenantModules: [],
     });
 
     const request: Record<string, unknown> = {
@@ -168,14 +169,8 @@ describe('TenantContextInterceptor', () => {
   it('deux tenants ne voient pas les données l\'un de l\'autre', async () => {
     // Simule que chaque tenant charge son propre contexte
     prismaMock.tenant.findUnique
-      .mockResolvedValueOnce({
-        ...TENANT_A,
-        region: { currencyCode: 'XOF', timezone: 'Africa/Dakar' },
-      })
-      .mockResolvedValueOnce({
-        ...TENANT_B,
-        region: { currencyCode: 'XOF', timezone: 'Africa/Dakar' },
-      });
+      .mockResolvedValueOnce({ ...TENANT_A, region: { currencyCode: 'XOF', timezone: 'Africa/Dakar' }, tenantModules: [] })
+      .mockResolvedValueOnce({ ...TENANT_B, region: { currencyCode: 'XOF', timezone: 'Africa/Dakar' }, tenantModules: [] });
 
     const reqA: Record<string, unknown> = { headers: { 'x-tenant-id': TENANT_A.id } };
     const reqB: Record<string, unknown> = { headers: { 'x-tenant-id': TENANT_B.id } };
@@ -218,6 +213,11 @@ describe('TenantResolutionMiddleware', () => {
 
   it('résout le slug via Redis sans query DB', async () => {
     redisMock.getTenantSlug.mockResolvedValue(TENANT_A.id);
+    redisMock.getTenantContext.mockResolvedValue({
+      id: TENANT_A.id, slug: TENANT_A.slug, regionId: TENANT_A.regionId,
+      currency: 'XOF', timezone: 'Africa/Dakar', status: 'active',
+      trialEndsAt: null, activeModules: [],
+    });
 
     const req = {
       headers: { host: 'restaurant-a.terangatable.com' },
@@ -235,7 +235,9 @@ describe('TenantResolutionMiddleware', () => {
 
   it('fallback DB et met en cache si Redis est vide', async () => {
     redisMock.getTenantSlug.mockResolvedValue(null);
-    prismaMock.tenant.findUnique.mockResolvedValue({ id: TENANT_A.id });
+    prismaMock.tenant.findUnique
+      .mockResolvedValueOnce({ id: TENANT_A.id }) // resolveSlug: select id
+      .mockResolvedValueOnce({ ...TENANT_A, region: { currencyCode: 'XOF', timezone: 'Africa/Dakar' }, tenantModules: [] }); // loadTenantContext
 
     const req = {
       headers: { host: 'restaurant-a.terangatable.com' },
@@ -349,12 +351,12 @@ describe('TenantsService — onboarding', () => {
       }),
     );
 
-    // 4 rôles créés
-    expect(prismaMock.role.create).toHaveBeenCalledTimes(4);
+    // 6 rôles créés
+    expect(prismaMock.role.create).toHaveBeenCalledTimes(6);
     const roleSlugs = prismaMock.role.create.mock.calls.map(
       (call: [{ data: { slug: string } }]) => call[0].data.slug,
     );
-    expect(roleSlugs).toEqual(expect.arrayContaining(['owner', 'manager', 'server', 'cashier']));
+    expect(roleSlugs).toEqual(expect.arrayContaining(['restaurant_owner', 'manager', 'serveur', 'caissier', 'cuisinier', 'livreur']));
 
     // WebsiteSettings créé
     expect(prismaMock.websiteSettings.create).toHaveBeenCalled();
