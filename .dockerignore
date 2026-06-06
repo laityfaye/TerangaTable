@@ -1,0 +1,41 @@
+# Dependencies (re-installed inside Docker)
+node_modules
+**/node_modules
+
+# Build outputs (rebuilt inside Docker)
+dist
+**/.next
+**/dist
+
+# Env files (injected via docker-compose env_file)
+.env
+.env.*
+!.env.example
+
+# Turbo cache
+.turbo
+
+# Git
+.git
+.gitignore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode
+.idea
+*.swp
+
+# Test artifacts
+coverage
+**/coverage
+
+# Docs & local tooling
+docs
+ticket-preview.html

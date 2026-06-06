@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisCacheService } from '../../common/services/redis-cache.service';
 import { MailService } from '../../common/mail/mail.service';
@@ -290,89 +291,103 @@ export class TenantsService {
       );
     }
 
-    // 1. Générer un slug unique depuis le nom du restaurant
+    // Préparer les valeurs hors transaction (opérations async non-DB)
     const slug = await this.generateUniqueSlug(request.restaurantName);
-
-    // 2. Créer le tenant
-    const tenant = await this.prisma.tenant.create({
-      data: {
-        regionId: request.regionId,
-        slug,
-        name: request.restaurantName,
-        planId: plan.id,
-        status: 'trial',
-        trialEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 jours
-      },
-    });
-
-    // 3. Créer le user owner avec mot de passe temporaire
     const [firstName, ...lastParts] = request.ownerName.split(' ');
     const lastName = lastParts.join(' ') || 'Owner';
     const tempPassword = randomBytes(8).toString('hex');
     const passwordHash = await bcrypt.hash(tempPassword, 12);
 
-    const owner = await this.prisma.user.create({
-      data: {
-        tenantId: tenant.id,
-        email: request.ownerEmail,
-        passwordHash,
-        firstName: firstName ?? 'Owner',
-        lastName,
-        isActive: true,
-      },
+    // Toutes les créations DB dans une transaction atomique
+    const { tenant, owner } = await this.prisma.$transaction(async (tx) => {
+      // 1. Créer le tenant
+      const tenant = await tx.tenant.create({
+        data: {
+          regionId: request.regionId,
+          slug,
+          name: request.restaurantName,
+          planId: plan.id,
+          status: 'trial',
+          trialEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        },
+      });
+
+      // 2. Créer le user owner
+      const owner = await tx.user.create({
+        data: {
+          tenantId: tenant.id,
+          email: request.ownerEmail,
+          passwordHash,
+          firstName: firstName ?? 'Owner',
+          lastName,
+          isActive: true,
+        },
+      });
+
+      // 3. Créer les rôles par défaut
+      const defaultRoles = [
+        { name: 'Propriétaire', slug: 'restaurant_owner', description: 'Accès complet au restaurant' },
+        { name: 'Manager', slug: 'manager', description: 'Gestion opérationnelle' },
+        { name: 'Serveur', slug: 'serveur', description: 'Prise de commandes' },
+        { name: 'Caissier', slug: 'caissier', description: 'Encaissements' },
+        { name: 'Cuisinier', slug: 'cuisinier', description: 'Préparation des plats' },
+        { name: 'Livreur', slug: 'livreur', description: 'Livraisons' },
+      ];
+
+      const createdRoles: Record<string, string> = {};
+      for (const roleData of defaultRoles) {
+        const role = await tx.role.create({
+          data: { tenantId: tenant.id, ...roleData, isSystem: true },
+        });
+        createdRoles[roleData.slug] = role.id;
+      }
+
+      // 4. Assigner le rôle owner
+      if (createdRoles['restaurant_owner']) {
+        await tx.$executeRaw`
+          INSERT INTO user_roles (user_id, role_id, tenant_id)
+          VALUES (${owner.id}::uuid, ${createdRoles['restaurant_owner']}::uuid, ${tenant.id}::uuid)
+          ON CONFLICT DO NOTHING
+        `;
+      }
+
+      // 5. Activer les modules du plan
+      const planFeatures = plan.features as Record<string, boolean>;
+      const moduleSlugs = Object.entries(planFeatures)
+        .filter(([, enabled]) => enabled)
+        .map(([slug]) => slug);
+
+      if (moduleSlugs.length > 0) {
+        const modules = await tx.module.findMany({
+          where: { slug: { in: moduleSlugs }, isActive: true },
+        });
+
+        await tx.tenantModule.createMany({
+          data: modules.map((m) => ({ tenantId: tenant.id, moduleId: m.id })),
+          skipDuplicates: true,
+        });
+      }
+
+      // 6. Créer les website_settings par défaut
+      await tx.websiteSettings.create({
+        data: { tenantId: tenant.id },
+      });
+
+      // 7. Créer les workflows par défaut
+      await this.createDefaultWorkflows(tenant.id, tx);
+
+      // 8. Lier la demande au tenant (best-effort)
+      try {
+        await (tx.tenantRequest as any).update({
+          where: { id: request.id },
+          data: { tenantId: tenant.id },
+        });
+      } catch {
+        this.logger.warn(`[ONBOARDING] tenant_id non lié à la demande ${request.id} — migration 004 non appliquée`);
+      }
+
+      return { tenant, owner };
     });
-
-    // 4. Créer les rôles par défaut
-    const defaultRoles = [
-      { name: 'Propriétaire', slug: 'restaurant_owner', description: 'Accès complet au restaurant' },
-      { name: 'Manager', slug: 'manager', description: 'Gestion opérationnelle' },
-      { name: 'Serveur', slug: 'serveur', description: 'Prise de commandes' },
-      { name: 'Caissier', slug: 'caissier', description: 'Encaissements' },
-      { name: 'Cuisinier', slug: 'cuisinier', description: 'Préparation des plats' },
-      { name: 'Livreur', slug: 'livreur', description: 'Livraisons' },
-    ];
-
-    const createdRoles: Record<string, string> = {};
-    for (const roleData of defaultRoles) {
-      const role = await this.prisma.role.create({
-        data: { tenantId: tenant.id, ...roleData, isSystem: true },
-      });
-      createdRoles[roleData.slug] = role.id;
-    }
-
-    // 5. Assigner le rôle owner au user créé
-    if (createdRoles['restaurant_owner']) {
-      await this.prisma.$executeRaw`
-        INSERT INTO user_roles (user_id, role_id, tenant_id)
-        VALUES (${owner.id}::uuid, ${createdRoles['restaurant_owner']}::uuid, ${tenant.id}::uuid)
-        ON CONFLICT DO NOTHING
-      `;
-    }
-
-    // 6. Activer les modules du plan
-    const planFeatures = plan.features as Record<string, boolean>;
-    const moduleSlugs = Object.entries(planFeatures)
-      .filter(([, enabled]) => enabled)
-      .map(([slug]) => slug);
-
-    if (moduleSlugs.length > 0) {
-      const modules = await this.prisma.module.findMany({
-        where: { slug: { in: moduleSlugs }, isActive: true },
-      });
-
-      await this.prisma.tenantModule.createMany({
-        data: modules.map((m) => ({ tenantId: tenant.id, moduleId: m.id })),
-        skipDuplicates: true,
-      });
-    }
-
-    // 7. Créer les website_settings par défaut
-    await this.prisma.websiteSettings.create({
-      data: { tenantId: tenant.id },
-    });
-
-    // 8. Créer 2 workflow_definitions par défaut (commandes + réservations)
-    await this.createDefaultWorkflows(tenant.id);
 
     this.logger.log(
       `[ONBOARDING] Tenant créé : ${tenant.slug} | Owner : ${owner.email} | Mot de passe temporaire : ${tempPassword}`,
@@ -386,22 +401,12 @@ export class TenantsService {
       tempPassword,
     );
 
-    // Lier la demande au tenant (best-effort : nécessite la migration 004)
-    try {
-      await (this.prisma.tenantRequest as any).update({
-        where: { id: request.id },
-        data: { tenantId: tenant.id },
-      });
-    } catch {
-      this.logger.warn(`[ONBOARDING] tenant_id non lié à la demande ${request.id} — migration 004 non appliquée`);
-    }
-
     return { tenant, owner, tempPassword };
   }
 
-  private async createDefaultWorkflows(tenantId: string) {
+  private async createDefaultWorkflows(tenantId: string, tx: Prisma.TransactionClient) {
     // Workflow commandes
-    const orderWorkflow = await this.prisma.workflowDefinition.create({
+    const orderWorkflow = await tx.workflowDefinition.create({
       data: { tenantId, entityType: 'order', name: 'Cycle de vie commande', isDefault: true },
     });
 
@@ -415,13 +420,12 @@ export class TenantsService {
 
     const createdOrderStates: Record<string, string> = {};
     for (const s of orderStates) {
-      const state = await this.prisma.workflowState.create({
+      const state = await tx.workflowState.create({
         data: { tenantId, workflowId: orderWorkflow.id, ...s },
       });
       createdOrderStates[s.slug] = state.id;
     }
 
-    // Transitions commandes
     const orderTransitions = [
       { from: 'pending', to: 'preparing', name: 'Démarrer préparation' },
       { from: 'preparing', to: 'ready', name: 'Marquer prêt' },
@@ -430,7 +434,7 @@ export class TenantsService {
     ];
 
     for (const t of orderTransitions) {
-      await this.prisma.workflowTransition.create({
+      await tx.workflowTransition.create({
         data: {
           workflowId: orderWorkflow.id,
           fromStateId: t.from ? (createdOrderStates[t.from] ?? null) : null,
@@ -441,7 +445,7 @@ export class TenantsService {
     }
 
     // Workflow réservations
-    const resaWorkflow = await this.prisma.workflowDefinition.create({
+    const resaWorkflow = await tx.workflowDefinition.create({
       data: { tenantId, entityType: 'reservation', name: 'Cycle de vie réservation', isDefault: true },
     });
 
@@ -455,7 +459,7 @@ export class TenantsService {
 
     const createdResaStates: Record<string, string> = {};
     for (const s of resaStates) {
-      const state = await this.prisma.workflowState.create({
+      const state = await tx.workflowState.create({
         data: { tenantId, workflowId: resaWorkflow.id, ...s },
       });
       createdResaStates[s.slug] = state.id;
@@ -469,7 +473,7 @@ export class TenantsService {
     ];
 
     for (const t of resaTransitions) {
-      await this.prisma.workflowTransition.create({
+      await tx.workflowTransition.create({
         data: {
           workflowId: resaWorkflow.id,
           fromStateId: t.from ? (createdResaStates[t.from] ?? null) : null,

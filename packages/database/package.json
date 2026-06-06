@@ -2,9 +2,11 @@
   "name": "@terangatable/database",
   "version": "0.0.1",
   "private": true,
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
   "types": "./src/index.ts",
+  "files": ["dist", "prisma", "src"],
   "scripts": {
+    "build": "tsc -p tsconfig.json",
     "db:generate": "prisma generate --schema=./prisma/schema.prisma",
     "db:migrate": "prisma migrate dev --schema=./prisma/schema.prisma",
     "db:migrate:deploy": "prisma migrate deploy --schema=./prisma/schema.prisma",

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisCacheService } from '../../common/services/redis-cache.service';
-import { SettingType } from '@terangatable/database';
+import { Prisma, SettingType } from '@terangatable/database';
 
 export interface UpdateSettingItem {
   key: string;
@@ -58,7 +58,40 @@ export class SettingsService {
       }),
     );
 
-    return Promise.all(ops);
+    await Promise.all(ops);
+
+    // Synchroniser certaines clés dans tenant.settings JSONB (lu par le marketplace)
+    const JSONB_KEY_MAP: Record<string, string> = {
+      restaurant_phone: 'phone',
+      restaurant_address: 'address',
+      restaurant_lat: 'lat',
+      restaurant_lng: 'lng',
+      opening_hours: 'opening_hours',
+    };
+
+    const jsonbPatch: Record<string, unknown> = {};
+    for (const item of items) {
+      const jsonbKey = JSONB_KEY_MAP[item.key];
+      if (!jsonbKey) continue;
+      if (item.key === 'restaurant_lat' || item.key === 'restaurant_lng') {
+        const n = Number(item.value);
+        if (!isNaN(n)) jsonbPatch[jsonbKey] = n;
+      } else {
+        jsonbPatch[jsonbKey] = item.value;
+      }
+    }
+
+    if (Object.keys(jsonbPatch).length > 0) {
+      const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId }, select: { settings: true } });
+      const current = (tenant?.settings ?? {}) as Record<string, unknown>;
+      await this.prisma.tenant.update({
+        where: { id: tenantId },
+        data: { settings: { ...current, ...jsonbPatch } as Prisma.InputJsonValue },
+      });
+      await this.redis.invalidateTenantContext(tenantId);
+    }
+
+    return { success: true };
   }
 
   // ── Modules ────────────────────────────────────────────────────────────────

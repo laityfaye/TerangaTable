@@ -71,7 +71,8 @@ export default function AnimateIn({
   // On masque via JS uniquement (pas SSR) pour éviter le flash côté serveur
   const [isClient, setIsClient] = useState(false);
   const [visible, setVisible] = useState(false);
-  const ref = useRef<Element | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ref = useRef<any>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -116,7 +117,7 @@ export default function AnimateIn({
 
   return (
     <Tag
-      ref={ref as never}
+      ref={ref as any} // eslint-disable-line @typescript-eslint/no-explicit-any
       className={`${animClass} ${className}`.trim()}
       style={animStyle}
     >

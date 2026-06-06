@@ -27,7 +27,7 @@ const mockProduct = {
   tenantId: 'tenant-1',
   name: 'Thiéboudienne',
   description: null,
-  basePrice: 4500,
+  basePrice: '4500',
   categoryId: 'cat-1',
   sku: null,
   imageUrl: null,
@@ -81,7 +81,6 @@ function buildPrismaMock() {
       findFirst: jest.fn().mockResolvedValue(mockProduct),
       create: jest.fn().mockResolvedValue(mockProduct),
       update: jest.fn().mockResolvedValue(mockProduct),
-      delete: jest.fn().mockResolvedValue(mockProduct),
       count: jest.fn().mockResolvedValue(1),
     },
     productOptionGroup: {
@@ -140,15 +139,15 @@ describe('CategoriesService', () => {
   });
 
   describe('findAll', () => {
-    it('retourne toutes les catégories comme liste plate', async () => {
-      const child = { ...mockCategory, id: 'cat-2', parentId: 'cat-1' };
+    it('retourne la hiérarchie avec enfants imbriqués', async () => {
+      const child = { ...mockCategory, id: 'cat-2', parentId: 'cat-1', children: [] };
       prisma.category.findMany.mockResolvedValue([mockCategory, child]);
 
       const result = await service.findAll(TENANT);
 
-      expect(result).toHaveLength(2);
-      expect(result[0].id).toBe('cat-1');
-      expect(result[1].id).toBe('cat-2');
+      expect(result).toHaveLength(1);
+      expect(result[0].children).toHaveLength(1);
+      expect(result[0].children[0].id).toBe('cat-2');
     });
 
     it('retourne un tableau vide quand aucune catégorie', async () => {
@@ -178,10 +177,10 @@ describe('CategoriesService', () => {
   });
 
   describe('findOne', () => {
-    it('retourne la catégorie avec product_count', async () => {
+    it('retourne la catégorie avec _count et enfants', async () => {
       prisma.category.findFirst.mockResolvedValue({ ...mockCategory, _count: { products: 3 } });
       const result = await service.findOne(TENANT, 'cat-1');
-      expect(result.product_count).toBe(3);
+      expect(result._count.products).toBe(3);
     });
 
     it('lève NotFoundException si introuvable', async () => {
@@ -277,10 +276,10 @@ describe('ProductsService', () => {
   });
 
   describe('remove', () => {
-    it('supprime le produit de la base', async () => {
+    it('soft-delete : met isAvailable=false', async () => {
       await service.remove(TENANT, 'prod-1');
-      expect(prisma.product.delete).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: 'prod-1' } }),
+      expect(prisma.product.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { isAvailable: false } }),
       );
     });
   });

@@ -16,6 +16,7 @@ import {
   Volume2,
   VolumeX,
   ExternalLink,
+  LocateFixed,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useSettings, useUpdateSettings } from '@/hooks/settings/use-settings';
@@ -164,6 +165,35 @@ function GeneralTab({
   const [address, setAddress] = useState(String(g['restaurant_address'] ?? ''));
   const [city, setCity] = useState(String(g['restaurant_city'] ?? ''));
   const [country, setCountry] = useState(String(g['restaurant_country'] ?? ''));
+  const [lat, setLat] = useState(String(g['restaurant_lat'] ?? ''));
+  const [lng, setLng] = useState(String(g['restaurant_lng'] ?? ''));
+  const [geoLoading, setGeoLoading] = useState(false);
+  const [geoError, setGeoError] = useState<string | null>(null);
+
+  function detectLocation() {
+    if (!navigator.geolocation) {
+      setGeoError('La géolocalisation n\'est pas supportée par ce navigateur.');
+      return;
+    }
+    setGeoLoading(true);
+    setGeoError(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLat(pos.coords.latitude.toFixed(6));
+        setLng(pos.coords.longitude.toFixed(6));
+        setGeoLoading(false);
+      },
+      (err) => {
+        setGeoLoading(false);
+        if (err.code === err.PERMISSION_DENIED) {
+          setGeoError('Permission refusée. Autorisez la localisation dans les paramètres du navigateur.');
+        } else {
+          setGeoError('Impossible de récupérer la position.');
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }
   const [timezone, setTimezone] = useState(String(g['timezone'] ?? 'Africa/Dakar'));
   const [language, setLanguage] = useState(String(g['language'] ?? 'fr'));
   const [currency, setCurrency] = useState(String(g['currency'] ?? 'XOF'));
@@ -191,6 +221,8 @@ function GeneralTab({
       { key: 'language', value: language, category: 'general' },
       { key: 'currency', value: currency, category: 'general' },
       { key: 'opening_hours', value: hours, category: 'general' },
+      ...(lat ? [{ key: 'restaurant_lat', value: parseFloat(lat), category: 'general' }] : []),
+      ...(lng ? [{ key: 'restaurant_lng', value: parseFloat(lng), category: 'general' }] : []),
     ]);
   }
 
@@ -211,6 +243,57 @@ function GeneralTab({
               <Input value={value} onChange={set} className="w-full" />
             </div>
           ))}
+        </div>
+        <div className="mt-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-medium text-slate-500">
+              Coordonnées GPS <span className="text-slate-400 font-normal">(pour la carte marketplace)</span>
+            </p>
+            <button
+              type="button"
+              onClick={detectLocation}
+              disabled={geoLoading}
+              className="flex items-center gap-1.5 text-xs font-medium text-terracotta hover:text-terracotta/80 disabled:opacity-50 transition-colors"
+            >
+              {geoLoading
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                : <LocateFixed className="w-3.5 h-3.5" />
+              }
+              {geoLoading ? 'Localisation…' : 'Utiliser ma position'}
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">Latitude</label>
+              <Input
+                value={lat}
+                onChange={setLat}
+                className="w-full"
+                placeholder="ex: 14.7924"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-400 mb-1">Longitude</label>
+              <Input
+                value={lng}
+                onChange={setLng}
+                className="w-full"
+                placeholder="ex: -16.9261"
+              />
+            </div>
+          </div>
+          {geoError && (
+            <p className="text-[11px] text-red-500 mt-1.5">{geoError}</p>
+          )}
+          {!geoError && (
+            <p className="text-[11px] text-slate-400 mt-1.5">
+              Ou trouvez vos coordonnées sur{' '}
+              <a href="https://www.openstreetmap.org" target="_blank" rel="noopener noreferrer" className="text-terracotta hover:underline">
+                openstreetmap.org
+              </a>
+              {' '}(clic droit → &quot;Afficher l&apos;adresse&quot;)
+            </p>
+          )}
         </div>
       </Card>
 

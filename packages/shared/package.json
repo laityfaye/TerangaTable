@@ -4,6 +4,7 @@
   "private": true,
   "main": "./dist/index.js",
   "types": "./src/index.ts",
+  "files": ["dist", "src"],
   "exports": {
     ".": {
       "import": "./dist/index.js",
