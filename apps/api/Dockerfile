@@ -30,16 +30,16 @@ RUN pnpm --filter api build
 # 4. Create a self-contained production bundle (resolves workspace symlinks)
 RUN pnpm --filter api --prod deploy /deploy
 
+# 5. Generate Prisma client inside the deployed node_modules (flat structure)
+RUN cd /deploy && node_modules/.bin/prisma generate --schema=/app/packages/database/prisma/schema.prisma
+
 # ── runner: minimal production image ────────────────────────────────────────
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Production node_modules from pnpm deploy (includes workspace packages + @prisma/client)
+# Production node_modules from pnpm deploy (includes .prisma/client generated above)
 COPY --from=builder /deploy/node_modules ./node_modules
-
-# Generated Prisma client — pnpm deploy omits this generated directory
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 # Compiled NestJS output
 COPY --from=builder /app/apps/api/dist ./dist
