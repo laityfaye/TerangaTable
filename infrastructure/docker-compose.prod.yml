@@ -87,7 +87,7 @@ services:
     restart: always
     env_file: ../.env.production
     ports:
-      - "127.0.0.1:3001:3001"
+      - "127.0.0.1:3021:3001"
     depends_on:
       postgres:
         condition: service_healthy
@@ -107,7 +107,7 @@ services:
     restart: always
     env_file: ../.env.production
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3020:3000"
     depends_on:
       - api
     networks: [terangatable]
