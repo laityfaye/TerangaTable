@@ -1,5 +1,5 @@
 FROM node:20-alpine AS base
-RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+RUN apk add --no-cache openssl && corepack enable && corepack prepare pnpm@9.0.0 --activate
 
 # ── deps: install all workspace deps (cached unless lock file changes) ──────
 FROM base AS deps
