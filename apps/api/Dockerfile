@@ -27,7 +27,10 @@ RUN pnpm --filter @terangatable/database build
 # 3. Compile the NestJS API
 RUN pnpm --filter api build
 
-# 4. Create a self-contained production bundle (resolves workspace symlinks)
+# 4. Compile seed.ts → seed.js (ts-node available here via devDeps)
+RUN cd /app/packages/database && npx tsc --project ./prisma/tsconfig.json
+
+# 5. Create a self-contained production bundle (resolves workspace symlinks)
 RUN pnpm --filter api --prod deploy /deploy
 
 # ── runner: minimal production image ────────────────────────────────────────
