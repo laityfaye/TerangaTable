@@ -3,7 +3,7 @@
 # Usage: ./deploy.sh {init|update|migrate|logs [service]|status|down}
 set -euo pipefail
 
-COMPOSE="docker compose -f infrastructure/docker-compose.prod.yml"
+COMPOSE="docker compose -f infrastructure/docker-compose.prod.yml --env-file .env.production"
 NGINX_CONF="infrastructure/nginx/nginx.conf"
 DOMAIN="terangatable.cloud"
 EMAIL="innosoftcreation@gmail.com"
