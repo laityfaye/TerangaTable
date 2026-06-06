@@ -32,6 +32,7 @@ RUN pnpm --filter api --prod deploy /deploy
 
 # ── runner: minimal production image ────────────────────────────────────────
 FROM node:20-alpine AS runner
+RUN apk add --no-cache openssl
 WORKDIR /app
 ENV NODE_ENV=production
 
