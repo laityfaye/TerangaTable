@@ -38,6 +38,9 @@ ENV NODE_ENV=production
 # Production node_modules from pnpm deploy (includes workspace packages + @prisma/client)
 COPY --from=builder /deploy/node_modules ./node_modules
 
+# Generated Prisma client — pnpm deploy omits this generated directory
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+
 # Compiled NestJS output
 COPY --from=builder /app/apps/api/dist ./dist
 
