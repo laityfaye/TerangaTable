@@ -311,7 +311,7 @@ function StateForm({
 
       {/* Sort order */}
       <div>
-        <label className="block text-xs font-medium text-slate-600 mb-1">Ordre d'affichage</label>
+        <label className="block text-xs font-medium text-slate-600 mb-1">Ordre d&apos;affichage</label>
         <input
           type="number"
           {...register('sort_order', { valueAsNumber: true })}
@@ -425,13 +425,13 @@ function TransitionForm({
       <div>
         <label className="block text-xs font-medium text-slate-600 mb-1">
           État source
-          <span className="ml-1 text-slate-400">(vide = depuis n'importe où)</span>
+          <span className="ml-1 text-slate-400">(vide = depuis n&apos;importe où)</span>
         </label>
         <select
           {...register('from_state_id')}
           className="w-full h-9 px-3 rounded-md border border-[#E7E5E4] text-sm text-[#1C1917] bg-white focus:outline-none focus:ring-2 focus:ring-terracotta/20 focus:border-terracotta transition-colors"
         >
-          <option value="">— Depuis n'importe quel état</option>
+          <option value="">— Depuis n&apos;importe quel état</option>
           {states.map((s) => (
             <option key={s.id} value={s.id}>
               {s.name}
@@ -549,7 +549,7 @@ function TransitionRow({
             {transition.to_state?.name}
           </span>
         </div>
-        <p className="mt-1 text-xs text-slate-500 font-medium truncate">"{transition.name}"</p>
+        <p className="mt-1 text-xs text-slate-500 font-medium truncate">&ldquo;{transition.name}&rdquo;</p>
         {transition.allowed_roles.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1">
             {transition.allowed_roles.map((r) => (

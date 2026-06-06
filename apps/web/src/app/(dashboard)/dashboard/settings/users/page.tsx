@@ -184,7 +184,7 @@ function AddMemberModal({ onClose }: AddModalProps) {
             />
             {errors.password
               ? <p className="mt-1 text-xs text-red-500">{errors.password}</p>
-              : <p className="mt-1 text-xs text-slate-400">Partagez ce mot de passe avec le membre de l'équipe.</p>
+              : <p className="mt-1 text-xs text-slate-400">Partagez ce mot de passe avec le membre de l&apos;équipe.</p>
             }
           </div>
 
@@ -421,7 +421,7 @@ export default function TeamUsersPage() {
       {/* Table */}
       <div className="bg-white rounded-lg border border-[#E7E5E4] shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-[#E7E5E4]">
-          <h2 className="font-heading font-semibold text-[#1C1917] text-base">Membres de l'équipe</h2>
+          <h2 className="font-heading font-semibold text-[#1C1917] text-base">Membres de l&apos;équipe</h2>
         </div>
 
         {isLoading ? (
@@ -435,8 +435,8 @@ export default function TeamUsersPage() {
         ) : users?.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-slate-400">
             <UserPlus size={32} className="mb-3 opacity-40" />
-            <p className="text-sm font-medium">Aucun membre pour l'instant</p>
-            <p className="text-xs mt-1">Ajoutez votre premier membre d'équipe.</p>
+            <p className="text-sm font-medium">Aucun membre pour l&apos;instant</p>
+            <p className="text-xs mt-1">Ajoutez votre premier membre d&apos;équipe.</p>
             <button
               onClick={() => setShowAdd(true)}
               className="mt-4 px-4 h-9 rounded-lg bg-terracotta text-white text-sm hover:bg-terracotta-dark transition-colors"

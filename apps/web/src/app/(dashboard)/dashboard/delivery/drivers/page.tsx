@@ -75,7 +75,7 @@ function DriverModal({ initial, zones, onClose, onSave, saving }: DriverModalPro
                 required
               />
               <p className="mt-1 text-xs text-gray-400">
-                L'utilisateur doit exister dans le système.
+                L&apos;utilisateur doit exister dans le système.
               </p>
             </div>
           )}
@@ -223,7 +223,7 @@ function DriverRow({
         <div className="flex items-center gap-1.5">
           <Truck size={13} className="text-gray-400" />
           <span className="text-sm text-gray-700">{driver.deliveries_today}</span>
-          <span className="text-xs text-gray-400">aujourd'hui</span>
+          <span className="text-xs text-gray-400">aujourd&apos;hui</span>
         </div>
       </td>
       <td className="px-4 py-3">

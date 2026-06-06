@@ -11,7 +11,6 @@ export const apiClient = axios.create({
 
 // Lazy-import the store to avoid circular dependency at module init time
 function getStore() {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   return require('../stores/auth.store').useAuthStore;
 }
 

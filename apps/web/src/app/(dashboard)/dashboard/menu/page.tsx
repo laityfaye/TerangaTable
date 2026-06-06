@@ -344,7 +344,7 @@ function ImageDropZone({
             </div>
           )}
           <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/30">
-            <span className="text-white text-xs font-medium">Changer l'image</span>
+            <span className="text-white text-xs font-medium">Changer l&apos;image</span>
           </div>
         </div>
       ) : (
@@ -628,7 +628,7 @@ function AllProductsTab() {
     return (
       <div className="text-center py-16">
         <Package size={40} className="mx-auto text-slate-200 mb-3" />
-        <p className="text-slate-500 font-body">Aucun produit pour l'instant.</p>
+        <p className="text-slate-500 font-body">Aucun produit pour l&apos;instant.</p>
         <Link
           href="/dashboard/menu/products/new"
           className="mt-4 inline-flex items-center gap-2 px-4 h-10 rounded-md bg-terracotta text-white text-sm font-body hover:bg-terracotta-dark transition-colors"
@@ -791,7 +791,7 @@ function OptionsTab() {
   return (
     <div className="text-center py-16">
       <Settings2 size={40} className="mx-auto text-slate-200 mb-3" />
-      <p className="text-slate-500 font-body">Gestion des groupes d'options globaux</p>
+      <p className="text-slate-500 font-body">Gestion des groupes d&apos;options globaux</p>
       <p className="text-xs text-slate-400 mt-1">
         Les options sont configurables depuis chaque fiche produit.
       </p>
@@ -968,7 +968,7 @@ export default function MenuPage() {
           {!isLoading && localCategories.length === 0 && (
             <div className="text-center py-16">
               <UtensilsCrossed size={40} className="mx-auto text-slate-200 mb-3" />
-              <p className="font-body text-slate-500">Aucune catégorie pour l'instant.</p>
+              <p className="font-body text-slate-500">Aucune catégorie pour l&apos;instant.</p>
               <button
                 type="button"
                 onClick={openCreate}

@@ -496,7 +496,7 @@ function ActionCard({
 
       {action.type === 'block_action' && (
         <div>
-          <label className="block text-xs text-slate-500 mb-1">Message d'erreur</label>
+          <label className="block text-xs text-slate-500 mb-1">Message d&apos;erreur</label>
           <input
             type="text"
             placeholder="ex: Commande bloquée — montant insuffisant"

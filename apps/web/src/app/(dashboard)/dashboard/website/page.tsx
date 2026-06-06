@@ -455,7 +455,7 @@ function ContenuPanel({
       <section>
         <h3 className="text-sm font-semibold text-[#1C1917] mb-1">Tagline</h3>
         <p className="text-xs text-slate-400 mb-3">
-          Sous-titre affiché dans le hero de la page d'accueil.
+          Sous-titre affiché dans le hero de la page d&apos;accueil.
         </p>
         <input
           type="text"
@@ -849,7 +849,7 @@ function GalleryManager({
         Images de galerie <span className="text-xs text-slate-400 font-normal">(max {MAX_SLOTS})</span>
       </label>
       <p className="text-xs text-slate-400">
-        Ces images s'affichent en priorité dans la section Galerie. Si vide, les photos de vos produits sont utilisées.
+        Ces images s&apos;affichent en priorité dans la section Galerie. Si vide, les photos de vos produits sont utilisées.
       </p>
       <div className="grid grid-cols-3 gap-2">
         {slots.map((src, i) => {
@@ -1252,7 +1252,7 @@ function DomainePanel({
           </button>
         </div>
         <p className="text-xs text-blue-500">
-          La propagation DNS peut prendre jusqu'à 48 heures.
+          La propagation DNS peut prendre jusqu&apos;à 48 heures.
         </p>
       </div>
 

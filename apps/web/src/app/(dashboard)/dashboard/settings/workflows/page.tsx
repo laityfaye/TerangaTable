@@ -204,7 +204,7 @@ function CreateWorkflowModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#1C1917] mb-1.5">Type d'entité</label>
+            <label className="block text-sm font-medium text-[#1C1917] mb-1.5">Type d&apos;entité</label>
             <select
               {...register('entity_type')}
               className="w-full h-10 px-3 rounded-md border border-[#E7E5E4] text-sm text-[#1C1917] bg-white focus:outline-none focus:ring-2 focus:ring-terracotta/20 focus:border-terracotta transition-colors"

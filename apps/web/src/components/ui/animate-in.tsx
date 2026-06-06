@@ -14,7 +14,7 @@
  *   'fade'  → fade + léger glissement vers le haut
  */
 
-import { useEffect, useRef, useState, type ReactNode, type CSSProperties } from 'react';
+import React, { useEffect, useRef, useState, type ReactNode, type CSSProperties } from 'react';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -71,8 +71,7 @@ export default function AnimateIn({
   // On masque via JS uniquement (pas SSR) pour éviter le flash côté serveur
   const [isClient, setIsClient] = useState(false);
   const [visible, setVisible] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ref = useRef<any>(null);
+  const ref = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -117,7 +116,7 @@ export default function AnimateIn({
 
   return (
     <Tag
-      ref={ref as any} // eslint-disable-line @typescript-eslint/no-explicit-any
+      ref={ref as React.Ref<HTMLElement>}
       className={`${animClass} ${className}`.trim()}
       style={animStyle}
     >

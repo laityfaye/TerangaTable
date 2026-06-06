@@ -48,7 +48,7 @@ export default function CitySelector({ cities }: Props) {
             La plateforme arrive dans votre ville
           </h2>
           <p className="text-[#57534E] mb-8 leading-relaxed">
-            TérangaTable se déploie progressivement dans toute l'Afrique.
+            TérangaTable se déploie progressivement dans toute l&apos;Afrique.
             Référencez votre restaurant dès maintenant pour être parmi les premiers.
           </p>
           <Link

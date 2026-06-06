@@ -498,7 +498,6 @@ function useTenantSlug(): string {
   useEffect(() => {
     fetch('/api/auth/me', { credentials: 'include' })
       .then((r) => r.json())
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .then((d: any) => {
         const s = d?.data?.tenant?.slug ?? d?.tenant?.slug ?? '';
         if (s) setSlug(s);

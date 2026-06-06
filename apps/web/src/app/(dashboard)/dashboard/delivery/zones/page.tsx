@@ -122,7 +122,7 @@ function ZoneModal({ initial, onClose, onSave, saving }: ZoneModalProps) {
 
           {type === 'polygon' && (
             <p className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2">
-              Le périmètre GeoJSON peut être défini via l'API ou une intégration cartographique.
+              Le périmètre GeoJSON peut être défini via l&apos;API ou une intégration cartographique.
             </p>
           )}
 

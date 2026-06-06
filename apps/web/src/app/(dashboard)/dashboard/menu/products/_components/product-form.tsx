@@ -724,7 +724,7 @@ export function ProductForm({ product }: { product?: Product }) {
 
             {optionGroups.length === 0 ? (
               <p className="text-sm text-slate-400 py-4 text-center">
-                Pas d'options pour ce produit.{' '}
+                Pas d&apos;options pour ce produit.{' '}
                 <button
                   type="button"
                   onClick={addOptionGroup}

@@ -40,7 +40,7 @@ export default function Step3Needs({
     <div className="animate-fade-in-up">
       <h1 className="font-heading text-2xl font-bold text-[#1C1917]">Vos besoins</h1>
       <p className="mt-2 text-sm text-[#57534E]">
-        Aidez-nous à préparer votre espace. Vous pourrez tout modifier après l'inscription.
+        Aidez-nous à préparer votre espace. Vous pourrez tout modifier après l&apos;inscription.
       </p>
 
       {/* Type de service */}
