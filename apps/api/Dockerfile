@@ -35,15 +35,14 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Production node_modules from pnpm deploy
+# Production node_modules from pnpm deploy (prisma is now a direct dep → binary linked)
 COPY --from=builder /deploy/node_modules ./node_modules
 
 # Prisma schema — needed for generate and migrate deploy
 COPY --from=builder /app/packages/database/prisma ./prisma
 
 # Generate Prisma client into the flat node_modules (.prisma/client)
-# prisma CLI is a transitive dep via @terangatable/database, no binary link needed
-RUN node node_modules/prisma/build/index.js generate --schema=./prisma/schema.prisma
+RUN node_modules/.bin/prisma generate --schema=./prisma/schema.prisma
 
 # Compiled NestJS output
 COPY --from=builder /app/apps/api/dist ./dist
