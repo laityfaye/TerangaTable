@@ -30,22 +30,23 @@ RUN pnpm --filter api build
 # 4. Create a self-contained production bundle (resolves workspace symlinks)
 RUN pnpm --filter api --prod deploy /deploy
 
-# 5. Generate Prisma client inside the deployed node_modules (flat structure)
-RUN cd /deploy && node_modules/.bin/prisma generate --schema=/app/packages/database/prisma/schema.prisma
-
 # ── runner: minimal production image ────────────────────────────────────────
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Production node_modules from pnpm deploy (includes .prisma/client generated above)
+# Production node_modules from pnpm deploy
 COPY --from=builder /deploy/node_modules ./node_modules
+
+# Prisma schema — needed for generate and migrate deploy
+COPY --from=builder /app/packages/database/prisma ./prisma
+
+# Generate Prisma client into the flat node_modules (.prisma/client)
+# prisma CLI is a transitive dep via @terangatable/database, no binary link needed
+RUN node node_modules/prisma/build/index.js generate --schema=./prisma/schema.prisma
 
 # Compiled NestJS output
 COPY --from=builder /app/apps/api/dist ./dist
-
-# Prisma schema — needed by prisma migrate deploy
-COPY --from=builder /app/packages/database/prisma ./prisma
 
 EXPOSE 3001
 CMD ["node", "dist/main"]
