@@ -116,7 +116,7 @@ export default function AnimateIn({
 
   return (
     <Tag
-      ref={ref as React.Ref<HTMLElement>}
+      ref={ref as any}
       className={`${animClass} ${className}`.trim()}
       style={animStyle}
     >
