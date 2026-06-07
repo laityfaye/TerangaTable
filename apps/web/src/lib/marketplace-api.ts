@@ -9,7 +9,12 @@ import type {
   RestaurantMenuDuJour,
 } from '@/types/marketplace';
 
-const API_URL = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001/v1';
+// SSR: use internal Docker network URL to bypass nginx/HTTPS
+// Browser: use the public HTTPS URL baked in at build time
+const API_URL =
+  typeof window === 'undefined'
+    ? (process.env['API_INTERNAL_URL'] ?? process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001/v1')
+    : (process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001/v1');
 
 // ── Fetcher de base ───────────────────────────────────────────────────────────
 
