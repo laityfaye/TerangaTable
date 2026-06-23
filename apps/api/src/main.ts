@@ -22,9 +22,10 @@ async function bootstrap() {
   // ── Security headers ────────────────────────────────────────────────────────
   app.use(helmet());
 
-  // ── CORS — origines depuis env (virgule-séparées) ───────────────────────────
-  const rawOrigin = process.env['APP_URL'] ?? 'http://localhost:3000';
-  const allowedOrigins = rawOrigin.split(',').map((o) => o.trim());
+  // ── CORS — origines depuis CORS_ORIGINS (virgule-séparées) ou APP_URL ───────
+  const rawOrigins =
+    process.env['CORS_ORIGINS'] ?? process.env['APP_URL'] ?? 'http://localhost:3000';
+  const allowedOrigins = rawOrigins.split(',').map((o) => o.trim());
   app.enableCors({
     origin: (origin, callback) => {
       if (!origin || allowedOrigins.includes(origin)) {
