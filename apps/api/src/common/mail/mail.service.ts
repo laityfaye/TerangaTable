@@ -11,28 +11,42 @@ export class MailService implements OnModuleInit {
   constructor(private readonly config: ConfigService) {}
 
   onModuleInit() {
-    const user = this.config.get<string>('MAIL_USERNAME') ?? '';
+    // Support both SMTP_USER (production) and MAIL_USERNAME (legacy/dev)
+    const user =
+      this.config.get<string>('SMTP_USER') ??
+      this.config.get<string>('MAIL_USERNAME') ??
+      '';
     // Les mots de passe d'application Google contiennent des espaces — on les retire
-    const pass = (this.config.get<string>('MAIL_PASSWORD') ?? '').replace(/\s/g, '');
+    const pass = (
+      this.config.get<string>('SMTP_PASS') ??
+      this.config.get<string>('MAIL_PASSWORD') ??
+      ''
+    ).replace(/\s/g, '');
 
     if (!user || !pass) {
-      this.logger.warn('[MAIL] MAIL_USERNAME ou MAIL_PASSWORD manquant — les emails ne seront pas envoyés');
+      this.logger.warn('[MAIL] SMTP_USER/SMTP_PASS (ou MAIL_USERNAME/MAIL_PASSWORD) manquant — les emails ne seront pas envoyés');
       return;
     }
 
+    const host = this.config.get<string>('SMTP_HOST', 'smtp.gmail.com');
+    const port = this.config.get<number>('SMTP_PORT', 587);
+
     this.transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
+      host,
+      port,
+      secure: port === 465,
       auth: { user, pass },
     });
 
-    this.logger.log(`[MAIL] Transporter initialisé pour ${user}`);
+    this.logger.log(`[MAIL] Transporter initialisé pour ${user} via ${host}:${port}`);
   }
 
   private get from(): string {
-    const user = this.config.get<string>('MAIL_USERNAME', '');
-    return `TérangaTable <${user}>`;
+    const user =
+      this.config.get<string>('SMTP_FROM') ??
+      this.config.get<string>('SMTP_USER') ??
+      this.config.get<string>('MAIL_USERNAME', '');
+    return user.includes('@') ? `TérangaTable <${user}>` : user;
   }
 
   async sendRequestConfirmation(to: string, ownerName: string, restaurantName: string) {
