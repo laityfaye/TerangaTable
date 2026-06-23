@@ -42,18 +42,18 @@ export class StorageService {
   private readonly publicUrl: string;
 
   constructor(private readonly config: ConfigService) {
-    const endpoint = this.config.get<string>('MINIO_ENDPOINT', 'http://localhost:9000');
-    const region = this.config.get<string>('MINIO_REGION', 'us-east-1');
+    const endpoint = this.config.get<string>('S3_ENDPOINT', 'http://localhost:9000');
+    const region = this.config.get<string>('S3_REGION', 'us-east-1');
 
-    this.bucket = this.config.get<string>('MINIO_BUCKET', 'terangatable');
-    this.publicUrl = this.config.get<string>('MINIO_PUBLIC_URL', endpoint);
+    this.bucket = this.config.get<string>('S3_BUCKET', 'terangatable');
+    this.publicUrl = this.config.get<string>('S3_PUBLIC_URL', endpoint);
 
     this.s3 = new S3Client({
       endpoint,
       region,
       credentials: {
-        accessKeyId: this.config.get<string>('MINIO_ACCESS_KEY', 'minioadmin'),
-        secretAccessKey: this.config.get<string>('MINIO_SECRET_KEY', 'minioadmin'),
+        accessKeyId: this.config.get<string>('S3_ACCESS_KEY', 'minioadmin'),
+        secretAccessKey: this.config.get<string>('S3_SECRET_KEY', 'minioadmin'),
       },
       forcePathStyle: true, // requis pour MinIO
     });
