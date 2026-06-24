@@ -3,9 +3,16 @@ import {
   BadRequestException,
   InternalServerErrorException,
   Logger,
+  OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  CreateBucketCommand,
+  PutBucketPolicyCommand,
+  HeadBucketCommand,
+} from '@aws-sdk/client-s3';
 import sharp from 'sharp';
 import { randomUUID } from 'crypto';
 import * as fs from 'fs';
@@ -35,7 +42,7 @@ export interface UploadResult {
 }
 
 @Injectable()
-export class StorageService {
+export class StorageService implements OnModuleInit {
   private readonly logger = new Logger(StorageService.name);
   private readonly s3: S3Client;
   private readonly bucket: string;
@@ -57,6 +64,38 @@ export class StorageService {
       },
       forcePathStyle: true, // requis pour MinIO
     });
+  }
+
+  async onModuleInit() {
+    try {
+      await this.s3.send(new HeadBucketCommand({ Bucket: this.bucket }));
+    } catch {
+      try {
+        await this.s3.send(new CreateBucketCommand({ Bucket: this.bucket }));
+        this.logger.log(`Bucket "${this.bucket}" créé`);
+      } catch (createErr) {
+        this.logger.warn(`Impossible de créer le bucket "${this.bucket}": ${String(createErr)}`);
+        return;
+      }
+    }
+
+    // Politique lecture publique anonyme — nécessaire pour que le proxy nginx serve les images
+    const policy = JSON.stringify({
+      Version: '2012-10-17',
+      Statement: [{
+        Effect: 'Allow',
+        Principal: { AWS: ['*'] },
+        Action: ['s3:GetObject'],
+        Resource: [`arn:aws:s3:::${this.bucket}/*`],
+      }],
+    });
+
+    try {
+      await this.s3.send(new PutBucketPolicyCommand({ Bucket: this.bucket, Policy: policy }));
+      this.logger.log(`Politique publique appliquée sur le bucket "${this.bucket}"`);
+    } catch (err) {
+      this.logger.warn(`Impossible d'appliquer la politique du bucket "${this.bucket}": ${String(err)}`);
+    }
   }
 
   async uploadImage(tenantId: string, file: Express.Multer.File): Promise<UploadResult> {
@@ -118,6 +157,18 @@ export class StorageService {
 
   private buildUrl(key: string): string {
     return `${this.publicUrl}/${this.bucket}/${key}`;
+  }
+
+  /** Remplace un préfixe d'endpoint interne par l'URL publique configurée.
+   *  Utile pour corriger des URLs stockées avant que S3_PUBLIC_URL soit défini. */
+  normalizeUrl(url: string | null | undefined): string | null {
+    if (!url) return null;
+    if (url.startsWith(this.publicUrl)) return url;
+    const endpoint = this.config.get<string>('S3_ENDPOINT', 'http://localhost:9000');
+    if (url.startsWith(endpoint)) {
+      return this.publicUrl + url.slice(endpoint.length);
+    }
+    return url;
   }
 
   async uploadWebsiteAsset(

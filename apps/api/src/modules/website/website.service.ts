@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { Prisma } from '@terangatable/database';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisCacheService } from '../../common/services/redis-cache.service';
+import { StorageService } from '../storage/storage.service';
 import { CreatePublicReservationDto } from './dto/create-public-reservation.dto';
 import { CreatePublicOrderDto } from './dto/create-public-order.dto';
 import { UpdateWebsiteSettingsDto } from './dto/update-website-settings.dto';
@@ -54,6 +55,7 @@ export class WebsiteService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly redis: RedisCacheService,
+    private readonly storage: StorageService,
     private readonly ordersGateway: OrdersGateway,
   ) {}
 
@@ -129,8 +131,8 @@ export class WebsiteService {
       ...(cc.description    != null && { description:    cc.description }),
       ...(cc.about_text     != null && { about_text:     cc.about_text }),
       ...(cc.about_chef     != null && { about_chef:     cc.about_chef }),
-      ...(cc.about_image_url != null && { about_image:   cc.about_image_url }),
-      ...(cc.gallery_images != null && { gallery_images: cc.gallery_images }),
+      ...(cc.about_image_url != null && { about_image:   this.storage.normalizeUrl(cc.about_image_url) }),
+      ...(cc.gallery_images  != null && { gallery_images: cc.gallery_images.map((u) => this.storage.normalizeUrl(u) ?? u) }),
       ...(cc.phone    != null && { phone:   cc.phone }),
       ...(cc.address  != null && { address: cc.address }),
       ...(cc.email    != null && { email:   cc.email }),
@@ -513,6 +515,7 @@ export class WebsiteService {
   // ── Private helpers ────────────────────────────────────────────────────────
 
   private formatSettings(s: WsRecord, tenantSlug: string) {
+    const cc = (s.contentConfig ?? {}) as ContentConfig;
     return {
       id:               s.id,
       tenant_id:        s.tenantId,
@@ -524,9 +527,9 @@ export class WebsiteService {
       is_maintenance:   s.isMaintenance ?? false,
       primary_color:    s.primaryColor,
       secondary_color:  s.secondaryColor,
-      logo_url:         s.logoUrl,
-      favicon_url:      s.faviconUrl,
-      hero_image_url:   s.heroImageUrl,
+      logo_url:         this.storage.normalizeUrl(s.logoUrl),
+      favicon_url:      this.storage.normalizeUrl(s.faviconUrl),
+      hero_image_url:   this.storage.normalizeUrl(s.heroImageUrl),
       seo_title:        s.seoTitle,
       seo_description:  s.seoDescription,
       seo_keywords:     s.seoKeywords,
@@ -535,7 +538,11 @@ export class WebsiteService {
       social_links:     s.socialLinks ?? {},
       font_heading:     s.fontHeading,
       font_body:        s.fontBody,
-      content_config:   (s.contentConfig ?? {}) as ContentConfig,
+      content_config:   {
+        ...cc,
+        ...(cc.about_image_url != null && { about_image_url: this.storage.normalizeUrl(cc.about_image_url) }),
+        ...(cc.gallery_images  != null && { gallery_images:  cc.gallery_images.map((u) => this.storage.normalizeUrl(u) ?? u) }),
+      },
     };
   }
 

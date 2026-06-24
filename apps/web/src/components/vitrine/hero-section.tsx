@@ -78,7 +78,7 @@ export default function HeroSection({
         {heroImageUrl ? (
           <div
             className="absolute inset-0 bg-cover bg-center animate-ken-burns"
-            style={{ backgroundImage: `url(${heroImageUrl})` }}
+            style={{ backgroundImage: `url("${heroImageUrl}")` }}
           />
         ) : (
           <div
