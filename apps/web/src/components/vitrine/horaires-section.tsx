@@ -6,6 +6,8 @@ import { DAY_LABELS, type DayKey } from '@/types/vitrine';
 interface Props {
   openingHours: Record<string, { open: string; close: string } | 'closed'>;
   address?: string | undefined;
+  lat?: number | undefined;
+  lng?: number | undefined;
   phone?: string | undefined;
   email?: string | undefined;
 }
@@ -61,7 +63,7 @@ const contactItem = {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function HorairesSection({ openingHours, address, phone, email }: Props) {
+export default function HorairesSection({ openingHours, address, lat, lng, phone, email }: Props) {
   const days = Object.keys(DAY_LABELS) as DayKey[];
 
   return (
@@ -236,7 +238,11 @@ export default function HorairesSection({ openingHours, address, phone, email }:
                   width="100%"
                   height="100%"
                   loading="lazy"
-                  src={`https://maps.google.com/maps?q=${encodeURIComponent(address)}&output=embed`}
+                  src={
+                    lat && lng
+                      ? `https://maps.google.com/maps?q=${lat},${lng}&output=embed`
+                      : `https://maps.google.com/maps?q=${encodeURIComponent(address!)}&output=embed`
+                  }
                   className="border-0 grayscale-[0.2]"
                 />
               </motion.div>

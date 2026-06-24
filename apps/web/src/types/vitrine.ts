@@ -8,6 +8,8 @@ export interface VitrineRegion {
 
 export interface TenantSettings {
   address?:       string;
+  lat?:           number;
+  lng?:           number;
   phone?:         string;
   email?:         string;
   description?:   string;

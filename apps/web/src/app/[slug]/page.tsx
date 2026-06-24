@@ -122,6 +122,8 @@ export default async function TenantVitrinePage({ params }: Props) {
                 key="horaires"
                 openingHours={settings.opening_hours}
                 address={settings.address}
+                lat={settings.lat}
+                lng={settings.lng}
                 phone={settings.phone}
                 email={settings.email}
               />

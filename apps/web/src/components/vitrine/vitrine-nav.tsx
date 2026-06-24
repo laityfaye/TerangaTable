@@ -62,11 +62,15 @@ export default function VitrineNav({
   const [open, setOpen]         = useState(false);
   const pathname                = usePathname();
 
+  // Pages with a fully dark background keep the nav transparent at all times
+  const alwaysDark = pathname.endsWith('/menu') || pathname.endsWith('/commande');
+
   useEffect(() => {
+    if (alwaysDark) return;
     const handler = () => setScrolled(window.scrollY > window.innerHeight * 0.85);
     window.addEventListener('scroll', handler, { passive: true });
     return () => window.removeEventListener('scroll', handler);
-  }, []);
+  }, [alwaysDark]);
 
   // Lock body scroll when menu is open
   useEffect(() => {

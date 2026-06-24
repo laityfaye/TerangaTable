@@ -101,7 +101,7 @@ export class WebsiteService {
 
     // Read operational settings (opening_hours) from the flat Setting table
     const settingRows = await this.prisma.setting.findMany({
-      where: { tenantId: tenant.id, key: { in: ['opening_hours'] } },
+      where: { tenantId: tenant.id, key: { in: ['opening_hours', 'restaurant_lat', 'restaurant_lng'] } },
       select: { key: true, value: true },
     });
     const settingMap: Record<string, unknown> = {};
@@ -125,6 +125,8 @@ export class WebsiteService {
       ...legacy,
       // operational settings from flat Setting table
       ...(openingHours && { opening_hours: openingHours }),
+      ...(settingMap['restaurant_lat'] != null && { lat: Number(settingMap['restaurant_lat']) }),
+      ...(settingMap['restaurant_lng'] != null && { lng: Number(settingMap['restaurant_lng']) }),
       // vitrine-specific content from contentConfig (overrides legacy)
       ...(cc.description    != null && { description:    cc.description }),
       ...(cc.about_text     != null && { about_text:     cc.about_text }),
