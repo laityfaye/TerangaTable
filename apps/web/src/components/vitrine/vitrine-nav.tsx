@@ -63,7 +63,7 @@ export default function VitrineNav({
   const pathname                = usePathname();
 
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 40);
+    const handler = () => setScrolled(window.scrollY > window.innerHeight * 0.85);
     window.addEventListener('scroll', handler, { passive: true });
     return () => window.removeEventListener('scroll', handler);
   }, []);
