@@ -105,7 +105,7 @@ export default async function TenantVitrinePage({ params }: Props) {
             ) : null;
 
           case 'about':
-            return settings.about_text || settings.about_chef ? (
+            return settings.about_text || settings.about_chef || settings.about_image ? (
               <AboutSection
                 key="about"
                 restaurantName={data.name}
