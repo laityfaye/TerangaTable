@@ -1,79 +1,76 @@
-import Link from 'next/link';
+'use client';
 
-// ── Data ──────────────────────────────────────────────────────────────────────
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
+import { useRef, useState, useEffect } from 'react';
+import {
+  ArrowRight, MapPin, Zap, Users, BarChart3,
+  Smartphone, Calendar, ShoppingBag, Globe,
+  CheckCircle2, Star, Package, TrendingUp,
+} from 'lucide-react';
+
+// ── Shared ─────────────────────────────────────────────────────────────────────
+
+const EASE = [0.22, 1, 0.36, 1] as const;
+
+// ── Data ───────────────────────────────────────────────────────────────────────
 
 const FEATURES = [
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
-      </svg>
-    ),
+    Icon: Smartphone,
     title: 'Caisse & POS',
     description: 'Terminal tactile optimisé pour tablettes. Prise de commande rapide, paiements multiples, tickets imprimés.',
+    color: '#C8553D',
+    bg: 'rgba(200,85,61,0.12)',
   },
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-      </svg>
-    ),
+    Icon: Globe,
     title: 'Menu digital',
     description: 'Carte en ligne personnalisable avec photos, allergènes et filtres. Mise à jour instantanée.',
+    color: '#D4A843',
+    bg: 'rgba(212,168,67,0.12)',
   },
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-      </svg>
-    ),
-    title: 'Gestion des commandes',
+    Icon: ShoppingBag,
+    title: 'Gestion commandes',
     description: 'Kanban en temps réel pour la cuisine. Workflows personnalisables, alertes sonores, suivi statut.',
+    color: '#2D6A4F',
+    bg: 'rgba(45,106,79,0.12)',
   },
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
-    ),
-    title: 'Réservations en ligne',
-    description: 'Formulaire de réservation intégré au site vitrine. Plan de salle, confirmation automatique.',
+    Icon: Calendar,
+    title: 'Réservations',
+    description: 'Formulaire intégré au site vitrine. Plan de salle interactif, confirmation automatique.',
+    color: '#C8553D',
+    bg: 'rgba(200,85,61,0.12)',
   },
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
+    Icon: Users,
     title: 'CRM & Fidélité',
     description: 'Base clients centralisée, historique des commandes, programme de fidélité points.',
+    color: '#D4A843',
+    bg: 'rgba(212,168,67,0.12)',
   },
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-      </svg>
-    ),
-    title: 'Analytics & Rapports',
-    description: 'Chiffre d\'affaires, produits phares, heures de pointe. Tableaux de bord en temps réel.',
+    Icon: BarChart3,
+    title: 'Analytics',
+    description: "Chiffre d'affaires, produits phares, heures de pointe. Tableaux de bord en temps réel.",
+    color: '#2D6A4F',
+    bg: 'rgba(45,106,79,0.12)',
   },
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-      </svg>
-    ),
+    Icon: Package,
     title: 'Site vitrine',
     description: 'Votre propre page restaurant avec domaine personnalisé. SEO, réservations, menu public.',
+    color: '#C8553D',
+    bg: 'rgba(200,85,61,0.12)',
   },
   {
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-      </svg>
-    ),
+    Icon: Zap,
     title: 'Livraison & Zones',
     description: 'Gestion des chauffeurs, zones de livraison et frais. Suivi en temps réel.',
+    color: '#D4A843',
+    bg: 'rgba(212,168,67,0.12)',
   },
 ];
 
@@ -82,11 +79,10 @@ const PLANS = [
     name: 'Starter',
     price: '15 000',
     currency: 'XOF',
-    period: '/mois',
     description: 'Pour les petits restaurants qui démarrent',
     color: '#D4A843',
     features: [
-      'Jusqu\'à 2 utilisateurs',
+      "Jusqu'à 2 utilisateurs",
       'Caisse POS',
       'Menu digital',
       'Gestion commandes',
@@ -100,11 +96,10 @@ const PLANS = [
     name: 'Growth',
     price: '35 000',
     currency: 'XOF',
-    period: '/mois',
     description: 'Pour les restaurants en croissance',
     color: '#C8553D',
     features: [
-      'Jusqu\'à 10 utilisateurs',
+      "Jusqu'à 10 utilisateurs",
       'Tout Starter inclus',
       'Réservations en ligne',
       'CRM & Fidélité',
@@ -120,7 +115,6 @@ const PLANS = [
     name: 'Enterprise',
     price: '75 000',
     currency: 'XOF',
-    period: '/mois',
     description: 'Pour les chaînes et franchises',
     color: '#2D6A4F',
     features: [
@@ -133,7 +127,7 @@ const PLANS = [
       'SLA 99.9% garanti',
       'Gestionnaire dédié',
     ],
-    cta: 'Contacter l\'équipe',
+    cta: "Contacter l'équipe",
     highlight: false,
   },
 ];
@@ -142,711 +136,1262 @@ const REGIONS = [
   { city: 'Dakar', country: 'Sénégal', flag: '🇸🇳', currency: 'XOF', status: 'active' },
   { city: 'Thiès', country: 'Sénégal', flag: '🇸🇳', currency: 'XOF', status: 'active' },
   { city: 'Saint-Louis', country: 'Sénégal', flag: '🇸🇳', currency: 'XOF', status: 'active' },
-  { city: 'Abidjan', country: 'Côte d\'Ivoire', flag: '🇨🇮', currency: 'XOF', status: 'active' },
+  { city: 'Abidjan', country: "Côte d'Ivoire", flag: '🇨🇮', currency: 'XOF', status: 'active' },
   { city: 'Casablanca', country: 'Maroc', flag: '🇲🇦', currency: 'MAD', status: 'active' },
   { city: 'Paris', country: 'France', flag: '🇫🇷', currency: 'EUR', status: 'soon' },
 ];
 
 const STATS = [
-  { value: '500+', label: 'Restaurants actifs' },
-  { value: '5', label: 'Pays couverts' },
-  { value: '99.9%', label: 'Disponibilité' },
-  { value: '24/7', label: 'Support client' },
+  { value: 500, suffix: '+', label: 'Restaurants actifs' },
+  { value: 5, suffix: '', label: 'Pays couverts' },
+  { value: 99, suffix: '.9%', label: 'Disponibilité garantie' },
+  { value: 24, suffix: '/7', label: 'Support client' },
 ];
 
-// ── Components ─────────────────────────────────────────────────────────────────
+const TESTIMONIALS = [
+  {
+    quote:
+      "TérangaTable a transformé la gestion de mon restaurant. Les commandes sont mieux organisées, et mes clients adorent réserver en ligne.",
+    author: 'Ibrahima Diallo',
+    role: 'Propriétaire, Restaurant La Teranga',
+    city: 'Dakar',
+    rating: 5,
+    initials: 'ID',
+    color: '#C8553D',
+  },
+  {
+    quote:
+      "La caisse POS est intuitive, mon équipe a pris en main le logiciel en une heure. Le support est réactif et toujours disponible.",
+    author: 'Fatou Konaté',
+    role: 'Gérante, Maquis Chez Fatou',
+    city: 'Abidjan',
+    rating: 5,
+    initials: 'FK',
+    color: '#D4A843',
+  },
+  {
+    quote:
+      "Les analytics m'ont permis de comprendre mes meilleures heures et mes plats les plus vendus. J'ai augmenté mon CA de 30% en 3 mois.",
+    author: 'Omar Benjelloun',
+    role: 'Directeur, Riad Saveurs',
+    city: 'Casablanca',
+    rating: 5,
+    initials: 'OB',
+    color: '#2D6A4F',
+  },
+];
+
+// ── Counter ────────────────────────────────────────────────────────────────────
+
+function Counter({ target, suffix = '' }: { target: number; suffix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [count, setCount] = useState(0);
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting && !started) setStarted(true); },
+      { threshold: 0.5 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [started]);
+
+  useEffect(() => {
+    if (!started) return;
+    const duration = 1800;
+    const steps = 55;
+    let step = 0;
+    const timer = setInterval(() => {
+      step++;
+      const progress = step / steps;
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.round(eased * target));
+      if (step >= steps) clearInterval(timer);
+    }, duration / steps);
+    return () => clearInterval(timer);
+  }, [started, target]);
+
+  return <span ref={ref}>{count}{suffix}</span>;
+}
+
+// ── Section header ─────────────────────────────────────────────────────────────
+
+function SectionHeader({
+  tag,
+  title,
+  sub,
+  light = false,
+}: {
+  tag: string;
+  title: React.ReactNode;
+  sub?: string;
+  light?: boolean;
+}) {
+  return (
+    <motion.div
+      className="text-center mb-16"
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6, ease: EASE }}
+    >
+      <div className="flex items-center justify-center gap-4 mb-4">
+        <div className="h-px w-10 bg-[#C8553D]" />
+        <span className="text-xs uppercase tracking-[0.2em] font-bold text-[#C8553D]">{tag}</span>
+        <div className="h-px w-10 bg-[#C8553D]" />
+      </div>
+      <h2
+        className={`text-3xl sm:text-4xl font-bold mb-4 ${light ? 'text-[#1C1917]' : 'text-white'}`}
+        style={{ fontFamily: 'var(--font-heading)' }}
+      >
+        {title}
+      </h2>
+      {sub && (
+        <p className={`text-base max-w-xl mx-auto ${light ? 'text-[#57534E]' : 'text-white/45'}`}>{sub}</p>
+      )}
+    </motion.div>
+  );
+}
+
+// ── Nav ────────────────────────────────────────────────────────────────────────
 
 function LandingNav() {
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setScrolled(window.scrollY > 60);
+    window.addEventListener('scroll', handler, { passive: true });
+    return () => window.removeEventListener('scroll', handler);
+  }, []);
+
+  // lock body scroll when menu is open
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [menuOpen]);
+
+  const navLinks = [
+    { href: '/decouvrir', label: 'Découvrir', accent: true },
+    { href: '#fonctionnalites', label: 'Fonctionnalités', accent: false },
+    { href: '#tarifs', label: 'Tarifs', accent: false },
+    { href: '#regions', label: 'Régions', accent: false },
+  ];
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-[#1A1A18]/95 backdrop-blur-md border-b border-white/10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        {/* Logo */}
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-[#C8553D] flex items-center justify-center">
-            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" />
-            </svg>
+    <>
+      <motion.header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+          scrolled
+            ? 'bg-[#0C0C0A]/95 backdrop-blur-xl border-b border-white/8 shadow-2xl shadow-black/30'
+            : 'bg-transparent'
+        }`}
+        initial={{ y: -80 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.5, ease: EASE }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-8 h-8 rounded-lg bg-[#C8553D] flex items-center justify-center shadow-lg shadow-[#C8553D]/30 group-hover:shadow-[#C8553D]/50 transition-shadow duration-300">
+              <span className="text-white font-bold text-sm" style={{ fontFamily: 'var(--font-heading)' }}>T</span>
+            </div>
+            <span className="text-white font-bold text-lg tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>
+              TérangaTable
+            </span>
+          </Link>
+
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-7">
+            {navLinks.map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className={`text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                  l.accent
+                    ? 'text-[#E8826F] hover:text-[#C8553D] font-semibold'
+                    : 'text-white/55 hover:text-white'
+                }`}
+              >
+                {l.accent && <MapPin className="w-3.5 h-3.5" />}
+                {l.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* CTA + hamburger */}
+          <div className="flex items-center gap-3">
+            <a href="https://terangatable.cloud/login" className="hidden sm:block text-sm text-white/55 hover:text-white transition-colors">
+              Se connecter
+            </a>
+            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+              <Link
+                href="/register"
+                className="text-sm font-bold px-5 py-2.5 rounded-full text-white bg-[#C8553D] hover:bg-[#A33D28] transition-colors shadow-lg shadow-[#C8553D]/25"
+              >
+                Essai gratuit
+              </Link>
+            </motion.div>
+
+            {/* Hamburger */}
+            <button
+              className="md:hidden p-2 text-white/70 hover:text-white"
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label="Menu"
+            >
+              <div className="flex flex-col gap-[5px] w-5 h-4 justify-center">
+                <motion.span className="block h-0.5 bg-current rounded-full" animate={menuOpen ? { rotate: 45, y: 7 } : { rotate: 0, y: 0 }} transition={{ duration: 0.3 }} />
+                <motion.span className="block h-0.5 bg-current rounded-full" animate={menuOpen ? { opacity: 0, scaleX: 0 } : { opacity: 1, scaleX: 1 }} transition={{ duration: 0.2 }} />
+                <motion.span className="block h-0.5 bg-current rounded-full" animate={menuOpen ? { rotate: -45, y: -7 } : { rotate: 0, y: 0 }} transition={{ duration: 0.3 }} />
+              </div>
+            </button>
           </div>
-          <span className="text-white font-bold text-lg tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>
-            TérangaTable
-          </span>
         </div>
+      </motion.header>
 
-        {/* Nav links — desktop */}
-        <nav className="hidden md:flex items-center gap-6">
-          <Link href="/decouvrir" className="text-sm text-[#E8826F] hover:text-[#C8553D] font-semibold transition-colors flex items-center gap-1">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-            Découvrir
-          </Link>
-          <a href="#fonctionnalites" className="text-sm text-white/70 hover:text-white transition-colors">Fonctionnalités</a>
-          <a href="#tarifs" className="text-sm text-white/70 hover:text-white transition-colors">Tarifs</a>
-          <a href="#regions" className="text-sm text-white/70 hover:text-white transition-colors">Régions</a>
-        </nav>
+      {/* Mobile fullscreen menu */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            className="fixed inset-0 z-40 md:hidden flex flex-col items-center justify-center gap-7"
+            style={{ background: 'linear-gradient(160deg, #0C0C0A 0%, #1A0A06 50%, #0C0C0A 100%)' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="grain-layer" aria-hidden />
+            <div className="absolute -top-32 right-0 w-80 h-80 bg-[#C8553D]/10 rounded-full blur-3xl pointer-events-none" />
 
-        {/* CTA */}
-        <div className="flex items-center gap-3">
-          <Link
-            href="/login"
-            className="hidden sm:block text-sm text-white/70 hover:text-white transition-colors"
-          >
-            Se connecter
-          </Link>
-          <Link
-            href="/register"
-            className="text-sm font-semibold px-4 py-2 rounded-full text-white bg-[#C8553D] hover:bg-[#A33D28] transition-colors"
-          >
-            Essai gratuit
-          </Link>
-        </div>
-      </div>
-    </header>
+            {navLinks.map((l, i) => (
+              <motion.div
+                key={l.href}
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3, delay: i * 0.06 }}
+              >
+                <Link
+                  href={l.href}
+                  onClick={() => setMenuOpen(false)}
+                  className={`block text-4xl font-bold tracking-tight transition-colors ${
+                    l.accent ? 'text-[#C8553D]' : 'text-white/75 hover:text-white'
+                  }`}
+                  style={{ fontFamily: 'var(--font-heading)' }}
+                >
+                  {l.label}
+                </Link>
+              </motion.div>
+            ))}
+
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mt-4 flex flex-col gap-3 items-center"
+            >
+              <Link
+                href="/register"
+                onClick={() => setMenuOpen(false)}
+                className="px-10 py-4 rounded-full bg-[#C8553D] text-white font-bold text-lg shadow-2xl shadow-[#C8553D]/30"
+              >
+                Essai gratuit →
+              </Link>
+              <a href="https://terangatable.cloud/login" onClick={() => setMenuOpen(false)} className="text-white/35 text-sm">
+                Se connecter
+              </a>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
+
+// ── Hero ───────────────────────────────────────────────────────────────────────
 
 function HeroSection() {
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
+  const heroY = useTransform(scrollYProgress, [0, 1], ['0%', '28%']);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
+
   return (
-    <section className="relative min-h-screen flex flex-col items-center justify-center text-center overflow-hidden bg-[#1A1A18]">
-      {/* Background pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `repeating-linear-gradient(
-              45deg,
-              #C8553D 0px,
-              #C8553D 1px,
-              transparent 1px,
-              transparent 12px
-            )`,
-          }}
-        />
-      </div>
+    <section ref={ref} className="relative min-h-screen flex items-center overflow-hidden bg-[#0C0C0A]">
+      {/* Grain */}
+      <div className="grain-layer" aria-hidden />
 
-      {/* Radial glow */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#C8553D]/10 rounded-full blur-3xl pointer-events-none" />
+      {/* Ambient glows */}
+      <motion.div
+        className="absolute -top-40 right-0 w-[900px] h-[900px] rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(200,85,61,0.13) 0%, transparent 70%)', y: heroY }}
+      />
+      <div className="absolute -bottom-40 -left-40 w-[700px] h-[700px] rounded-full pointer-events-none"
+        style={{ background: 'radial-gradient(circle, rgba(212,168,67,0.07) 0%, transparent 70%)' }}
+      />
 
-      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 flex flex-col items-center gap-6 py-32">
-        {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#C8553D]/40 bg-[#C8553D]/10 text-[#E8826F] text-xs font-semibold tracking-wide uppercase">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#C8553D] inline-block animate-pulse" />
-          Nouveau — Disponible en Côte d&apos;Ivoire & Maroc
+      <motion.div
+        className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-24 pb-16 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center w-full"
+        style={{ opacity: heroOpacity }}
+      >
+        {/* ── Left: copy ── */}
+        <div className="flex flex-col gap-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, ease: EASE }}
+          >
+            <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#C8553D]/35 bg-[#C8553D]/10 text-[#E8826F] text-xs font-semibold tracking-wide">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#C8553D] inline-block animate-pulse" />
+              Disponible en Côte d&apos;Ivoire & Maroc
+            </span>
+          </motion.div>
+
+          <motion.h1
+            className="text-4xl sm:text-5xl xl:text-[3.6rem] font-bold text-white leading-[1.07] tracking-tight"
+            style={{ fontFamily: 'var(--font-heading)' }}
+            initial={{ opacity: 0, y: 28 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: EASE, delay: 0.1 }}
+          >
+            La plateforme tout-en-un pour les{' '}
+            <span
+              style={{
+                background: 'linear-gradient(135deg, #C8553D 0%, #D4A843 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              restaurants africains
+            </span>
+          </motion.h1>
+
+          <motion.p
+            className="text-white/50 text-base sm:text-lg leading-relaxed max-w-lg"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, ease: EASE, delay: 0.2 }}
+          >
+            Caisse POS, menu digital, commandes, réservations et analytics —
+            tout ce dont votre restaurant a besoin pour croître, en un seul outil.
+          </motion.p>
+
+          <motion.div
+            className="flex flex-col sm:flex-row gap-3"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: EASE, delay: 0.3 }}
+          >
+            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+              <Link
+                href="/register"
+                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full font-bold text-white text-sm bg-[#C8553D] hover:bg-[#A33D28] transition-colors shadow-2xl shadow-[#C8553D]/30"
+              >
+                Commencer gratuitement
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+              <a
+                href="#fonctionnalites"
+                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full font-semibold text-white/70 text-sm border border-white/15 hover:border-white/35 hover:text-white hover:bg-white/5 transition-all"
+              >
+                Voir les fonctionnalités
+              </a>
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            className="flex flex-wrap items-center gap-6 pt-1"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.45 }}
+          >
+            {[
+              { icon: '✓', text: '14 jours gratuits' },
+              { icon: '✓', text: 'Aucune CB requise' },
+              { icon: '✓', text: 'Résiliation facile' },
+            ].map((t) => (
+              <div key={t.text} className="flex items-center gap-1.5 text-xs text-white/35">
+                <span className="text-[#2D6A4F] font-bold text-sm">{t.icon}</span>
+                {t.text}
+              </div>
+            ))}
+          </motion.div>
         </div>
 
-        {/* Headline */}
-        <h1
-          className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight"
-          style={{ fontFamily: 'var(--font-heading)' }}
+        {/* ── Right: product mockup ── */}
+        <motion.div
+          className="relative hidden lg:flex items-center justify-center"
+          initial={{ opacity: 0, scale: 0.9, y: 24 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.9, ease: EASE, delay: 0.25 }}
         >
-          Gérez votre restaurant,{' '}
-          <span className="text-[#C8553D]">développez</span>{' '}
-          votre business
-        </h1>
-
-        {/* Sub */}
-        <p className="text-white/60 text-lg sm:text-xl max-w-2xl leading-relaxed">
-          Le Shopify + Odoo de la Restauration en Afrique. Caisse, menu digital,
-          commandes, réservations et analytics — tout en un.
-        </p>
-
-        {/* Decorative line */}
-        <div className="w-16 h-px bg-[#C8553D]" />
-
-        {/* CTAs */}
-        <div className="flex flex-col sm:flex-row gap-3 mt-2">
-          <Link
-            href="/register"
-            className="px-8 py-3.5 rounded-full font-semibold text-white text-sm tracking-wide bg-[#C8553D] hover:bg-[#A33D28] transition-colors"
-          >
-            Commencer gratuitement
-          </Link>
-          <Link
-            href="/decouvrir"
-            className="px-8 py-3.5 rounded-full font-semibold text-white text-sm tracking-wide border-2 border-white/20 hover:border-white/50 hover:bg-white/5 transition-all flex items-center gap-2 justify-center"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            Trouver un restaurant
-          </Link>
-        </div>
-
-        <p className="text-white/30 text-xs mt-2">
-          14 jours gratuits · Aucune carte bancaire requise
-        </p>
-      </div>
-
-      {/* Scroll hint */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 animate-bounce">
-        <svg className="w-5 h-5 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </div>
-    </section>
-  );
-}
-
-function StatsBar() {
-  return (
-    <section className="bg-[#C8553D] py-10 px-4 sm:px-6">
-      <div className="max-w-5xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 text-center text-white">
-        {STATS.map((s) => (
-          <div key={s.label}>
-            <div
-              className="text-3xl sm:text-4xl font-bold mb-1"
-              style={{ fontFamily: 'var(--font-heading)' }}
-            >
-              {s.value}
-            </div>
-            <div className="text-white/80 text-sm">{s.label}</div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function FeaturesSection() {
-  return (
-    <section id="fonctionnalites" className="py-24 px-4 sm:px-6 bg-[#FAFAF8]">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <div className="flex items-center justify-center gap-4 mb-4">
-            <div className="h-px w-12 bg-[#C8553D]" />
-            <span className="text-sm uppercase tracking-widest font-semibold text-[#C8553D]">
-              Fonctionnalités
-            </span>
-            <div className="h-px w-12 bg-[#C8553D]" />
-          </div>
-          <h2
-            className="text-3xl sm:text-4xl font-bold text-[#1C1917]"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
-            Tout ce dont votre restaurant a besoin
-          </h2>
-          <p className="text-[#57534E] text-base sm:text-lg mt-4 max-w-2xl mx-auto">
-            Une plateforme complète pensée pour les restaurants africains,
-            de la prise de commande jusqu&apos;à l&apos;analyse de vos performances.
-          </p>
-        </div>
-
-        {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {FEATURES.map((f) => (
-            <div
-              key={f.title}
-              className="bg-white rounded-lg border border-[#E7E5E4] p-5 hover:shadow-md hover:border-[#C8553D]/30 transition-all group"
-            >
-              <div className="w-10 h-10 rounded-lg bg-[#C8553D]/10 flex items-center justify-center text-[#C8553D] mb-4 group-hover:bg-[#C8553D] group-hover:text-white transition-all">
-                {f.icon}
-              </div>
-              <h3 className="font-semibold text-[#1C1917] mb-2" style={{ fontFamily: 'var(--font-heading)' }}>
-                {f.title}
-              </h3>
-              <p className="text-[#57534E] text-sm leading-relaxed">{f.description}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function DashboardPreview() {
-  return (
-    <section className="py-24 px-4 sm:px-6 bg-[#1A1A18] overflow-hidden">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-4 mb-4">
-            <div className="h-px w-12 bg-[#C8553D]" />
-            <span className="text-sm uppercase tracking-widest font-semibold text-[#C8553D]">
-              Dashboard
-            </span>
-            <div className="h-px w-12 bg-[#C8553D]" />
-          </div>
-          <h2
-            className="text-3xl sm:text-4xl font-bold text-white"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
-            Un tableau de bord pensé pour l&apos;Afrique
-          </h2>
-          <p className="text-white/60 text-base mt-4 max-w-xl mx-auto">
-            Interface rapide et intuitive, conçue pour fonctionner même avec une
-            connexion internet limitée.
-          </p>
-        </div>
-
-        {/* Mock dashboard frame */}
-        <div className="relative mx-auto max-w-4xl rounded-xl overflow-hidden border border-white/10 shadow-2xl">
-          {/* Browser bar */}
-          <div className="bg-[#2A2A28] px-4 py-3 flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-500/70" />
-            <div className="w-3 h-3 rounded-full bg-yellow-500/70" />
-            <div className="w-3 h-3 rounded-full bg-green-500/70" />
-            <div className="flex-1 mx-3 h-6 bg-[#1A1A18] rounded-md flex items-center px-3">
-              <span className="text-white/30 text-xs font-mono">app.terangatable.com/dashboard</span>
-            </div>
-          </div>
-
-          {/* Dashboard content mock */}
-          <div className="bg-[#FAFAF8] flex" style={{ height: 360 }}>
-            {/* Sidebar */}
-            <div className="w-52 bg-[#1A1A18] flex flex-col py-4 gap-1 shrink-0">
-              <div className="px-4 mb-2">
-                <div className="w-24 h-4 bg-white/20 rounded" />
-              </div>
-              {['Tableau de bord', 'Commandes', 'Menu', 'POS', 'Réservations', 'Analytics'].map((item, i) => (
-                <div
-                  key={item}
-                  className={`flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg ${
-                    i === 1 ? 'bg-[#C8553D]/15 border-l-2 border-[#C8553D]' : ''
-                  }`}
-                >
-                  <div className={`w-4 h-4 rounded ${i === 1 ? 'bg-[#C8553D]' : 'bg-white/15'}`} />
-                  <div className={`h-2.5 rounded ${i === 1 ? 'bg-white w-20' : 'bg-white/20 w-16'}`} />
+          <div className="relative w-full max-w-[440px]">
+            {/* Dashboard browser */}
+            <div className="rounded-2xl overflow-hidden border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.7)] bg-[#161614]">
+              {/* Browser bar */}
+              <div className="flex items-center gap-2 px-4 py-3 bg-[#1E1E1B] border-b border-white/6">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-[#FF5F57]" />
+                  <div className="w-3 h-3 rounded-full bg-[#FEBC2E]" />
+                  <div className="w-3 h-3 rounded-full bg-[#28C840]" />
                 </div>
-              ))}
-            </div>
-
-            {/* Main content */}
-            <div className="flex-1 p-5 overflow-hidden">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <div className="w-32 h-5 bg-[#1C1917]/30 rounded mb-1" />
-                  <div className="w-20 h-3 bg-[#1C1917]/15 rounded" />
+                <div className="flex-1 mx-3 h-5 bg-[#0C0C0A] rounded-md flex items-center px-3">
+                  <div className="w-2 h-2 rounded-full bg-[#2D6A4F] mr-2 shrink-0" />
+                  <span className="text-white/25 text-[10px] font-mono truncate">app.terangatable.com/dashboard</span>
                 </div>
-                <div className="w-28 h-8 bg-[#C8553D] rounded-lg" />
               </div>
 
-              {/* Stats row */}
-              <div className="grid grid-cols-3 gap-3 mb-4">
-                {['CA du jour', 'Commandes', 'Table libre'].map((label, i) => (
-                  <div key={label} className="bg-white rounded-lg p-3 border border-[#E7E5E4]">
-                    <div className="text-xs text-[#57534E] mb-1">{label}</div>
-                    <div
-                      className="h-6 rounded"
-                      style={{
-                        background: i === 0 ? '#C8553D20' : i === 1 ? '#D4A84320' : '#2D6A4F20',
-                        width: ['70%', '55%', '45%'][i],
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-
-              {/* Kanban preview */}
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { label: 'Nouvelle', color: '#F59E0B', count: 3 },
-                  { label: 'En cuisine', color: '#3B82F6', count: 5 },
-                  { label: 'Prête', color: '#10B981', count: 2 },
-                ].map((col) => (
-                  <div key={col.label} className="rounded-lg overflow-hidden">
-                    <div
-                      className="px-2 py-1.5 text-xs font-semibold text-white flex items-center justify-between"
-                      style={{ backgroundColor: col.color }}
-                    >
-                      <span>{col.label}</span>
-                      <span className="bg-white/20 px-1.5 rounded-full text-[10px]">{col.count}</span>
+              {/* Dashboard */}
+              <div className="flex" style={{ height: 340 }}>
+                {/* Sidebar */}
+                <div className="w-44 bg-[#111110] flex flex-col py-4 gap-0.5 shrink-0">
+                  <div className="px-3 mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-md bg-[#C8553D] flex items-center justify-center shrink-0">
+                        <span className="text-white text-[10px] font-bold">T</span>
+                      </div>
+                      <div className="w-16 h-2.5 bg-white/20 rounded" />
                     </div>
-                    {Array.from({ length: Math.min(col.count, 2) }).map((_, j) => (
-                      <div
-                        key={j}
-                        className="bg-white border border-[#E7E5E4] rounded p-2 mt-1 space-y-1"
-                      >
-                        <div className="w-16 h-2 bg-[#1C1917]/20 rounded" />
-                        <div className="w-12 h-2 bg-[#57534E]/15 rounded" />
+                  </div>
+                  {[
+                    { label: 'Tableau de bord', active: false },
+                    { label: 'Commandes', active: true },
+                    { label: 'Menu', active: false },
+                    { label: 'POS', active: false },
+                    { label: 'Réservations', active: false },
+                    { label: 'Analytics', active: false },
+                    { label: 'Clients', active: false },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className={`flex items-center gap-2.5 px-3 py-2 mx-2 rounded-lg ${
+                        item.active ? 'bg-[#C8553D]/15 border border-[#C8553D]/20' : ''
+                      }`}
+                    >
+                      <div className={`w-3.5 h-3.5 rounded ${item.active ? 'bg-[#C8553D]' : 'bg-white/10'}`} />
+                      <div className={`h-2 rounded ${item.active ? 'bg-white/85 w-16' : 'bg-white/15 w-12'}`} />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Main content */}
+                <div className="flex-1 p-4 overflow-hidden bg-[#FAFAF8]">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <div className="w-28 h-4 bg-[#1C1917]/25 rounded mb-1.5" />
+                      <div className="w-20 h-2.5 bg-[#1C1917]/12 rounded" />
+                    </div>
+                    <div className="w-24 h-8 bg-[#C8553D] rounded-xl" />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 mb-4">
+                    {[
+                      { label: "CA Auj.", val: '142 500 F', color: '#C8553D' },
+                      { label: 'Commandes', val: '28', color: '#D4A843' },
+                      { label: 'Tables', val: '6/12', color: '#2D6A4F' },
+                    ].map((s) => (
+                      <div key={s.label} className="bg-white rounded-xl p-2.5 border border-[#E7E5E4]">
+                        <div className="text-[9px] text-[#57534E] mb-1">{s.label}</div>
+                        <div className="text-xs font-bold" style={{ color: s.color }}>{s.val}</div>
                       </div>
                     ))}
                   </div>
+
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {[
+                      { label: 'Nouvelles', color: '#F59E0B', count: 3 },
+                      { label: 'En cuisine', color: '#3B82F6', count: 5 },
+                      { label: 'Prêtes', color: '#10B981', count: 2 },
+                    ].map((col) => (
+                      <div key={col.label}>
+                        <div className="px-2 py-1 text-[9px] font-bold text-white flex items-center justify-between rounded-t-lg" style={{ backgroundColor: col.color }}>
+                          <span className="truncate">{col.label}</span>
+                          <span className="bg-white/25 px-1 rounded ml-1 text-[8px]">{col.count}</span>
+                        </div>
+                        {Array.from({ length: Math.min(col.count, 2) }).map((_, j) => (
+                          <div key={j} className="bg-white border border-[#E7E5E4] rounded p-1.5 mt-1">
+                            <div className="w-12 h-1.5 bg-[#1C1917]/20 rounded mb-1" />
+                            <div className="w-8 h-1.5 bg-[#57534E]/15 rounded" />
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Floating card — revenue */}
+            <motion.div
+              className="absolute -left-14 top-16 bg-[#1E1E1B] border border-white/10 rounded-2xl p-4 shadow-2xl w-44 backdrop-blur-sm"
+              animate={{ y: [0, -7, 0] }}
+              transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              <div className="text-[9px] text-[#D4A843] font-bold uppercase tracking-widest mb-2">Ventes du jour</div>
+              <div className="text-white font-bold text-xl leading-none" style={{ fontFamily: 'var(--font-heading)' }}>
+                348 500
+                <span className="text-[10px] text-white/35 font-normal ml-1">F CFA</span>
+              </div>
+              <div className="flex items-center gap-1 mt-2">
+                <TrendingUp className="w-3 h-3 text-[#2D6A4F]" />
+                <span className="text-[#2D6A4F] text-[10px] font-semibold">+23% vs hier</span>
+              </div>
+            </motion.div>
+
+            {/* Floating card — orders */}
+            <motion.div
+              className="absolute -right-12 bottom-16 bg-[#1E1E1B] border border-white/10 rounded-2xl p-3.5 shadow-2xl w-36"
+              animate={{ y: [0, 7, 0] }}
+              transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut', delay: 1.5 }}
+            >
+              <div className="text-[9px] text-[#C8553D] font-bold uppercase tracking-widest mb-2">Commandes</div>
+              <div className="text-white font-bold text-2xl" style={{ fontFamily: 'var(--font-heading)' }}>28</div>
+              <div className="flex items-end gap-0.5 mt-2 h-6">
+                {[3, 4, 5, 3, 5, 6, 5].map((h, i) => (
+                  <div key={i} className="flex-1 rounded-sm" style={{ height: `${h * 16}%`, backgroundColor: i === 6 ? '#C8553D' : 'rgba(200,85,61,0.35)' }} />
                 ))}
+              </div>
+            </motion.div>
+
+            {/* Floating badge — online */}
+            <motion.div
+              className="absolute -right-6 top-10 bg-[#2D6A4F] rounded-2xl px-3 py-2 shadow-2xl flex items-center gap-1.5"
+              animate={{ scale: [1, 1.06, 1] }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: 0.8 }}
+            >
+              <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              <span className="text-white text-[10px] font-bold">En ligne</span>
+            </motion.div>
+          </div>
+        </motion.div>
+      </motion.div>
+
+      {/* Scroll hint */}
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+        <motion.div
+          className="w-5 h-8 rounded-full border border-white/20 flex items-start justify-center pt-1.5"
+          animate={{ opacity: [0.4, 0.8, 0.4] }}
+          transition={{ duration: 2.5, repeat: Infinity }}
+        >
+          <motion.div
+            className="w-1 h-2 bg-white/50 rounded-full"
+            animate={{ y: [0, 10, 0] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+// ── Stats ──────────────────────────────────────────────────────────────────────
+
+function StatsSection() {
+  return (
+    <section className="relative bg-[#C8553D] py-14 px-4 sm:px-6 overflow-hidden">
+      {/* Subtle grain */}
+      <div className="grain-layer opacity-[0.03]" aria-hidden />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#A33D28]/30 via-transparent to-[#A33D28]/30 pointer-events-none" />
+
+      <div className="relative max-w-6xl mx-auto">
+        <motion.div
+          className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-10 text-center"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-60px' }}
+          variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
+        >
+          {STATS.map((s) => (
+            <motion.div
+              key={s.label}
+              className="text-white"
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } },
+              }}
+            >
+              <div className="text-4xl sm:text-5xl font-bold mb-1.5" style={{ fontFamily: 'var(--font-heading)' }}>
+                <Counter target={s.value} suffix={s.suffix} />
+              </div>
+              <div className="text-white/70 text-sm font-medium">{s.label}</div>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+// ── Features ───────────────────────────────────────────────────────────────────
+
+function FeaturesSection() {
+  return (
+    <section id="fonctionnalites" className="py-24 px-4 sm:px-6 bg-[#0C0C0A]">
+      <div className="max-w-7xl mx-auto">
+        <SectionHeader
+          tag="Fonctionnalités"
+          title="Tout ce dont votre restaurant a besoin"
+          sub="Une plateforme complète pensée pour les restaurants africains, de la prise de commande jusqu'à l'analyse de vos performances."
+        />
+
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-80px' }}
+          variants={{ visible: { transition: { staggerChildren: 0.07 } } }}
+        >
+          {FEATURES.map((f, i) => (
+            <motion.div
+              key={f.title}
+              className="group relative rounded-2xl border border-white/6 bg-[#161614] p-6 overflow-hidden cursor-default"
+              variants={{
+                hidden: { opacity: 0, y: 28 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
+              }}
+              whileHover={{ y: -5, borderColor: 'rgba(255,255,255,0.14)', transition: { duration: 0.22, ease: EASE } }}
+            >
+              {/* Hover glow */}
+              <div
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                style={{ background: `radial-gradient(ellipse at 50% 0%, ${f.bg} 0%, transparent 65%)` }}
+              />
+
+              {/* Step number */}
+              <div className="absolute top-5 right-5 text-xs font-mono font-bold opacity-15" style={{ color: f.color }}>
+                {String(i + 1).padStart(2, '0')}
+              </div>
+
+              {/* Icon */}
+              <div
+                className="relative w-11 h-11 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300"
+                style={{ backgroundColor: f.bg, color: f.color }}
+              >
+                <f.Icon className="w-5 h-5" />
+              </div>
+
+              <h3 className="font-bold text-white mb-2 text-[15px] relative" style={{ fontFamily: 'var(--font-heading)' }}>
+                {f.title}
+              </h3>
+              <p className="text-white/40 text-sm leading-relaxed relative">{f.description}</p>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+// ── Dashboard Preview ──────────────────────────────────────────────────────────
+
+function DashboardPreview() {
+  return (
+    <section className="py-24 px-4 sm:px-6 bg-[#111110] overflow-hidden">
+      <div className="max-w-6xl mx-auto">
+        <SectionHeader
+          tag="Dashboard"
+          title="Un tableau de bord pensé pour l'Afrique"
+          sub="Interface rapide et intuitive, conçue pour fonctionner même avec une connexion internet limitée."
+        />
+
+        <motion.div
+          className="relative mx-auto max-w-4xl"
+          initial={{ opacity: 0, y: 48 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.85, ease: EASE }}
+        >
+          {/* Outer glow halo */}
+          <div className="absolute -inset-4 bg-[#C8553D]/6 rounded-3xl blur-3xl pointer-events-none" />
+
+          <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-[0_40px_120px_rgba(0,0,0,0.85)]">
+            {/* Browser chrome */}
+            <div className="bg-[#1E1E1B] px-4 py-3 flex items-center gap-2 border-b border-white/6">
+              <div className="flex gap-1.5 shrink-0">
+                <div className="w-3 h-3 rounded-full bg-[#FF5F57]" />
+                <div className="w-3 h-3 rounded-full bg-[#FEBC2E]" />
+                <div className="w-3 h-3 rounded-full bg-[#28C840]" />
+              </div>
+              <div className="flex-1 mx-4 h-6 bg-[#111110] rounded-lg flex items-center px-3 min-w-0">
+                <div className="w-2 h-2 rounded-full bg-[#2D6A4F] mr-2 shrink-0" />
+                <span className="text-white/25 text-xs font-mono truncate">app.terangatable.com/dashboard</span>
+              </div>
+            </div>
+
+            {/* Dashboard body */}
+            <div className="bg-[#FAFAF8] flex" style={{ height: 420 }}>
+              {/* Sidebar */}
+              <div className="w-56 bg-[#1A1A18] flex flex-col py-5 gap-0.5 shrink-0">
+                <div className="px-4 mb-5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-[#C8553D] flex items-center justify-center shrink-0">
+                      <span className="text-white text-sm font-bold">T</span>
+                    </div>
+                    <div>
+                      <div className="w-20 h-2.5 bg-white/25 rounded mb-1.5" />
+                      <div className="w-14 h-2 bg-white/12 rounded" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="px-2 flex flex-col gap-0.5">
+                  {[
+                    { label: 'Tableau de bord', active: false },
+                    { label: 'Commandes', active: true },
+                    { label: 'Menu', active: false },
+                    { label: 'Caisse POS', active: false },
+                    { label: 'Réservations', active: false },
+                    { label: 'Analytics', active: false },
+                    { label: 'Clients CRM', active: false },
+                    { label: 'Paramètres', active: false },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl ${
+                        item.active ? 'bg-[#C8553D]/12 border border-[#C8553D]/20' : ''
+                      }`}
+                    >
+                      <div className={`w-4 h-4 rounded ${item.active ? 'bg-[#C8553D]' : 'bg-white/10'}`} />
+                      <div className={`h-2 rounded ${item.active ? 'bg-white/85 w-20' : 'bg-white/16 w-14'}`} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Main */}
+              <div className="flex-1 p-6 overflow-hidden">
+                {/* Topbar */}
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <div className="w-40 h-5 bg-[#1C1917]/25 rounded-lg mb-2" />
+                    <div className="w-28 h-3 bg-[#1C1917]/12 rounded" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-[#E7E5E4] rounded-xl" />
+                    <div className="w-8 h-8 bg-[#E7E5E4] rounded-xl" />
+                    <div className="w-32 h-9 bg-[#C8553D] rounded-xl" />
+                  </div>
+                </div>
+
+                {/* KPI row */}
+                <div className="grid grid-cols-4 gap-3 mb-5">
+                  {[
+                    { label: "CA Aujourd'hui", val: '348 500 F', trend: '+23%', color: '#C8553D' },
+                    { label: 'Commandes actives', val: '28', trend: '+5', color: '#D4A843' },
+                    { label: 'Tables libres', val: '6 / 12', trend: '−2', color: '#2D6A4F' },
+                    { label: 'Temps moyen', val: '22 min', trend: '−3 min', color: '#3B82F6' },
+                  ].map((kpi) => (
+                    <div key={kpi.label} className="bg-white rounded-xl p-3 border border-[#E7E5E4] shadow-sm">
+                      <div className="text-[10px] text-[#78716C] mb-1.5 truncate">{kpi.label}</div>
+                      <div className="font-bold text-sm text-[#1C1917] mb-1">{kpi.val}</div>
+                      <div className="text-[10px] font-semibold" style={{ color: kpi.color }}>{kpi.trend}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Chart + Kanban */}
+                <div className="grid grid-cols-3 gap-3">
+                  {/* Bar chart */}
+                  <div className="col-span-1 bg-white rounded-xl p-3.5 border border-[#E7E5E4]">
+                    <div className="text-[10px] text-[#78716C] mb-3 font-medium">Ventes — 7 jours</div>
+                    <div className="flex items-end gap-1" style={{ height: 70 }}>
+                      {[38, 62, 47, 78, 92, 68, 100].map((h, i) => (
+                        <div
+                          key={i}
+                          className="flex-1 rounded-t"
+                          style={{
+                            height: `${h}%`,
+                            backgroundColor: i === 6 ? '#C8553D' : 'rgba(200,85,61,0.2)',
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Kanban */}
+                  <div className="col-span-2 grid grid-cols-3 gap-2">
+                    {[
+                      { label: 'Nouvelles', color: '#F59E0B', count: 3 },
+                      { label: 'En cuisine', color: '#3B82F6', count: 5 },
+                      { label: 'Prêtes', color: '#10B981', count: 2 },
+                    ].map((col) => (
+                      <div key={col.label}>
+                        <div
+                          className="px-2 py-1.5 text-[10px] font-bold text-white flex items-center justify-between rounded-t-lg"
+                          style={{ backgroundColor: col.color }}
+                        >
+                          <span className="truncate">{col.label}</span>
+                          <span className="bg-white/25 px-1.5 rounded text-[9px] ml-1 shrink-0">{col.count}</span>
+                        </div>
+                        {Array.from({ length: Math.min(col.count, 3) }).map((_, j) => (
+                          <div key={j} className="bg-white border border-[#E7E5E4] rounded p-2 mt-1">
+                            <div className="w-14 h-2 bg-[#1C1917]/18 rounded mb-1" />
+                            <div className="w-10 h-1.5 bg-[#57534E]/12 rounded" />
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
 }
 
-function DiscoverySection() {
+// ── Marketplace CTA ────────────────────────────────────────────────────────────
+// Compact — remplace l'ancienne DiscoverySection volumineuse
+
+function MarketplaceCtaSection() {
   const cities = [
     { name: 'Dakar', slug: 'dakar', flag: '🇸🇳', count: '200+', highlight: true },
-    { name: 'Thiès', slug: 'thies', flag: '🇸🇳', count: '45+' },
-    { name: 'Saint-Louis', slug: 'saint-louis', flag: '🇸🇳', count: '30+' },
-    { name: 'Abidjan', slug: 'abidjan', flag: '🇨🇮', count: '80+' },
-    { name: 'Casablanca', slug: 'casablanca', flag: '🇲🇦', count: '60+' },
-  ];
-
-  const features = [
-    { emoji: '📍', title: 'Géolocalisation en temps réel', description: 'Restaurants les plus proches, ouverts maintenant, temps estimé de livraison' },
-    { emoji: '🤖', title: 'Recommandations par IA', description: 'Selon l\'heure, la météo, vos habitudes et les tendances du moment' },
-    { emoji: '🗺️', title: 'Carte interactive', description: 'Visualisez tous les restaurants sur la carte, cliquez pour voir les détails' },
-    { emoji: '⭐', title: 'Avis et notes vérifiés', description: 'Évaluations authentiques de vrais clients pour guider votre choix' },
-    { emoji: '📱', title: 'Commande & Réservation', description: 'Commandez en ligne ou réservez une table directement depuis la plateforme' },
-    { emoji: '💳', title: 'Paiement mobile', description: 'Wave, Orange Money, Free Money — payez comme vous le souhaitez' },
+    { name: 'Abidjan', slug: 'abidjan', flag: '🇨🇮', count: '80+', highlight: false },
+    { name: 'Casablanca', slug: 'casablanca', flag: '🇲🇦', count: '60+', highlight: false },
+    { name: 'Thiès', slug: 'thies', flag: '🇸🇳', count: '45+', highlight: false },
+    { name: 'Saint-Louis', slug: 'saint-louis', flag: '🇸🇳', count: '30+', highlight: false },
   ];
 
   return (
-    <section className="py-24 px-4 sm:px-6 bg-[#FAFAF8] overflow-hidden">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <div className="flex items-center justify-center gap-4 mb-4">
-            <div className="h-px w-12 bg-[#C8553D]" />
-            <span className="text-sm uppercase tracking-widest font-semibold text-[#C8553D]">Marketplace</span>
-            <div className="h-px w-12 bg-[#C8553D]" />
-          </div>
-          <h2
-            className="text-3xl sm:text-4xl font-bold text-[#1C1917]"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
-            La vitrine intelligente de la restauration africaine
-          </h2>
-          <p className="text-[#57534E] text-base sm:text-lg mt-4 max-w-2xl mx-auto">
-            TerangaTable n&apos;est pas qu&apos;un outil de gestion — c&apos;est une plateforme de découverte
-            pour des millions de clients à travers l&apos;Afrique.
-          </p>
-        </div>
+    <section className="py-24 px-4 sm:px-6 bg-[#0C0C0A]">
+      <div className="max-w-6xl mx-auto">
+        <motion.div
+          className="relative rounded-3xl overflow-hidden"
+          initial={{ opacity: 0, y: 36 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.75, ease: EASE }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-[#1A1A18] via-[#1C0D07] to-[#1A1A18]" />
+          <div className="grain-layer" aria-hidden />
+          <div className="absolute -top-24 -right-16 w-96 h-96 bg-[#C8553D]/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-16 -left-8 w-72 h-72 bg-[#D4A843]/7 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Features grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-16">
-          {features.map((f) => (
-            <div
-              key={f.title}
-              className="bg-white rounded-xl border border-[#E7E5E4] p-5 hover:border-[#C8553D]/30 hover:shadow-md transition-all group"
-            >
-              <div className="text-3xl mb-3">{f.emoji}</div>
-              <h3 className="font-semibold text-[#1C1917] mb-2" style={{ fontFamily: 'var(--font-heading)' }}>{f.title}</h3>
-              <p className="text-[#57534E] text-sm leading-relaxed">{f.description}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Villes disponibles */}
-        <div className="bg-[#1A1A18] rounded-2xl p-8 overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-[#C8553D]/10 rounded-full blur-3xl" />
-          <div className="relative z-10">
-            <h3
-              className="text-white text-2xl font-bold mb-2"
-              style={{ fontFamily: 'var(--font-heading)' }}
-            >
-              Disponible dans vos villes
-            </h3>
-            <p className="text-white/60 text-sm mb-8">
-              Chaque ville bénéficie d&apos;une expérience localisée — langue, devises, horaires et cuisine locale.
-            </p>
-
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8">
-              {cities.map((city) => (
-                <Link
-                  key={city.slug}
-                  href={`/decouvrir/${city.slug}`}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all group ${
-                    city.highlight
-                      ? 'bg-[#C8553D] border border-[#C8553D]'
-                      : 'bg-white/5 border border-white/10 hover:bg-white/10 hover:border-[#C8553D]/40'
-                  }`}
-                >
-                  <span className="text-3xl">{city.flag}</span>
-                  <span className={`font-semibold text-sm ${city.highlight ? 'text-white' : 'text-white/80'}`}>
-                    {city.name}
-                  </span>
-                  <span className={`text-xs font-mono ${city.highlight ? 'text-white/80' : 'text-white/40'}`}>
-                    {city.count} restos
-                  </span>
-                </Link>
-              ))}
+          <div className="relative z-10 p-8 sm:p-12 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+            {/* Left */}
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#D4A843]/12 border border-[#D4A843]/25 text-[#D4A843] text-xs font-bold uppercase tracking-widest mb-5">
+                <MapPin className="w-3 h-3" />
+                Marketplace
+              </div>
+              <h2
+                className="text-3xl sm:text-4xl font-bold text-white mb-4 leading-tight"
+                style={{ fontFamily: 'var(--font-heading)' }}
+              >
+                Des millions de clients découvrent des restaurants chaque mois
+              </h2>
+              <p className="text-white/45 text-sm leading-relaxed mb-7 max-w-sm">
+                TérangaTable est aussi une marketplace de découverte — vos futurs clients y cherchent, commandent et réservent. Référencez votre restaurant et touchez une nouvelle clientèle dès aujourd&apos;hui.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+                  <Link
+                    href="/decouvrir"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#C8553D] text-white font-semibold text-sm hover:bg-[#A33D28] transition-colors shadow-xl shadow-[#C8553D]/20"
+                  >
+                    <MapPin className="w-4 h-4" />
+                    Explorer la marketplace
+                  </Link>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+                  <Link
+                    href="/register"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-white/18 text-white/70 font-semibold text-sm hover:border-white/35 hover:text-white transition-all"
+                  >
+                    Référencer mon restaurant
+                  </Link>
+                </motion.div>
+              </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3">
+            {/* Right — city grid */}
+            <div>
+              <p className="text-white/25 text-[10px] uppercase tracking-[0.2em] font-semibold mb-4">Villes disponibles</p>
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                {cities.map((city) => (
+                  <motion.div key={city.slug} whileHover={{ scale: 1.06, y: -2 }} transition={{ duration: 0.18 }}>
+                    <Link
+                      href={`/decouvrir/${city.slug}`}
+                      className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border transition-all ${
+                        city.highlight
+                          ? 'bg-[#C8553D]/15 border-[#C8553D]/30 hover:bg-[#C8553D]/22'
+                          : 'bg-white/5 border-white/8 hover:bg-white/10 hover:border-white/16'
+                      }`}
+                    >
+                      <span className="text-2xl">{city.flag}</span>
+                      <span className="text-white/75 text-xs font-semibold">{city.name}</span>
+                      <span className="text-white/30 text-[10px] font-mono">{city.count} restos</span>
+                    </Link>
+                  </motion.div>
+                ))}
+              </div>
               <Link
                 href="/decouvrir"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#C8553D] text-white font-semibold text-sm hover:bg-[#A33D28] transition-colors"
+                className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-white/8 text-white/35 text-xs hover:text-white/60 hover:border-white/18 transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                Explorer les restaurants
-              </Link>
-              <Link
-                href="/register"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full border border-white/20 text-white font-semibold text-sm hover:border-white/50 hover:bg-white/5 transition-all"
-              >
-                Référencer mon restaurant
+                Voir toutes les villes <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
 }
+
+// ── Testimonials ───────────────────────────────────────────────────────────────
+
+function TestimonialsSection() {
+  return (
+    <section className="py-24 px-4 sm:px-6 bg-[#111110]">
+      <div className="max-w-6xl mx-auto">
+        <SectionHeader
+          tag="Témoignages"
+          title="Ils nous font confiance"
+        />
+
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-3 gap-5"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-80px' }}
+          variants={{ visible: { transition: { staggerChildren: 0.12 } } }}
+        >
+          {TESTIMONIALS.map((t) => (
+            <motion.div
+              key={t.author}
+              className="relative rounded-2xl border border-white/8 bg-[#161614] p-6 flex flex-col gap-4 group"
+              variants={{
+                hidden: { opacity: 0, y: 28 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
+              }}
+              whileHover={{ y: -5, borderColor: 'rgba(255,255,255,0.14)', transition: { duration: 0.22 } }}
+            >
+              {/* Quote mark */}
+              <div className="text-5xl font-serif leading-none" style={{ color: `${t.color}30` }}>&ldquo;</div>
+
+              {/* Stars */}
+              <div className="flex gap-1 -mt-3">
+                {Array.from({ length: t.rating }).map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-[#D4A843] text-[#D4A843]" />
+                ))}
+              </div>
+
+              <blockquote className="text-white/60 text-sm leading-relaxed flex-1 italic">
+                {t.quote}
+              </blockquote>
+
+              <div className="flex items-center gap-3 pt-2 border-t border-white/6">
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm text-white shrink-0"
+                  style={{ backgroundColor: t.color }}
+                >
+                  {t.initials}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-white font-semibold text-sm truncate">{t.author}</div>
+                  <div className="text-white/35 text-xs truncate">{t.role}</div>
+                </div>
+                <div className="text-[10px] text-white/20 font-mono shrink-0">{t.city}</div>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+// ── Pricing ────────────────────────────────────────────────────────────────────
 
 function PricingSection() {
   return (
-    <section id="tarifs" className="py-24 px-4 sm:px-6 bg-[#FAFAF8]">
+    <section id="tarifs" className="py-24 px-4 sm:px-6 bg-[#0C0C0A]">
       <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-14">
-          <div className="flex items-center justify-center gap-4 mb-4">
-            <div className="h-px w-12 bg-[#C8553D]" />
-            <span className="text-sm uppercase tracking-widest font-semibold text-[#C8553D]">
-              Tarifs
-            </span>
-            <div className="h-px w-12 bg-[#C8553D]" />
-          </div>
-          <h2
-            className="text-3xl sm:text-4xl font-bold text-[#1C1917]"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
-            Des tarifs adaptés à votre restaurant
-          </h2>
-          <p className="text-[#57534E] mt-4 max-w-xl mx-auto">
-            Commencez gratuitement pendant 14 jours. Aucune carte bancaire requise.
-          </p>
-        </div>
+        <SectionHeader
+          tag="Tarifs"
+          title="Des tarifs adaptés à votre restaurant"
+          sub="Commencez gratuitement pendant 14 jours. Aucune carte bancaire requise."
+        />
 
-        {/* Plans */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-3 gap-5"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-80px' }}
+          variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
+        >
           {PLANS.map((plan) => (
-            <div
+            <motion.div
               key={plan.name}
-              className={`relative rounded-xl border p-6 flex flex-col ${
+              className={`relative rounded-2xl flex flex-col p-7 ${
                 plan.highlight
-                  ? 'bg-[#1A1A18] border-[#C8553D] shadow-xl'
-                  : 'bg-white border-[#E7E5E4] shadow-sm'
+                  ? 'bg-[#161614] border-2 shadow-[0_0_70px_rgba(200,85,61,0.18)]'
+                  : 'bg-[#161614] border border-white/8'
               }`}
+              style={plan.highlight ? { borderColor: 'rgba(200,85,61,0.55)' } : {}}
+              variants={{
+                hidden: { opacity: 0, y: 28 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
+              }}
+              whileHover={{ y: -4, transition: { duration: 0.22 } }}
             >
               {plan.highlight && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-white text-xs font-bold bg-[#C8553D]">
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-white text-xs font-bold bg-[#C8553D] shadow-lg shadow-[#C8553D]/30 whitespace-nowrap">
                   Le plus populaire
                 </div>
               )}
 
-              {/* Name + price */}
               <div className="mb-6">
-                <div
-                  className="text-xs font-bold uppercase tracking-widest mb-2"
-                  style={{ color: plan.color }}
-                >
+                <div className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: plan.color }}>
                   {plan.name}
                 </div>
-                <div className="flex items-end gap-1">
-                  <span
-                    className={`text-3xl font-bold ${plan.highlight ? 'text-white' : 'text-[#1C1917]'}`}
-                    style={{ fontFamily: 'var(--font-heading)' }}
-                  >
+                <div className="flex items-end gap-2 mb-2">
+                  <span className="text-4xl font-bold text-white" style={{ fontFamily: 'var(--font-heading)' }}>
                     {plan.price}
                   </span>
-                  <span className={`text-sm mb-1 ${plan.highlight ? 'text-white/60' : 'text-[#57534E]'}`}>
-                    {plan.currency}{plan.period}
-                  </span>
+                  <span className="text-white/30 text-sm mb-1">{plan.currency} / mois</span>
                 </div>
-                <p className={`text-sm mt-1 ${plan.highlight ? 'text-white/50' : 'text-[#57534E]'}`}>
-                  {plan.description}
-                </p>
+                <p className="text-white/30 text-xs">{plan.description}</p>
               </div>
 
-              {/* Features */}
-              <ul className="flex-1 space-y-2.5 mb-6">
+              <ul className="flex-1 space-y-3 mb-7">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-start gap-2.5">
-                    <svg
-                      className="w-4 h-4 mt-0.5 shrink-0"
-                      style={{ color: plan.color }}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span className={`text-sm ${plan.highlight ? 'text-white/80' : 'text-[#1C1917]'}`}>
-                      {feature}
-                    </span>
+                    <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" style={{ color: plan.color }} />
+                    <span className="text-white/60 text-sm">{feature}</span>
                   </li>
                 ))}
               </ul>
 
-              {/* CTA */}
-              <Link
-                href="/register"
-                className="block text-center py-3 rounded-full font-semibold text-sm transition-all"
-                style={
-                  plan.highlight
-                    ? { backgroundColor: plan.color, color: '#fff' }
-                    : { backgroundColor: `${plan.color}15`, color: plan.color }
-                }
-              >
-                {plan.cta}
-              </Link>
-            </div>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
+                <Link
+                  href="/register"
+                  className="block text-center py-3.5 rounded-xl font-bold text-sm transition-all"
+                  style={
+                    plan.highlight
+                      ? { backgroundColor: plan.color, color: '#fff' }
+                      : { backgroundColor: `${plan.color}14`, color: plan.color, border: `1px solid ${plan.color}28` }
+                  }
+                >
+                  {plan.cta}
+                </Link>
+              </motion.div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
 }
 
+// ── Regions ────────────────────────────────────────────────────────────────────
+
 function RegionsSection() {
   return (
-    <section id="regions" className="py-24 px-4 sm:px-6 bg-white">
+    <section id="regions" className="py-24 px-4 sm:px-6 bg-[#111110]">
       <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-14">
-          <div className="flex items-center justify-center gap-4 mb-4">
-            <div className="h-px w-12 bg-[#C8553D]" />
-            <span className="text-sm uppercase tracking-widest font-semibold text-[#C8553D]">
-              Couverture
-            </span>
-            <div className="h-px w-12 bg-[#C8553D]" />
-          </div>
-          <h2
-            className="text-3xl sm:text-4xl font-bold text-[#1C1917]"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
-            Disponible à travers l&apos;Afrique
-          </h2>
-          <p className="text-[#57534E] mt-4 max-w-xl mx-auto">
-            Localisé pour chaque marché — devises, langues et réglementations locales.
-          </p>
-        </div>
+        <SectionHeader
+          tag="Couverture"
+          title="Disponible à travers l'Afrique"
+          sub="Localisé pour chaque marché — devises, langues et réglementations locales."
+        />
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <motion.div
+          className="grid grid-cols-2 sm:grid-cols-3 gap-4"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-60px' }}
+          variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
+        >
           {REGIONS.map((r) => (
-            <div
+            <motion.div
               key={r.city}
-              className={`rounded-xl border p-5 flex flex-col gap-2 ${
+              className={`rounded-2xl border p-5 flex flex-col gap-2.5 ${
                 r.status === 'soon'
-                  ? 'bg-[#F5F4F2] border-[#E7E5E4] opacity-60'
-                  : 'bg-white border-[#E7E5E4] hover:border-[#C8553D]/40 hover:shadow-sm transition-all'
+                  ? 'bg-[#161614] border-white/5 opacity-45 cursor-default'
+                  : 'bg-[#161614] border-white/8 hover:border-white/18 hover:bg-[#1C1C1A] transition-all cursor-default'
               }`}
+              variants={{
+                hidden: { opacity: 0, scale: 0.94 },
+                visible: {
+                  opacity: r.status === 'soon' ? 0.45 : 1,
+                  scale: 1,
+                  transition: { duration: 0.4, ease: EASE },
+                },
+              }}
+              whileHover={r.status !== 'soon' ? { y: -4, transition: { duration: 0.2 } } : {}}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-start justify-between">
                 <span className="text-3xl">{r.flag}</span>
                 {r.status === 'soon' && (
-                  <span className="text-[10px] font-bold bg-[#D4A843]/20 text-[#D4A843] px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold bg-[#D4A843]/12 text-[#D4A843] px-2 py-0.5 rounded-full border border-[#D4A843]/18">
                     Bientôt
                   </span>
                 )}
               </div>
               <div>
-                <div className="font-semibold text-[#1C1917]" style={{ fontFamily: 'var(--font-heading)' }}>
-                  {r.city}
-                </div>
-                <div className="text-sm text-[#57534E]">{r.country}</div>
+                <div className="font-bold text-white text-base" style={{ fontFamily: 'var(--font-heading)' }}>{r.city}</div>
+                <div className="text-white/38 text-sm">{r.country}</div>
               </div>
               <div className="text-xs font-mono text-[#C8553D] font-semibold">{r.currency}</div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
 }
 
+// ── Final CTA ──────────────────────────────────────────────────────────────────
+
 function CtaSection() {
   return (
-    <section className="py-24 px-4 sm:px-6 bg-[#C8553D]">
-      <div className="max-w-3xl mx-auto text-center">
+    <section className="relative py-28 px-4 sm:px-6 overflow-hidden bg-[#0C0C0A]">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#C8553D]/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-[400px] h-[300px] bg-[#D4A843]/6 rounded-full blur-3xl" />
+      </div>
+      <div className="grain-layer" aria-hidden />
+
+      <motion.div
+        className="relative z-10 max-w-3xl mx-auto text-center"
+        initial={{ opacity: 0, y: 36 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.75, ease: EASE }}
+      >
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#C8553D]/35 bg-[#C8553D]/10 text-[#E8826F] text-xs font-semibold tracking-wide mb-6">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#C8553D] animate-pulse" />
+          500+ restaurants nous font confiance
+        </div>
         <h2
-          className="text-3xl sm:text-4xl font-bold text-white mb-4"
+          className="text-4xl sm:text-5xl font-bold text-white mb-5 leading-[1.1]"
           style={{ fontFamily: 'var(--font-heading)' }}
         >
           Prêt à transformer votre restaurant ?
         </h2>
-        <p className="text-white/80 text-lg mb-8">
-          Rejoignez 500+ restaurateurs qui ont déjà choisi TérangaTable.
-          14 jours gratuits, sans engagement.
+        <p className="text-white/45 text-lg mb-10 max-w-lg mx-auto leading-relaxed">
+          14 jours gratuits, sans engagement, sans carte bancaire.
+          Rejoignez les restaurateurs qui ont fait le choix TérangaTable.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link
-            href="/register"
-            className="px-8 py-4 rounded-full font-bold text-[#C8553D] bg-white hover:bg-[#FAFAF8] transition-colors text-sm"
-          >
-            Commencer gratuitement
-          </Link>
-          <a
-            href="mailto:contact@terangatable.com"
-            className="px-8 py-4 rounded-full font-semibold text-white border-2 border-white/50 hover:border-white hover:bg-white/10 transition-all text-sm"
-          >
-            Contacter l&apos;équipe
-          </a>
+          <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-2 px-9 py-4 rounded-full font-bold text-white bg-[#C8553D] hover:bg-[#A33D28] transition-colors shadow-2xl shadow-[#C8553D]/35 text-sm"
+            >
+              Commencer gratuitement
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </motion.div>
+          <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+            <a
+              href="mailto:contact@terangatable.com"
+              className="inline-flex items-center gap-2 px-9 py-4 rounded-full font-semibold text-white/65 border border-white/18 hover:border-white/38 hover:text-white hover:bg-white/5 transition-all text-sm"
+            >
+              Contacter l&apos;équipe
+            </a>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }
 
+// ── Footer ─────────────────────────────────────────────────────────────────────
+
 function LandingFooter() {
+  const cols = [
+    {
+      title: 'Produit',
+      links: [
+        { label: 'Fonctionnalités', href: '#fonctionnalites' },
+        { label: 'Tarifs', href: '#tarifs' },
+        { label: 'Régions', href: '#regions' },
+        { label: 'Marketplace', href: '/decouvrir' },
+      ],
+    },
+    {
+      title: 'Entreprise',
+      links: [
+        { label: 'À propos', href: '#' },
+        { label: 'Blog', href: '#' },
+        { label: 'Contact', href: 'mailto:contact@terangatable.com' },
+      ],
+    },
+    {
+      title: 'Légal',
+      links: [
+        { label: 'Confidentialité', href: '#' },
+        { label: "Conditions d'utilisation", href: '#' },
+      ],
+    },
+  ];
+
   return (
-    <footer className="bg-[#1A1A18] text-white/50 py-12 px-4 sm:px-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
-          {/* Brand */}
-          <div className="col-span-2 md:col-span-1">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-7 h-7 rounded-md bg-[#C8553D] flex items-center justify-center">
-                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" />
-                </svg>
-              </div>
-              <span className="text-white font-bold" style={{ fontFamily: 'var(--font-heading)' }}>
-                TérangaTable
-              </span>
+    <footer className="bg-[#080807] text-white/38 border-t border-white/5">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-14 grid grid-cols-2 md:grid-cols-4 gap-10">
+        {/* Brand */}
+        <div className="col-span-2 md:col-span-1">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-7 h-7 rounded-lg bg-[#C8553D] flex items-center justify-center">
+              <span className="text-white font-bold text-xs">T</span>
             </div>
-            <p className="text-sm leading-relaxed">
-              Le Shopify + Odoo de la Restauration en Afrique.
-            </p>
+            <span className="text-white font-bold" style={{ fontFamily: 'var(--font-heading)' }}>TérangaTable</span>
           </div>
-
-          {/* Product */}
-          <div>
-            <h4 className="text-white text-sm font-semibold mb-3">Produit</h4>
-            <ul className="space-y-2 text-sm">
-              <li><a href="#fonctionnalites" className="hover:text-white transition-colors">Fonctionnalités</a></li>
-              <li><a href="#tarifs" className="hover:text-white transition-colors">Tarifs</a></li>
-              <li><a href="#regions" className="hover:text-white transition-colors">Régions</a></li>
-            </ul>
-          </div>
-
-          {/* Company */}
-          <div>
-            <h4 className="text-white text-sm font-semibold mb-3">Entreprise</h4>
-            <ul className="space-y-2 text-sm">
-              <li><a href="#" className="hover:text-white transition-colors">À propos</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-              <li>
-                <a href="mailto:contact@terangatable.com" className="hover:text-white transition-colors">
-                  Contact
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Legal */}
-          <div>
-            <h4 className="text-white text-sm font-semibold mb-3">Légal</h4>
-            <ul className="space-y-2 text-sm">
-              <li><a href="#" className="hover:text-white transition-colors">Confidentialité</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Conditions d&apos;utilisation</a></li>
-            </ul>
+          <p className="text-sm leading-relaxed max-w-[200px] mb-5">
+            Le Shopify + Odoo de la Restauration en Afrique.
+          </p>
+          <div className="flex gap-2">
+            {['𝕏', 'in', 'f'].map((s) => (
+              <a
+                key={s}
+                href="#"
+                className="w-8 h-8 rounded-full border border-white/8 flex items-center justify-center text-xs hover:bg-[#C8553D]/18 hover:border-[#C8553D]/35 hover:text-white transition-all"
+              >
+                {s}
+              </a>
+            ))}
           </div>
         </div>
 
-        <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+        {cols.map((col) => (
+          <div key={col.title}>
+            <h4 className="text-white text-sm font-semibold mb-4">{col.title}</h4>
+            <ul className="space-y-2.5">
+              {col.links.map((l) => (
+                <li key={l.label}>
+                  <a href={l.href} className="text-sm hover:text-white transition-colors">
+                    {l.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      <div className="border-t border-white/5 px-4 sm:px-6 py-5">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
           <p>© {new Date().getFullYear()} TérangaTable — Tous droits réservés.</p>
-          <p>
-            Made with <span className="text-[#C8553D]">♥</span> pour la restauration africaine
-          </p>
+          <p>Made with <span className="text-[#C8553D]">♥</span> pour la restauration africaine</p>
         </div>
       </div>
     </footer>
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
   return (
@@ -854,10 +1399,11 @@ export default function HomePage() {
       <LandingNav />
       <main>
         <HeroSection />
-        <StatsBar />
+        <StatsSection />
         <FeaturesSection />
         <DashboardPreview />
-        <DiscoverySection />
+        <MarketplaceCtaSection />
+        <TestimonialsSection />
         <PricingSection />
         <RegionsSection />
         <CtaSection />
