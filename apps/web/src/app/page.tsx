@@ -714,7 +714,7 @@ function StatsSection() {
   ];
 
   return (
-    <section className="relative py-20 sm:py-24 px-4 sm:px-6 overflow-hidden">
+    <section className="relative py-12 sm:py-16 px-4 sm:px-6 overflow-hidden">
       <style>{`
         @keyframes img-marquee {
           from { transform: translateX(0); }
@@ -786,7 +786,7 @@ function FeaturesSection() {
   const [selected, setSelected] = useState<typeof FEATURES[0] | null>(null);
 
   return (
-    <section id="fonctionnalites" className="py-24 px-4 sm:px-6 bg-[#0C0C0A]">
+    <section id="fonctionnalites" className="py-14 px-4 sm:px-6 bg-[#0C0C0A]">
       <div className="max-w-2xl mx-auto">
         <SectionHeader
           tag="Fonctionnalités"
@@ -924,7 +924,7 @@ function MarketplaceCtaSection() {
   ];
 
   return (
-    <section className="relative py-32 sm:py-44 px-4 sm:px-6 overflow-hidden">
+    <section className="relative py-20 sm:py-28 px-4 sm:px-6 overflow-hidden">
       {/* Image de fond */}
       <img
         src="https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?auto=format&fit=crop&w=1920&q=80"
@@ -1025,7 +1025,7 @@ function TestimonialsSection() {
   const doubled = [...TESTIMONIALS, ...TESTIMONIALS, ...TESTIMONIALS];
 
   return (
-    <section className="py-24 bg-[#111110] overflow-hidden">
+    <section className="py-14 bg-[#111110] overflow-hidden">
       <style>{`
         @keyframes marquee-scroll {
           from { transform: translateX(0); }
@@ -1160,7 +1160,7 @@ function PricingSection() {
   );
 
   return (
-    <section id="tarifs" className="py-24 bg-[#0C0C0A] overflow-hidden">
+    <section id="tarifs" className="py-14 bg-[#0C0C0A] overflow-hidden">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
         <SectionHeader
           tag="Tarifs"
@@ -1222,7 +1222,7 @@ function PricingSection() {
 
 function RegionsSection() {
   return (
-    <section id="regions" className="relative py-24 px-4 sm:px-6 bg-[#0C0C0A] overflow-hidden">
+    <section id="regions" className="relative py-14 px-4 sm:px-6 bg-[#0C0C0A] overflow-hidden">
       {/* Fond décoratif */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#C8553D]/5 rounded-full blur-[120px]" />
@@ -1373,7 +1373,7 @@ function RegionsSection() {
 
 function CtaSection() {
   return (
-    <section className="relative py-28 px-4 sm:px-6 overflow-hidden bg-[#0C0C0A]">
+    <section className="relative py-16 px-4 sm:px-6 overflow-hidden bg-[#0C0C0A]">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#C8553D]/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 right-1/4 w-[400px] h-[300px] bg-[#D4A843]/6 rounded-full blur-3xl" />
