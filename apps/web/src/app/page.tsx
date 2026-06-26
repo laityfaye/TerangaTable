@@ -544,11 +544,11 @@ function HeroSection() {
               initial="enter"
               animate="center"
               exit="exit"
-              className="flex flex-col gap-5 max-w-2xl"
+              className="flex flex-col gap-5 max-w-2xl mx-auto lg:mx-0 text-center lg:text-left"
             >
               {/* Badge */}
               <motion.span
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border self-start text-xs font-semibold tracking-wide backdrop-blur-sm"
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border self-center lg:self-start text-xs font-semibold tracking-wide backdrop-blur-sm"
                 style={{
                   borderColor: `${slide.accent}55`,
                   backgroundColor: `${slide.accent}22`,
@@ -576,7 +576,7 @@ function HeroSection() {
               </p>
 
               {/* Chips */}
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
                 {slide.chips.map((chip) => (
                   <span
                     key={chip}
@@ -595,7 +595,7 @@ function HeroSection() {
           </AnimatePresence>
 
           {/* CTAs — statiques, ne changent pas avec le slide */}
-          <div className="flex flex-col sm:flex-row gap-3 mt-7 sm:mt-8">
+          <div className="flex flex-col sm:flex-row gap-3 mt-7 sm:mt-8 items-center lg:items-start">
             <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
               <Link
                 href="/register"
@@ -617,7 +617,7 @@ function HeroSection() {
             </motion.div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-5 mt-5">
+          <div className="flex flex-wrap items-center gap-5 mt-5 justify-center lg:justify-start">
             {['14 jours gratuits', 'Aucune CB requise', 'Résiliation facile'].map((t) => (
               <div key={t} className="flex items-center gap-1.5 text-xs text-white/50">
                 <span className="text-[#2D6A4F] font-bold text-sm">✓</span>
