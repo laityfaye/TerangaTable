@@ -610,7 +610,7 @@ function HeroSection() {
           </AnimatePresence>
 
           {/* CTAs — statiques, ne changent pas avec le slide */}
-          <div className="flex flex-col sm:flex-row gap-3 mt-7 sm:mt-8 items-center lg:items-start">
+          <div className="flex flex-col sm:flex-row gap-3 mt-7 sm:mt-8 items-center justify-center lg:justify-start">
             <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
               <Link
                 href="/register"
@@ -1220,164 +1220,21 @@ function PricingSection() {
 
 // ── Regions ────────────────────────────────────────────────────────────────────
 
-function RegionsSection() {
-  return (
-    <section id="regions" className="relative py-14 px-4 sm:px-6 bg-[#0C0C0A] overflow-hidden">
-      {/* Fond décoratif */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#C8553D]/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 right-0 w-[400px] h-[300px] bg-[#2D6A4F]/5 rounded-full blur-[100px]" />
-      </div>
-      <div className="grain-layer" aria-hidden />
-
-      <div className="relative z-10 max-w-6xl mx-auto">
-        {/* Header deux colonnes */}
-        <motion.div
-          className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-14"
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-60px' }}
-          transition={{ duration: 0.6, ease: EASE }}
-        >
-          <div>
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#C8553D]/10 border border-[#C8553D]/20 text-[#C8553D] text-xs font-bold uppercase tracking-widest mb-5">
-              <MapPin className="w-3 h-3" />
-              Couverture
-            </div>
-            <h2
-              className="text-4xl sm:text-5xl font-bold text-white leading-[1.08] tracking-tight"
-              style={{ fontFamily: 'var(--font-heading)' }}
-            >
-              Disponible là où<br />vous êtes.
-            </h2>
-          </div>
-          <p className="text-white/35 text-sm leading-relaxed max-w-xs lg:text-right">
-            Devises, langues et réglementations locales — chaque marché a sa propre configuration.
-          </p>
-        </motion.div>
-
-        {/* Grille régions */}
-        <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-60px' }}
-          variants={{ visible: { transition: { staggerChildren: 0.07 } } }}
-        >
-          {REGIONS.map((r) => (
-            <motion.div
-              key={r.city}
-              className={`group relative rounded-2xl overflow-hidden flex flex-col transition-all duration-300 ${
-                r.status === 'soon'
-                  ? 'opacity-40 cursor-default'
-                  : 'cursor-default hover:scale-[1.02]'
-              }`}
-              variants={{
-                hidden: { opacity: 0, y: 20 },
-                visible: {
-                  opacity: r.status === 'soon' ? 0.4 : 1,
-                  y: 0,
-                  transition: { duration: 0.5, ease: EASE },
-                },
-              }}
-              style={{ border: `1px solid ${r.primary}22` }}
-            >
-              {/* Gradient de fond avec la couleur primaire du pays */}
-              <div
-                className="absolute inset-0"
-                style={{ background: `linear-gradient(135deg, ${r.primary}14 0%, rgba(22,22,20,0.95) 55%)` }}
-              />
-              <div className="absolute inset-0 bg-[#161614]/80" />
-
-              {/* Bande drapeau en haut */}
-              <div className="flex h-2 shrink-0 relative z-10">
-                {r.stripes.map((c, i) => (
-                  <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                ))}
-              </div>
-
-              {/* Contenu */}
-              <div className="relative z-10 p-6 flex flex-col gap-4 flex-1">
-                {/* Top row */}
-                <div className="flex items-center justify-between">
-                  <span
-                    className="text-xs font-black px-2.5 py-1 rounded-lg tracking-widest"
-                    style={{ backgroundColor: `${r.primary}20`, color: r.primary }}
-                  >
-                    {r.code}
-                  </span>
-                  {r.status === 'soon' ? (
-                    <span className="text-[10px] font-bold bg-[#D4A843]/10 text-[#D4A843] px-2.5 py-1 rounded-full border border-[#D4A843]/20">
-                      Bientôt
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1.5 text-[10px] text-[#2D6A4F] font-bold uppercase tracking-wide">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#2D6A4F] animate-pulse" />
-                      Actif
-                    </span>
-                  )}
-                </div>
-
-                {/* Ville + pays */}
-                <div>
-                  <div
-                    className="text-2xl font-bold text-white leading-tight mb-0.5"
-                    style={{ fontFamily: 'var(--font-heading)' }}
-                  >
-                    {r.city}
-                  </div>
-                  <div className="text-white/40 text-sm">{r.country}</div>
-                </div>
-
-                {/* Footer */}
-                <div className="flex items-center justify-between pt-3 border-t border-white/6">
-                  <span
-                    className="text-xs font-mono font-bold px-2.5 py-1 rounded-md"
-                    style={{ backgroundColor: `${r.primary}12`, color: `${r.primary}CC` }}
-                  >
-                    {r.currency}
-                  </span>
-                  {r.status !== 'soon' && (
-                    <Globe className="w-3.5 h-3.5 text-white/15 group-hover:text-white/30 transition-colors" />
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* Bas de section — expansion */}
-        <motion.div
-          className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 rounded-2xl border border-white/6 bg-white/[0.02]"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-        >
-          <p className="text-white/30 text-sm">
-            Expansion en cours — <span className="text-white/60">Bamako, Conakry, Lomé</span> arrivent prochainement.
-          </p>
-          <Link
-            href="/register"
-            className="shrink-0 text-xs font-semibold text-[#C8553D] hover:text-[#D4A843] transition-colors flex items-center gap-1"
-          >
-            Demander ma ville <ArrowRight className="w-3 h-3" />
-          </Link>
-        </motion.div>
-      </div>
-    </section>
-  );
-}
 
 // ── Final CTA ──────────────────────────────────────────────────────────────────
 
 function CtaSection() {
   return (
-    <section className="relative py-16 px-4 sm:px-6 overflow-hidden bg-[#0C0C0A]">
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#C8553D]/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-[400px] h-[300px] bg-[#D4A843]/6 rounded-full blur-3xl" />
-      </div>
+    <section className="relative py-16 px-4 sm:px-6 overflow-hidden">
+      {/* Image de fond */}
+      <img
+        src="https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?auto=format&fit=crop&w=1920&q=80"
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+      {/* Overlays */}
+      <div className="absolute inset-0 bg-black/75" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/40" />
       <div className="grain-layer" aria-hidden />
 
       <motion.div
@@ -1457,9 +1314,9 @@ function LandingFooter() {
 
   return (
     <footer className="bg-[#080807] border-t border-white/8">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-14 grid grid-cols-2 md:grid-cols-4 gap-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-14 flex flex-col items-center gap-10 md:grid md:grid-cols-4 md:items-start">
         {/* Brand */}
-        <div className="col-span-2 md:col-span-1">
+        <div className="flex flex-col items-center text-center md:items-start md:text-left md:col-span-1">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-7 h-7 rounded-lg bg-[#C8553D] flex items-center justify-center">
               <span className="text-white font-bold text-xs">T</span>
@@ -1500,7 +1357,7 @@ function LandingFooter() {
 
       {/* Développeur */}
       <div className="border-t border-white/8 px-4 sm:px-6 py-6">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="max-w-6xl mx-auto flex flex-col items-center text-center sm:flex-row sm:items-center sm:text-left justify-between gap-4">
           <div className="flex flex-col gap-1">
             <p className="text-white/70 text-xs">
               © {new Date().getFullYear()} TérangaTable — Tous droits réservés.
@@ -1518,7 +1375,7 @@ function LandingFooter() {
             </p>
           </div>
 
-          <div className="flex flex-col sm:items-end gap-1 text-white/40 text-xs">
+          <div className="flex flex-col items-center sm:items-end gap-1 text-white/40 text-xs">
             <a href="mailto:innosoftcreation@gmail.com" className="hover:text-white/70 transition-colors">
               innosoftcreation@gmail.com
             </a>
@@ -1546,7 +1403,6 @@ export default function HomePage() {
         <MarketplaceCtaSection />
         <TestimonialsSection />
         <PricingSection />
-        <RegionsSection />
         <CtaSection />
       </main>
       <LandingFooter />
