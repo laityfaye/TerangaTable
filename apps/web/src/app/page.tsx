@@ -6,7 +6,7 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 import {
   ArrowRight, MapPin, Zap, Users, BarChart3,
   Smartphone, Calendar, ShoppingBag, Globe,
-  CheckCircle2, Star, Package, TrendingUp,
+  CheckCircle2, Star, Package,
   ChevronLeft, ChevronRight,
 } from 'lucide-react';
 
@@ -184,357 +184,41 @@ const TESTIMONIALS = [
 
 // ── Hero slides data ───────────────────────────────────────────────────────────
 
+// Remplacez ces URLs par vos propres photos de restaurants
 const HERO_SLIDES = [
   {
-    id: 'platform' as const,
     badge: 'Plateforme tout-en-un',
-    title: 'La plateforme qui fait tout pour votre restaurant',
-    sub: 'Caisse POS, menu digital, commandes, réservations et analytics — tout ce dont votre restaurant a besoin, en un seul outil.',
-    chips: ['Tableau de bord unifié', 'Temps réel', 'Multi-sites'],
+    title: 'Tout pour votre restaurant, en un seul outil.',
+    sub: 'Caisse, commandes, réservations et analytics — enfin réunis.',
+    chips: ['Temps réel', 'Multi-sites'],
     accent: '#C8553D',
-    glow: 'rgba(200,85,61,0.18)',
+    image: 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1920&q=80',
   },
   {
-    id: 'pos' as const,
     badge: 'Caisse & POS',
-    title: 'Encaissez en quelques touches, sans friction',
-    sub: 'Terminal tactile optimisé tablette. Prise de commande ultra-rapide, paiements Wave, Orange Money et espèces — tickets imprimés instantanément.',
-    chips: ['Wave & Orange Money', 'Hors-ligne disponible', 'Impression auto'],
+    title: 'Encaissez sans friction.',
+    sub: 'Wave, Orange Money, espèces — tickets imprimés instantanément.',
+    chips: ['Hors-ligne', 'Impression auto'],
     accent: '#D4A843',
-    glow: 'rgba(212,168,67,0.18)',
+    image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1920&q=80',
   },
   {
-    id: 'orders' as const,
     badge: 'Gestion commandes',
-    title: 'La cuisine sait toujours où en est chaque commande',
-    sub: 'Kanban en temps réel entre la salle et la cuisine. Alertes sonores, statuts colorés, workflows personnalisables pour vos équipes.',
-    chips: ['Kanban temps réel', 'Alertes cuisine', 'Zéro papier'],
+    title: 'La cuisine toujours dans la boucle.',
+    sub: 'Kanban temps réel, alertes sonores, zéro papier.',
+    chips: ['Temps réel', 'Zéro papier'],
     accent: '#2D6A4F',
-    glow: 'rgba(45,106,79,0.18)',
+    image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1920&q=80',
   },
   {
-    id: 'analytics' as const,
     badge: 'Analytics & Rapports',
-    title: 'Prenez les bonnes décisions grâce aux données',
-    sub: "Chiffre d'affaires, plats stars, heures de pointe, fidélité client — visualisez tout ce qui compte et agissez en temps réel.",
-    chips: ['Rapports auto', 'Plats best-sellers', 'Prévisions CA'],
+    title: 'Décidez grâce aux données.',
+    sub: "CA, plats stars, heures de pointe — tout en temps réel.",
+    chips: ['Rapports auto', 'Prévisions CA'],
     accent: '#C8553D',
-    glow: 'rgba(200,85,61,0.18)',
+    image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1920&q=80',
   },
 ];
-
-type SlideId = 'platform' | 'pos' | 'orders' | 'analytics';
-
-// ── Hero Visuals ───────────────────────────────────────────────────────────────
-
-function PlatformVisual() {
-  return (
-    <div className="relative w-full max-w-[340px] md:max-w-[440px]">
-      <div className="rounded-2xl overflow-hidden border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.7)] bg-[#161614]">
-        <div className="flex items-center gap-2 px-4 py-3 bg-[#1E1E1B] border-b border-white/6">
-          <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-[#FF5F57]" />
-            <div className="w-3 h-3 rounded-full bg-[#FEBC2E]" />
-            <div className="w-3 h-3 rounded-full bg-[#28C840]" />
-          </div>
-          <div className="flex-1 mx-3 h-5 bg-[#0C0C0A] rounded-md flex items-center px-3">
-            <div className="w-2 h-2 rounded-full bg-[#2D6A4F] mr-2 shrink-0" />
-            <span className="text-white/25 text-[10px] font-mono truncate">app.terangatable.com/dashboard</span>
-          </div>
-        </div>
-        <div className="flex" style={{ height: 320 }}>
-          <div className="w-40 bg-[#111110] flex flex-col py-4 gap-0.5 shrink-0">
-            <div className="px-3 mb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-md bg-[#C8553D] flex items-center justify-center shrink-0">
-                  <span className="text-white text-[10px] font-bold">T</span>
-                </div>
-                <div className="w-16 h-2.5 bg-white/20 rounded" />
-              </div>
-            </div>
-            {[
-              { label: 'Tableau de bord', active: true },
-              { label: 'Commandes', active: false },
-              { label: 'Menu', active: false },
-              { label: 'POS', active: false },
-              { label: 'Réservations', active: false },
-              { label: 'Analytics', active: false },
-            ].map((item) => (
-              <div key={item.label} className={`flex items-center gap-2.5 px-3 py-2 mx-2 rounded-lg ${item.active ? 'bg-[#C8553D]/15 border border-[#C8553D]/20' : ''}`}>
-                <div className={`w-3.5 h-3.5 rounded ${item.active ? 'bg-[#C8553D]' : 'bg-white/10'}`} />
-                <div className={`h-2 rounded ${item.active ? 'bg-white/85 w-16' : 'bg-white/15 w-12'}`} />
-              </div>
-            ))}
-          </div>
-          <div className="flex-1 p-4 bg-[#FAFAF8] overflow-hidden">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <div className="w-28 h-3.5 bg-[#1C1917]/25 rounded mb-1.5" />
-                <div className="w-20 h-2.5 bg-[#1C1917]/12 rounded" />
-              </div>
-              <div className="w-20 h-7 bg-[#C8553D] rounded-xl" />
-            </div>
-            <div className="grid grid-cols-3 gap-2 mb-3">
-              {[
-                { label: 'CA Auj.', val: '142 500 F', color: '#C8553D' },
-                { label: 'Commandes', val: '28', color: '#D4A843' },
-                { label: 'Tables', val: '6/12', color: '#2D6A4F' },
-              ].map((s) => (
-                <div key={s.label} className="bg-white rounded-xl p-2.5 border border-[#E7E5E4]">
-                  <div className="text-[9px] text-[#57534E] mb-1">{s.label}</div>
-                  <div className="text-xs font-bold" style={{ color: s.color }}>{s.val}</div>
-                </div>
-              ))}
-            </div>
-            <div className="bg-white rounded-xl border border-[#E7E5E4] p-3">
-              <div className="text-[9px] font-bold text-[#1C1917] mb-2">Activité récente</div>
-              {[
-                { w: 'w-24', col: '#2D6A4F' }, { w: 'w-16', col: '#D4A843' }, { w: 'w-20', col: '#C8553D' },
-              ].map((r, i) => (
-                <div key={i} className="flex items-center gap-2 mb-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: r.col }} />
-                  <div className={`h-2 ${r.w} bg-[#1C1917]/15 rounded`} />
-                  <div className="ml-auto w-10 h-2 bg-[#1C1917]/10 rounded" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-      <motion.div className="absolute -left-12 top-14 bg-[#1E1E1B] border border-white/10 rounded-2xl p-4 shadow-2xl w-44 backdrop-blur-sm hidden lg:block" animate={{ y: [0, -7, 0] }} transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}>
-        <div className="text-[9px] text-[#D4A843] font-bold uppercase tracking-widest mb-2">Ventes du jour</div>
-        <div className="text-white font-bold text-xl leading-none" style={{ fontFamily: 'var(--font-heading)' }}>348 500<span className="text-[10px] text-white/35 font-normal ml-1">F CFA</span></div>
-        <div className="flex items-center gap-1 mt-2"><TrendingUp className="w-3 h-3 text-[#2D6A4F]" /><span className="text-[#2D6A4F] text-[10px] font-semibold">+23% vs hier</span></div>
-      </motion.div>
-      <motion.div className="absolute -right-10 bottom-14 bg-[#1E1E1B] border border-white/10 rounded-2xl p-3.5 shadow-2xl w-36 hidden lg:block" animate={{ y: [0, 7, 0] }} transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut', delay: 1.5 }}>
-        <div className="text-[9px] text-[#C8553D] font-bold uppercase tracking-widest mb-2">Commandes</div>
-        <div className="text-white font-bold text-2xl" style={{ fontFamily: 'var(--font-heading)' }}>28</div>
-        <div className="flex items-end gap-0.5 mt-2 h-6">
-          {[3, 4, 5, 3, 5, 6, 5].map((h, i) => (
-            <div key={i} className="flex-1 rounded-sm" style={{ height: `${h * 16}%`, backgroundColor: i === 6 ? '#C8553D' : 'rgba(200,85,61,0.35)' }} />
-          ))}
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
-function POSVisual() {
-  return (
-    <div className="relative w-full max-w-[340px] md:max-w-[440px]">
-      <div className="rounded-2xl overflow-hidden border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.7)] bg-[#161614]">
-        <div className="flex items-center gap-2 px-4 py-3 bg-[#1E1E1B] border-b border-white/6">
-          <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-[#FF5F57]" />
-            <div className="w-3 h-3 rounded-full bg-[#FEBC2E]" />
-            <div className="w-3 h-3 rounded-full bg-[#28C840]" />
-          </div>
-          <div className="flex-1 mx-3 h-5 bg-[#0C0C0A] rounded-md flex items-center px-3">
-            <div className="w-2 h-2 rounded-full bg-[#D4A843] mr-2 shrink-0" />
-            <span className="text-white/25 text-[10px] font-mono">app.terangatable.com/pos</span>
-          </div>
-        </div>
-        <div className="flex" style={{ height: 320 }}>
-          <div className="flex-1 bg-[#FAFAF8] p-3 overflow-hidden">
-            <div className="text-[10px] font-bold text-[#1C1917] mb-2">Menu</div>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { name: 'Thiéboudienne', price: '4 500', color: '#C8553D' },
-                { name: 'Yassa Poulet', price: '3 800', color: '#D4A843' },
-                { name: 'Mafé Bœuf', price: '4 200', color: '#2D6A4F' },
-                { name: 'Ceebu Yapp', price: '5 000', color: '#C8553D' },
-              ].map((item) => (
-                <div key={item.name} className="bg-white rounded-xl p-2.5 border border-[#E7E5E4]">
-                  <div className="w-full h-10 rounded-lg mb-2 flex items-center justify-center" style={{ backgroundColor: `${item.color}18` }}>
-                    <div className="w-6 h-6 rounded-full" style={{ backgroundColor: `${item.color}35` }} />
-                  </div>
-                  <div className="text-[8px] font-semibold text-[#1C1917] truncate">{item.name}</div>
-                  <div className="text-[9px] font-bold mt-0.5" style={{ color: item.color }}>{item.price} F</div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="w-36 bg-[#111110] p-3 flex flex-col">
-            <div className="text-[9px] font-bold text-white/60 mb-2 uppercase tracking-wider">Commande #47</div>
-            <div className="flex-1 space-y-1.5">
-              {[
-                { name: 'Thiéboudienne', qty: 2, price: '9 000' },
-                { name: 'Yassa Poulet', qty: 1, price: '3 800' },
-                { name: 'Bissap', qty: 2, price: '1 200' },
-              ].map((item) => (
-                <div key={item.name} className="bg-white/6 rounded-lg p-2">
-                  <div className="text-[8px] text-white/70 truncate">{item.name}</div>
-                  <div className="flex items-center justify-between mt-0.5">
-                    <span className="text-[8px] text-white/35">×{item.qty}</span>
-                    <span className="text-[8px] text-white/60 font-bold">{item.price} F</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="border-t border-white/10 pt-2 mt-2">
-              <div className="flex justify-between mb-2">
-                <span className="text-[9px] text-white/40">Total</span>
-                <span className="text-[10px] text-white font-bold">14 000 F</span>
-              </div>
-              <div className="grid grid-cols-2 gap-1">
-                <button className="bg-[#1BA9D4] rounded-lg py-1.5 text-[8px] font-bold text-white">Wave</button>
-                <button className="bg-[#F77F00] rounded-lg py-1.5 text-[8px] font-bold text-white">Orange</button>
-              </div>
-              <button className="w-full mt-1 bg-[#C8553D] rounded-lg py-1.5 text-[8px] font-bold text-white">Espèces</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <motion.div className="absolute -left-12 top-12 bg-[#1E1E1B] border border-white/10 rounded-2xl p-3.5 shadow-2xl w-40 hidden lg:block" animate={{ y: [0, -6, 0] }} transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}>
-        <div className="text-[9px] text-[#D4A843] font-bold uppercase tracking-widest mb-1.5">Paiements</div>
-        <div className="space-y-1">
-          {[{ m: 'Wave', v: '8 600 F', c: '#1BA9D4' }, { m: 'Orange', v: '5 400 F', c: '#F77F00' }].map((p) => (
-            <div key={p.m} className="flex items-center justify-between">
-              <span className="text-[9px] text-white/50">{p.m}</span>
-              <span className="text-[9px] font-bold" style={{ color: p.c }}>{p.v}</span>
-            </div>
-          ))}
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
-function OrdersVisual() {
-  const cols = [
-    { label: 'Nouvelles', color: '#F59E0B', items: ['Table 3 · 4 pers.', 'Livraison #82'] },
-    { label: 'En cuisine', color: '#3B82F6', items: ['Table 7 · URGENT', 'Table 1', 'À emporter #44'] },
-    { label: 'Prêtes', color: '#10B981', items: ['Table 5', 'Livraison #79'] },
-  ];
-  return (
-    <div className="relative w-full max-w-[340px] md:max-w-[460px]">
-      <div className="rounded-2xl overflow-hidden border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.7)] bg-[#161614]">
-        <div className="flex items-center gap-2 px-4 py-3 bg-[#1E1E1B] border-b border-white/6">
-          <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-[#FF5F57]" />
-            <div className="w-3 h-3 rounded-full bg-[#FEBC2E]" />
-            <div className="w-3 h-3 rounded-full bg-[#28C840]" />
-          </div>
-          <div className="flex-1 mx-3 h-5 bg-[#0C0C0A] rounded-md flex items-center px-3">
-            <div className="w-2 h-2 rounded-full bg-[#2D6A4F] mr-2 shrink-0" />
-            <span className="text-white/25 text-[10px] font-mono">app.terangatable.com/commandes</span>
-          </div>
-        </div>
-        <div className="p-4 bg-[#FAFAF8]" style={{ minHeight: 300 }}>
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-[11px] font-bold text-[#1C1917]">Cuisine en temps réel</div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#2D6A4F] animate-pulse" />
-              <span className="text-[9px] text-[#2D6A4F] font-semibold">Live</span>
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            {cols.map((col) => (
-              <div key={col.label}>
-                <div className="flex items-center justify-between px-2 py-1.5 rounded-t-xl mb-1" style={{ backgroundColor: col.color }}>
-                  <span className="text-[9px] font-bold text-white truncate">{col.label}</span>
-                  <span className="bg-white/25 px-1.5 py-0.5 rounded text-[8px] text-white font-bold ml-1">{col.items.length}</span>
-                </div>
-                <div className="space-y-1.5">
-                  {col.items.map((item, j) => (
-                    <div key={j} className={`bg-white rounded-xl p-2.5 border shadow-sm ${item.includes('URGENT') ? 'border-red-300' : 'border-[#E7E5E4]'}`}>
-                      {item.includes('URGENT') && <div className="text-[8px] text-red-500 font-bold mb-0.5 uppercase tracking-wide">⚡ Urgent</div>}
-                      <div className="text-[9px] font-semibold text-[#1C1917] truncate">{item.replace(' · URGENT', '')}</div>
-                      <div className="w-8 h-1.5 bg-[#1C1917]/10 rounded mt-1" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-      <motion.div className="absolute -right-10 top-14 bg-[#1E1E1B] border border-white/10 rounded-2xl p-3.5 shadow-2xl w-36 hidden lg:block" animate={{ scale: [1, 1.04, 1] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}>
-        <div className="text-[9px] text-[#2D6A4F] font-bold uppercase tracking-widest mb-2">Temps moyen</div>
-        <div className="text-white font-bold text-xl" style={{ fontFamily: 'var(--font-heading)' }}>12 <span className="text-sm text-white/40 font-normal">min</span></div>
-        <div className="text-[8px] text-[#2D6A4F] mt-1">↓ 3 min vs hier</div>
-      </motion.div>
-    </div>
-  );
-}
-
-function AnalyticsVisual() {
-  const bars = [45, 62, 48, 78, 91, 55, 83];
-  const days = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-  return (
-    <div className="relative w-full max-w-[340px] md:max-w-[440px]">
-      <div className="rounded-2xl overflow-hidden border border-white/10 shadow-[0_40px_100px_rgba(0,0,0,0.7)] bg-[#161614]">
-        <div className="flex items-center gap-2 px-4 py-3 bg-[#1E1E1B] border-b border-white/6">
-          <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-[#FF5F57]" />
-            <div className="w-3 h-3 rounded-full bg-[#FEBC2E]" />
-            <div className="w-3 h-3 rounded-full bg-[#28C840]" />
-          </div>
-          <div className="flex-1 mx-3 h-5 bg-[#0C0C0A] rounded-md flex items-center px-3">
-            <div className="w-2 h-2 rounded-full bg-[#C8553D] mr-2 shrink-0" />
-            <span className="text-white/25 text-[10px] font-mono">app.terangatable.com/analytics</span>
-          </div>
-        </div>
-        <div className="p-4 bg-[#FAFAF8]" style={{ minHeight: 300 }}>
-          <div className="grid grid-cols-3 gap-2 mb-3">
-            {[
-              { label: 'CA semaine', val: '2 840 000', unit: 'F CFA', color: '#C8553D', up: '+18%' },
-              { label: 'Commandes', val: '196', unit: 'cmd', color: '#D4A843', up: '+12%' },
-              { label: 'Panier moyen', val: '14 490', unit: 'F', color: '#2D6A4F', up: '+5%' },
-            ].map((kpi) => (
-              <div key={kpi.label} className="bg-white rounded-xl p-2.5 border border-[#E7E5E4]">
-                <div className="text-[8px] text-[#57534E] mb-1 leading-tight">{kpi.label}</div>
-                <div className="text-[10px] font-bold leading-tight" style={{ color: kpi.color }}>{kpi.val}<span className="text-[7px] text-[#57534E] font-normal ml-0.5">{kpi.unit}</span></div>
-                <div className="text-[7px] text-[#2D6A4F] font-semibold mt-0.5">{kpi.up}</div>
-              </div>
-            ))}
-          </div>
-          <div className="bg-white rounded-xl p-3 border border-[#E7E5E4] mb-2">
-            <div className="text-[9px] font-bold text-[#1C1917] mb-2">CA par jour (sem.)</div>
-            <div className="flex items-end gap-1 h-16">
-              {bars.map((h, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                  <div className="w-full rounded-t-sm" style={{ height: `${h}%`, backgroundColor: i === 4 ? '#C8553D' : 'rgba(200,85,61,0.28)' }} />
-                  <span className="text-[7px] text-[#57534E]">{days[i]}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="bg-white rounded-xl p-2.5 border border-[#E7E5E4]">
-            <div className="text-[9px] font-bold text-[#1C1917] mb-2">Plats best-sellers</div>
-            {[
-              { name: 'Thiéboudienne', pct: 88 },
-              { name: 'Yassa Poulet', pct: 64 },
-              { name: 'Mafé Bœuf', pct: 51 },
-            ].map((p) => (
-              <div key={p.name} className="mb-1.5">
-                <div className="flex justify-between mb-0.5">
-                  <span className="text-[8px] text-[#57534E]">{p.name}</span>
-                  <span className="text-[8px] font-bold text-[#C8553D]">{p.pct}%</span>
-                </div>
-                <div className="h-1 bg-[#1C1917]/8 rounded-full">
-                  <div className="h-1 bg-[#C8553D] rounded-full" style={{ width: `${p.pct}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-      <motion.div className="absolute -left-12 bottom-14 bg-[#1E1E1B] border border-white/10 rounded-2xl p-4 shadow-2xl w-44 hidden lg:block" animate={{ y: [0, -7, 0] }} transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}>
-        <div className="text-[9px] text-[#C8553D] font-bold uppercase tracking-widest mb-2">Meilleure heure</div>
-        <div className="text-white font-bold text-xl" style={{ fontFamily: 'var(--font-heading)' }}>12h – 14h</div>
-        <div className="text-[8px] text-white/40 mt-1">67 commandes en moyenne</div>
-      </motion.div>
-    </div>
-  );
-}
-
-function SlideVisual({ id }: { id: SlideId }) {
-  if (id === 'platform') return <PlatformVisual />;
-  if (id === 'pos') return <POSVisual />;
-  if (id === 'orders') return <OrdersVisual />;
-  return <AnalyticsVisual />;
-}
 
 // ── Counter ────────────────────────────────────────────────────────────────────
 
@@ -770,7 +454,7 @@ function LandingNav() {
 // ── Hero ───────────────────────────────────────────────────────────────────────
 
 function HeroSection() {
-  const SLIDE_DURATION = 5000;
+  const SLIDE_DURATION = 6000;
   const TICK = 80;
 
   const [current, setCurrent] = useState(0);
@@ -797,8 +481,7 @@ function HeroSection() {
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
-      const next = (current + 1) % HERO_SLIDES.length;
-      goTo(next, 1);
+      goTo((current + 1) % HERO_SLIDES.length, 1);
     }, SLIDE_DURATION);
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [current, goTo]);
@@ -806,161 +489,193 @@ function HeroSection() {
   const slide = HERO_SLIDES[current];
 
   const textVariants = {
-    enter: (d: number) => ({ opacity: 0, x: d * 40 }),
-    center: { opacity: 1, x: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const } },
-    exit: (d: number) => ({ opacity: 0, x: d * -30, transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] as const } }),
-  };
-
-  const visualVariants = {
-    enter: (d: number) => ({ opacity: 0, x: d * 60, scale: 0.94 }),
-    center: { opacity: 1, x: 0, scale: 1, transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] as const } },
-    exit: (d: number) => ({ opacity: 0, x: d * -40, scale: 0.96, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as const } }),
+    enter: (d: number) => ({ opacity: 0, y: d > 0 ? 28 : -28 }),
+    center: { opacity: 1, y: 0, transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] as const } },
+    exit: (d: number) => ({ opacity: 0, y: d > 0 ? -18 : 18, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as const } }),
   };
 
   return (
     <section className="relative min-h-[100svh] flex flex-col overflow-hidden bg-[#0C0C0A]">
-      <div className="grain-layer" aria-hidden />
 
-      <AnimatePresence mode="wait">
+      {/* ── Background images — crossfade + Ken Burns ── */}
+      <AnimatePresence mode="sync">
         <motion.div
-          key={`glow-${current}`}
-          className="absolute inset-0 pointer-events-none"
+          key={`bg-${current}`}
+          className="absolute inset-0 z-0"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.8 }}
-          style={{ background: `radial-gradient(ellipse 60% 50% at 70% 30%, ${slide.glow} 0%, transparent 70%)` }}
-        />
+          transition={{ duration: 1.4, ease: 'easeInOut' }}
+        >
+          <motion.img
+            src={slide.image}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+            initial={{ scale: 1.04 }}
+            animate={{ scale: 1.12 }}
+            transition={{ duration: SLIDE_DURATION / 1000 + 2, ease: 'linear' }}
+          />
+        </motion.div>
       </AnimatePresence>
-      <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(212,168,67,0.06) 0%, transparent 70%)' }} />
 
-      <div className="relative z-10 flex-1 flex items-center">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-24 sm:pt-28 pb-6 sm:pb-10 w-full grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-20 items-center">
+      {/* ── Gradient overlays ── */}
+      <div className="absolute inset-0 z-[1] bg-gradient-to-r from-black/90 via-black/65 sm:via-black/50 to-black/10" />
+      <div className="absolute inset-0 z-[1] bg-gradient-to-t from-black/80 via-black/10 to-black/40" />
+      {/* Accent color tint en bas à gauche */}
+      <motion.div
+        key={`tint-${current}`}
+        className="absolute bottom-0 left-0 w-96 h-96 rounded-full pointer-events-none z-[1]"
+        style={{ background: `radial-gradient(circle, ${slide.accent}22 0%, transparent 70%)` }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1.2 }}
+      />
+      <div className="grain-layer z-[2]" aria-hidden />
 
-          {/* ── Left: copy ── */}
-          <div className="flex flex-col gap-6 min-h-0">
-            <AnimatePresence mode="wait" custom={direction}>
-              <motion.div
-                key={`copy-${current}`}
-                custom={direction}
-                variants={textVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                className="flex flex-col gap-6"
+      {/* ── Content ── */}
+      <div className="relative z-10 flex-1 flex items-end sm:items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-6 w-full">
+
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.div
+              key={`copy-${current}`}
+              custom={direction}
+              variants={textVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              className="flex flex-col gap-5 max-w-2xl"
+            >
+              {/* Badge */}
+              <motion.span
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border self-start text-xs font-semibold tracking-wide backdrop-blur-sm"
+                style={{
+                  borderColor: `${slide.accent}55`,
+                  backgroundColor: `${slide.accent}22`,
+                  color: slide.accent,
+                }}
               >
-                <span
-                  className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border self-start text-xs font-semibold tracking-wide"
-                  style={{ borderColor: `${slide.accent}40`, backgroundColor: `${slide.accent}12`, color: slide.accent }}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full inline-block animate-pulse" style={{ backgroundColor: slide.accent }} />
-                  {slide.badge}
-                </span>
+                <span className="w-1.5 h-1.5 rounded-full inline-block animate-pulse" style={{ backgroundColor: slide.accent }} />
+                {slide.badge}
+              </motion.span>
 
-                <h1
-                  className="text-4xl sm:text-5xl xl:text-[3.4rem] font-bold text-white leading-[1.08] tracking-tight"
-                  style={{ fontFamily: 'var(--font-heading)' }}
-                >
-                  {slide.title}
-                </h1>
+              {/* Titre */}
+              <h1
+                className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-[1.1] tracking-tight"
+                style={{ fontFamily: 'var(--font-heading)', textShadow: '0 2px 24px rgba(0,0,0,0.6)' }}
+              >
+                {slide.title}
+              </h1>
 
-                <p className="text-white/50 text-base sm:text-lg leading-relaxed max-w-lg">
-                  {slide.sub}
-                </p>
+              {/* Sous-titre */}
+              <p
+                className="text-white/65 text-sm sm:text-base leading-relaxed max-w-md"
+                style={{ textShadow: '0 1px 10px rgba(0,0,0,0.7)' }}
+              >
+                {slide.sub}
+              </p>
 
-                <div className="flex flex-wrap gap-2">
-                  {slide.chips.map((chip) => (
-                    <span key={chip} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/6 border border-white/10 text-white/65 text-xs font-medium">
-                      <CheckCircle2 className="w-3 h-3" style={{ color: slide.accent }} />
-                      {chip}
-                    </span>
-                  ))}
-                </div>
-              </motion.div>
-            </AnimatePresence>
+              {/* Chips */}
+              <div className="flex flex-wrap gap-2">
+                {slide.chips.map((chip) => (
+                  <span
+                    key={chip}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white/85 text-xs font-medium backdrop-blur-md"
+                    style={{
+                      backgroundColor: 'rgba(0,0,0,0.38)',
+                      border: `1px solid ${slide.accent}45`,
+                    }}
+                  >
+                    <CheckCircle2 className="w-3 h-3 shrink-0" style={{ color: slide.accent }} />
+                    {chip}
+                  </span>
+                ))}
+              </div>
+            </motion.div>
+          </AnimatePresence>
 
-            <div className="flex flex-col sm:flex-row gap-3 mt-2">
-              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
-                <Link href="/register" className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full font-bold text-white text-sm bg-[#C8553D] hover:bg-[#A33D28] transition-colors shadow-2xl shadow-[#C8553D]/30">
-                  Commencer gratuitement
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
-                <a href="#fonctionnalites" className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full font-semibold text-white/70 text-sm border border-white/15 hover:border-white/35 hover:text-white hover:bg-white/5 transition-all">
-                  Voir les fonctionnalités
-                </a>
-              </motion.div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-5 pt-1">
-              {['14 jours gratuits', 'Aucune CB requise', 'Résiliation facile'].map((t) => (
-                <div key={t} className="flex items-center gap-1.5 text-xs text-white/35">
-                  <span className="text-[#2D6A4F] font-bold text-sm">✓</span>
-                  {t}
-                </div>
-              ))}
-            </div>
+          {/* CTAs — statiques, ne changent pas avec le slide */}
+          <div className="flex flex-col sm:flex-row gap-3 mt-7 sm:mt-8">
+            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+              <Link
+                href="/register"
+                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full font-bold text-white text-sm transition-colors shadow-2xl shadow-black/40"
+                style={{ backgroundColor: '#C8553D' }}
+              >
+                Commencer gratuitement
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+              <a
+                href="#fonctionnalites"
+                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full font-semibold text-white text-sm backdrop-blur-sm transition-all hover:bg-white/15"
+                style={{ backgroundColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.22)' }}
+              >
+                Voir les fonctionnalités
+              </a>
+            </motion.div>
           </div>
 
-          {/* ── Right: visual ── */}
-          <div className="relative hidden md:flex items-center justify-center lg:justify-end">
-            <AnimatePresence mode="wait" custom={direction}>
-              <motion.div
-                key={`visual-${current}`}
-                custom={direction}
-                variants={visualVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                className="w-full flex justify-center"
-              >
-                <SlideVisual id={slide.id} />
-              </motion.div>
-            </AnimatePresence>
+          <div className="flex flex-wrap items-center gap-5 mt-5">
+            {['14 jours gratuits', 'Aucune CB requise', 'Résiliation facile'].map((t) => (
+              <div key={t} className="flex items-center gap-1.5 text-xs text-white/50">
+                <span className="text-[#2D6A4F] font-bold text-sm">✓</span>
+                {t}
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* ── Bottom controls ── */}
-      <div className="relative z-10 pb-10 px-4 sm:px-6">
+      {/* ── Contrôles en bas ── */}
+      <div className="relative z-10 pb-8 sm:pb-10 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto flex items-center gap-4">
+
+          {/* Barres de progression */}
           <div className="flex-1 flex gap-2">
-            {HERO_SLIDES.map((s, i) => (
+            {HERO_SLIDES.map((_, i) => (
               <button
-                key={s.id}
+                key={i}
                 onClick={() => goTo(i)}
-                className="flex-1 h-1 rounded-full bg-white/12 overflow-hidden relative focus:outline-none min-h-[16px] flex items-center"
+                className="flex-1 rounded-full overflow-hidden relative focus:outline-none"
+                style={{ height: 3, minHeight: 20, display: 'flex', alignItems: 'center' }}
                 aria-label={`Slide ${i + 1}`}
               >
-                {i === current && (
-                  <motion.div
-                    className="absolute inset-y-0 left-0 rounded-full"
-                    style={{ backgroundColor: slide.accent, width: `${progress}%` }}
-                    transition={{ duration: 0 }}
-                  />
-                )}
-                {i < current && (
-                  <div className="absolute inset-0 rounded-full opacity-50" style={{ backgroundColor: slide.accent }} />
-                )}
+                <div className="w-full rounded-full overflow-hidden" style={{ height: 3, backgroundColor: 'rgba(255,255,255,0.22)' }}>
+                  {i === current && (
+                    <motion.div
+                      className="h-full rounded-full"
+                      style={{ backgroundColor: slide.accent, width: `${progress}%` }}
+                      transition={{ duration: 0 }}
+                    />
+                  )}
+                  {i < current && (
+                    <div className="h-full rounded-full opacity-75" style={{ backgroundColor: slide.accent }} />
+                  )}
+                </div>
               </button>
             ))}
           </div>
 
-          <span className="text-white/25 text-xs font-mono tabular-nums">
+          {/* Compteur */}
+          <span className="text-white/40 text-xs font-mono tabular-nums shrink-0">
             {String(current + 1).padStart(2, '0')}&nbsp;/&nbsp;{String(HERO_SLIDES.length).padStart(2, '0')}
           </span>
 
-          <div className="flex gap-1.5">
+          {/* Flèches */}
+          <div className="flex gap-1.5 shrink-0">
             <button
               onClick={() => goTo((current - 1 + HERO_SLIDES.length) % HERO_SLIDES.length, -1)}
-              className="w-10 h-10 rounded-full border border-white/12 flex items-center justify-center text-white/40 hover:text-white hover:border-white/30 transition-colors focus:outline-none"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white/60 hover:text-white transition-colors focus:outline-none backdrop-blur-sm"
+              style={{ backgroundColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={() => goTo((current + 1) % HERO_SLIDES.length, 1)}
-              className="w-10 h-10 rounded-full border border-white/12 flex items-center justify-center text-white/40 hover:text-white hover:border-white/30 transition-colors focus:outline-none"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white/60 hover:text-white transition-colors focus:outline-none backdrop-blur-sm"
+              style={{ backgroundColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}
             >
               <ChevronRight className="w-4 h-4" />
             </button>
