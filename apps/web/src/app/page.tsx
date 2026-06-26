@@ -21,57 +21,73 @@ const FEATURES = [
     Icon: Smartphone,
     title: 'Caisse & POS',
     description: 'Terminal tactile optimisé pour tablettes. Prise de commande rapide, paiements multiples, tickets imprimés.',
+    details: ['Prise de commande ultra-rapide', 'Wave, Orange Money & espèces', 'Impression automatique des tickets', 'Mode hors-ligne disponible', 'Gestion multi-tables'],
     color: '#C8553D',
-    bg: 'rgba(200,85,61,0.12)',
+    bg: 'rgba(200,85,61,0.15)',
+    gradient: 'linear-gradient(135deg, #C8553D, #A33D28)',
   },
   {
     Icon: Globe,
     title: 'Menu digital',
     description: 'Carte en ligne personnalisable avec photos, allergènes et filtres. Mise à jour instantanée.',
+    details: ['Photos et descriptions des plats', 'Filtres allergènes & régimes', 'Mise à jour en temps réel', 'QR code pour les tables', 'Multilingue (FR, EN, AR)'],
     color: '#D4A843',
-    bg: 'rgba(212,168,67,0.12)',
+    bg: 'rgba(212,168,67,0.15)',
+    gradient: 'linear-gradient(135deg, #D4A843, #A87E20)',
   },
   {
     Icon: ShoppingBag,
-    title: 'Gestion commandes',
+    title: 'Commandes',
     description: 'Kanban en temps réel pour la cuisine. Workflows personnalisables, alertes sonores, suivi statut.',
+    details: ['Kanban salle ↔ cuisine', 'Alertes sonores par statut', 'Zéro papier, zéro erreur', 'Historique complet des commandes', 'Tickets de cuisine imprimés'],
     color: '#2D6A4F',
-    bg: 'rgba(45,106,79,0.12)',
+    bg: 'rgba(45,106,79,0.15)',
+    gradient: 'linear-gradient(135deg, #2D6A4F, #1A3D2E)',
   },
   {
     Icon: Calendar,
     title: 'Réservations',
     description: 'Formulaire intégré au site vitrine. Plan de salle interactif, confirmation automatique.',
+    details: ['Calendrier des réservations', 'Plan de salle interactif', 'Confirmation par SMS/email', 'Gestion des no-shows', 'Rappels automatiques'],
     color: '#C8553D',
-    bg: 'rgba(200,85,61,0.12)',
+    bg: 'rgba(200,85,61,0.15)',
+    gradient: 'linear-gradient(135deg, #C8553D, #A33D28)',
   },
   {
     Icon: Users,
     title: 'CRM & Fidélité',
     description: 'Base clients centralisée, historique des commandes, programme de fidélité points.',
+    details: ['Fiche client complète', 'Historique des visites', 'Programme de points fidélité', 'Segmentation clients', 'Campagnes SMS ciblées'],
     color: '#D4A843',
-    bg: 'rgba(212,168,67,0.12)',
+    bg: 'rgba(212,168,67,0.15)',
+    gradient: 'linear-gradient(135deg, #D4A843, #A87E20)',
   },
   {
     Icon: BarChart3,
     title: 'Analytics',
     description: "Chiffre d'affaires, produits phares, heures de pointe. Tableaux de bord en temps réel.",
+    details: ["CA journalier, hebdomadaire, mensuel", 'Plats les plus vendus', 'Heures de pointe identifiées', 'Comparatifs de périodes', 'Export PDF & Excel'],
     color: '#2D6A4F',
-    bg: 'rgba(45,106,79,0.12)',
+    bg: 'rgba(45,106,79,0.15)',
+    gradient: 'linear-gradient(135deg, #2D6A4F, #1A3D2E)',
   },
   {
     Icon: Package,
     title: 'Site vitrine',
     description: 'Votre propre page restaurant avec domaine personnalisé. SEO, réservations, menu public.',
+    details: ['Domaine personnalisé inclus', 'Menu public en ligne', 'Réservations intégrées', 'Optimisé SEO local', 'Galerie photos'],
     color: '#C8553D',
-    bg: 'rgba(200,85,61,0.12)',
+    bg: 'rgba(200,85,61,0.15)',
+    gradient: 'linear-gradient(135deg, #C8553D, #A33D28)',
   },
   {
     Icon: Zap,
-    title: 'Livraison & Zones',
+    title: 'Livraison',
     description: 'Gestion des chauffeurs, zones de livraison et frais. Suivi en temps réel.',
+    details: ['Zones et frais configurables', 'Suivi chauffeur en temps réel', 'Notification client à la livraison', 'Rapports de livraison', 'Intégration Yango & autres'],
     color: '#D4A843',
-    bg: 'rgba(212,168,67,0.12)',
+    bg: 'rgba(212,168,67,0.15)',
+    gradient: 'linear-gradient(135deg, #D4A843, #A87E20)',
   },
 ];
 
@@ -497,26 +513,25 @@ function HeroSection() {
   return (
     <section className="relative min-h-[100svh] flex flex-col overflow-hidden bg-[#0C0C0A]">
 
-      {/* ── Background images — crossfade + Ken Burns ── */}
-      <AnimatePresence mode="sync">
+      {/* ── Background images — toutes dans le DOM, crossfade par opacity ── */}
+      {HERO_SLIDES.map((s, i) => (
         <motion.div
-          key={`bg-${current}`}
+          key={i}
           className="absolute inset-0 z-0"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          initial={false}
+          animate={{ opacity: i === current ? 1 : 0 }}
           transition={{ duration: 1.4, ease: 'easeInOut' }}
         >
           <motion.img
-            src={slide.image}
+            src={s.image}
             alt=""
             className="absolute inset-0 w-full h-full object-cover"
             initial={{ scale: 1.04 }}
-            animate={{ scale: 1.12 }}
-            transition={{ duration: SLIDE_DURATION / 1000 + 2, ease: 'linear' }}
+            animate={{ scale: 1.1 }}
+            transition={{ duration: 20, ease: 'linear' }}
           />
         </motion.div>
-      </AnimatePresence>
+      ))}
 
       {/* ── Gradient overlays ── */}
       <div className="absolute inset-0 z-[1] bg-gradient-to-r from-black/90 via-black/65 sm:via-black/50 to-black/10" />
@@ -689,13 +704,51 @@ function HeroSection() {
 // ── Stats ──────────────────────────────────────────────────────────────────────
 
 function StatsSection() {
-  return (
-    <section className="relative bg-[#C8553D] py-14 px-4 sm:px-6 overflow-hidden">
-      {/* Subtle grain */}
-      <div className="grain-layer opacity-[0.03]" aria-hidden />
-      <div className="absolute inset-0 bg-gradient-to-r from-[#A33D28]/30 via-transparent to-[#A33D28]/30 pointer-events-none" />
+  const bgImages = [
+    'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=900&q=65',
+    'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=65',
+    'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=900&q=65',
+    'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=900&q=65',
+    'https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?auto=format&fit=crop&w=900&q=65',
+    'https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?auto=format&fit=crop&w=900&q=65',
+  ];
 
-      <div className="relative max-w-6xl mx-auto">
+  return (
+    <section className="relative py-20 sm:py-24 px-4 sm:px-6 overflow-hidden">
+      <style>{`
+        @keyframes img-marquee {
+          from { transform: translateX(0); }
+          to { transform: translateX(-50%); }
+        }
+        .img-marquee-track { animation: img-marquee 28s linear infinite; }
+      `}</style>
+
+      {/* Images qui défilent en arrière-plan */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="img-marquee-track flex h-full w-max">
+          {[...bgImages, ...bgImages].map((src, i) => (
+            <img
+              key={i}
+              src={src}
+              alt=""
+              className="h-full object-cover"
+              style={{ minWidth: 320, width: 'auto' }}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Overlay dégradé de marque */}
+      <div
+        className="absolute inset-0"
+        style={{ background: 'linear-gradient(135deg, rgba(200,85,61,0.88) 0%, rgba(212,168,67,0.84) 50%, rgba(45,106,79,0.88) 100%)' }}
+      />
+      {/* Assombrissement supplémentaire pour lisibilité */}
+      <div className="absolute inset-0 bg-black/25" />
+      <div className="grain-layer opacity-[0.05]" aria-hidden />
+
+      {/* Contenu */}
+      <div className="relative z-10 max-w-6xl mx-auto">
         <motion.div
           className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-10 text-center"
           initial="hidden"
@@ -712,10 +765,13 @@ function StatsSection() {
                 visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } },
               }}
             >
-              <div className="text-4xl sm:text-5xl font-bold mb-1.5" style={{ fontFamily: 'var(--font-heading)' }}>
+              <div
+                className="text-4xl sm:text-5xl font-bold mb-1.5 text-white drop-shadow-lg"
+                style={{ fontFamily: 'var(--font-heading)' }}
+              >
                 <Counter target={s.value} suffix={s.suffix} />
               </div>
-              <div className="text-white/70 text-sm font-medium">{s.label}</div>
+              <div className="text-white/80 text-sm font-medium">{s.label}</div>
             </motion.div>
           ))}
         </motion.div>
@@ -727,318 +783,236 @@ function StatsSection() {
 // ── Features ───────────────────────────────────────────────────────────────────
 
 function FeaturesSection() {
+  const [selected, setSelected] = useState<typeof FEATURES[0] | null>(null);
+
   return (
     <section id="fonctionnalites" className="py-24 px-4 sm:px-6 bg-[#0C0C0A]">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-2xl mx-auto">
         <SectionHeader
           tag="Fonctionnalités"
           title="Tout ce dont votre restaurant a besoin"
-          sub="Une plateforme complète pensée pour les restaurants africains, de la prise de commande jusqu'à l'analyse de vos performances."
+          sub="Appuyez sur une fonctionnalité pour découvrir les détails."
         />
 
+        {/* ── Grille icônes style app ── */}
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+          className="grid grid-cols-4 gap-3 sm:gap-6"
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
-          variants={{ visible: { transition: { staggerChildren: 0.07 } } }}
+          viewport={{ once: true, margin: '-60px' }}
+          variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
         >
-          {FEATURES.map((f, i) => (
-            <motion.div
+          {FEATURES.map((f) => (
+            <motion.button
               key={f.title}
-              className="group relative rounded-2xl border border-white/6 bg-[#161614] p-6 overflow-hidden cursor-default"
+              onClick={() => setSelected(f)}
+              className="flex flex-col items-center gap-2.5 group focus:outline-none"
               variants={{
-                hidden: { opacity: 0, y: 28 },
-                visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
+                hidden: { opacity: 0, scale: 0.85 },
+                visible: { opacity: 1, scale: 1, transition: { duration: 0.4, ease: EASE } },
               }}
-              whileHover={{ y: -5, borderColor: 'rgba(255,255,255,0.14)', transition: { duration: 0.22, ease: EASE } }}
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.93 }}
             >
-              {/* Hover glow */}
+              {/* Icône app */}
               <div
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                style={{ background: `radial-gradient(ellipse at 50% 0%, ${f.bg} 0%, transparent 65%)` }}
-              />
-
-              {/* Step number */}
-              <div className="absolute top-5 right-5 text-xs font-mono font-bold opacity-15" style={{ color: f.color }}>
-                {String(i + 1).padStart(2, '0')}
-              </div>
-
-              {/* Icon */}
-              <div
-                className="relative w-11 h-11 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300"
-                style={{ backgroundColor: f.bg, color: f.color }}
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl flex items-center justify-center shadow-lg relative overflow-hidden"
+                style={{ background: f.gradient }}
               >
-                <f.Icon className="w-5 h-5" />
+                <div className="absolute inset-0 bg-white/10 rounded-inherit" />
+                <f.Icon className="w-7 h-7 sm:w-9 sm:h-9 text-white relative z-10" />
               </div>
-
-              <h3 className="font-bold text-white mb-2 text-[15px] relative" style={{ fontFamily: 'var(--font-heading)' }}>
+              <span className="text-white/65 text-[11px] sm:text-xs text-center leading-tight font-medium group-hover:text-white transition-colors">
                 {f.title}
-              </h3>
-              <p className="text-white/40 text-sm leading-relaxed relative">{f.description}</p>
-            </motion.div>
+              </span>
+            </motion.button>
           ))}
         </motion.div>
       </div>
-    </section>
-  );
-}
 
-// ── Dashboard Preview ──────────────────────────────────────────────────────────
+      {/* ── Modal détail ── */}
+      <AnimatePresence>
+        {selected && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 sm:p-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            onClick={() => setSelected(null)}
+          >
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
 
-function DashboardPreview() {
-  return (
-    <section className="py-24 px-4 sm:px-6 bg-[#111110] overflow-hidden">
-      <div className="max-w-6xl mx-auto">
-        <SectionHeader
-          tag="Dashboard"
-          title="Un tableau de bord pensé pour l'Afrique"
-          sub="Interface rapide et intuitive, conçue pour fonctionner même avec une connexion internet limitée."
-        />
-
-        <motion.div
-          className="relative mx-auto max-w-4xl"
-          initial={{ opacity: 0, y: 48 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-60px' }}
-          transition={{ duration: 0.85, ease: EASE }}
-        >
-          {/* Outer glow halo */}
-          <div className="absolute -inset-4 bg-[#C8553D]/6 rounded-3xl blur-3xl pointer-events-none" />
-
-          <div className="overflow-x-auto scrollbar-hide rounded-2xl">
-          <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-[0_40px_120px_rgba(0,0,0,0.85)] min-w-[640px]">
-            {/* Browser chrome */}
-            <div className="bg-[#1E1E1B] px-4 py-3 flex items-center gap-2 border-b border-white/6">
-              <div className="flex gap-1.5 shrink-0">
-                <div className="w-3 h-3 rounded-full bg-[#FF5F57]" />
-                <div className="w-3 h-3 rounded-full bg-[#FEBC2E]" />
-                <div className="w-3 h-3 rounded-full bg-[#28C840]" />
-              </div>
-              <div className="flex-1 mx-4 h-6 bg-[#111110] rounded-lg flex items-center px-3 min-w-0">
-                <div className="w-2 h-2 rounded-full bg-[#2D6A4F] mr-2 shrink-0" />
-                <span className="text-white/25 text-xs font-mono truncate">app.terangatable.com/dashboard</span>
-              </div>
-            </div>
-
-            {/* Dashboard body */}
-            <div className="bg-[#FAFAF8] flex" style={{ height: 420 }}>
-              {/* Sidebar */}
-              <div className="w-56 bg-[#1A1A18] flex flex-col py-5 gap-0.5 shrink-0">
-                <div className="px-4 mb-5">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-[#C8553D] flex items-center justify-center shrink-0">
-                      <span className="text-white text-sm font-bold">T</span>
-                    </div>
-                    <div>
-                      <div className="w-20 h-2.5 bg-white/25 rounded mb-1.5" />
-                      <div className="w-14 h-2 bg-white/12 rounded" />
-                    </div>
+            {/* Panel */}
+            <motion.div
+              className="relative bg-[#161614] rounded-3xl w-full max-w-md border border-white/10 overflow-hidden"
+              initial={{ y: 80, opacity: 0, scale: 0.96 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 50, opacity: 0, scale: 0.96 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header coloré */}
+              <div className="relative px-6 pt-7 pb-6" style={{ background: selected.gradient }}>
+                <div className="absolute inset-0 bg-black/20" />
+                <div className="relative flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
+                    <selected.Icon className="w-7 h-7 text-white" />
                   </div>
-                </div>
-
-                <div className="px-2 flex flex-col gap-0.5">
-                  {[
-                    { label: 'Tableau de bord', active: false },
-                    { label: 'Commandes', active: true },
-                    { label: 'Menu', active: false },
-                    { label: 'Caisse POS', active: false },
-                    { label: 'Réservations', active: false },
-                    { label: 'Analytics', active: false },
-                    { label: 'Clients CRM', active: false },
-                    { label: 'Paramètres', active: false },
-                  ].map((item) => (
-                    <div
-                      key={item.label}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl ${
-                        item.active ? 'bg-[#C8553D]/12 border border-[#C8553D]/20' : ''
-                      }`}
-                    >
-                      <div className={`w-4 h-4 rounded ${item.active ? 'bg-[#C8553D]' : 'bg-white/10'}`} />
-                      <div className={`h-2 rounded ${item.active ? 'bg-white/85 w-20' : 'bg-white/16 w-14'}`} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Main */}
-              <div className="flex-1 p-6 overflow-hidden">
-                {/* Topbar */}
-                <div className="flex items-center justify-between mb-6">
                   <div>
-                    <div className="w-40 h-5 bg-[#1C1917]/25 rounded-lg mb-2" />
-                    <div className="w-28 h-3 bg-[#1C1917]/12 rounded" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-[#E7E5E4] rounded-xl" />
-                    <div className="w-8 h-8 bg-[#E7E5E4] rounded-xl" />
-                    <div className="w-32 h-9 bg-[#C8553D] rounded-xl" />
-                  </div>
-                </div>
-
-                {/* KPI row */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-                  {[
-                    { label: "CA Aujourd'hui", val: '348 500 F', trend: '+23%', color: '#C8553D' },
-                    { label: 'Commandes actives', val: '28', trend: '+5', color: '#D4A843' },
-                    { label: 'Tables libres', val: '6 / 12', trend: '−2', color: '#2D6A4F' },
-                    { label: 'Temps moyen', val: '22 min', trend: '−3 min', color: '#3B82F6' },
-                  ].map((kpi) => (
-                    <div key={kpi.label} className="bg-white rounded-xl p-3 border border-[#E7E5E4] shadow-sm">
-                      <div className="text-[10px] text-[#78716C] mb-1.5 truncate">{kpi.label}</div>
-                      <div className="font-bold text-sm text-[#1C1917] mb-1">{kpi.val}</div>
-                      <div className="text-[10px] font-semibold" style={{ color: kpi.color }}>{kpi.trend}</div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Chart + Kanban */}
-                <div className="grid grid-cols-3 gap-3">
-                  {/* Bar chart */}
-                  <div className="col-span-1 bg-white rounded-xl p-3.5 border border-[#E7E5E4]">
-                    <div className="text-[10px] text-[#78716C] mb-3 font-medium">Ventes — 7 jours</div>
-                    <div className="flex items-end gap-1" style={{ height: 70 }}>
-                      {[38, 62, 47, 78, 92, 68, 100].map((h, i) => (
-                        <div
-                          key={i}
-                          className="flex-1 rounded-t"
-                          style={{
-                            height: `${h}%`,
-                            backgroundColor: i === 6 ? '#C8553D' : 'rgba(200,85,61,0.2)',
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Kanban */}
-                  <div className="col-span-2 grid grid-cols-3 gap-2">
-                    {[
-                      { label: 'Nouvelles', color: '#F59E0B', count: 3 },
-                      { label: 'En cuisine', color: '#3B82F6', count: 5 },
-                      { label: 'Prêtes', color: '#10B981', count: 2 },
-                    ].map((col) => (
-                      <div key={col.label}>
-                        <div
-                          className="px-2 py-1.5 text-[10px] font-bold text-white flex items-center justify-between rounded-t-lg"
-                          style={{ backgroundColor: col.color }}
-                        >
-                          <span className="truncate">{col.label}</span>
-                          <span className="bg-white/25 px-1.5 rounded text-[9px] ml-1 shrink-0">{col.count}</span>
-                        </div>
-                        {Array.from({ length: Math.min(col.count, 3) }).map((_, j) => (
-                          <div key={j} className="bg-white border border-[#E7E5E4] rounded p-2 mt-1">
-                            <div className="w-14 h-2 bg-[#1C1917]/18 rounded mb-1" />
-                            <div className="w-10 h-1.5 bg-[#57534E]/12 rounded" />
-                          </div>
-                        ))}
-                      </div>
-                    ))}
+                    <h3 className="text-white font-bold text-xl" style={{ fontFamily: 'var(--font-heading)' }}>
+                      {selected.title}
+                    </h3>
+                    <p className="text-white/70 text-sm mt-0.5">{selected.description}</p>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-          </div>
-        </motion.div>
-      </div>
+
+              {/* Détails */}
+              <div className="px-6 py-5">
+                <p className="text-white/40 text-xs font-semibold uppercase tracking-widest mb-3">Inclus</p>
+                <ul className="flex flex-col gap-3">
+                  {selected.details.map((d) => (
+                    <li key={d} className="flex items-center gap-3 text-sm text-white/80">
+                      <span
+                        className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: selected.bg }}
+                      >
+                        <CheckCircle2 className="w-3 h-3" style={{ color: selected.color }} />
+                      </span>
+                      {d}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* CTA */}
+              <div className="px-6 pb-6 pt-1">
+                <Link
+                  href="/register"
+                  className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-bold text-white text-sm"
+                  style={{ background: selected.gradient }}
+                  onClick={() => setSelected(null)}
+                >
+                  Commencer gratuitement
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <button
+                  onClick={() => setSelected(null)}
+                  className="w-full mt-2.5 py-2.5 text-white/35 text-sm hover:text-white/60 transition-colors"
+                >
+                  Fermer
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
-
 // ── Marketplace CTA ────────────────────────────────────────────────────────────
-// Compact — remplace l'ancienne DiscoverySection volumineuse
 
 function MarketplaceCtaSection() {
   const cities = [
-    { name: 'Dakar', slug: 'dakar', flag: '🇸🇳', count: '200+', highlight: true },
-    { name: 'Abidjan', slug: 'abidjan', flag: '🇨🇮', count: '80+', highlight: false },
-    { name: 'Casablanca', slug: 'casablanca', flag: '🇲🇦', count: '60+', highlight: false },
-    { name: 'Thiès', slug: 'thies', flag: '🇸🇳', count: '45+', highlight: false },
-    { name: 'Saint-Louis', slug: 'saint-louis', flag: '🇸🇳', count: '30+', highlight: false },
+    { name: 'Dakar', slug: 'dakar', count: '200+' },
+    { name: 'Abidjan', slug: 'abidjan', count: '80+' },
+    { name: 'Casablanca', slug: 'casablanca', count: '60+' },
+    { name: 'Thiès', slug: 'thies', count: '45+' },
+    { name: 'Saint-Louis', slug: 'saint-louis', count: '30+' },
   ];
 
   return (
-    <section className="py-24 px-4 sm:px-6 bg-[#0C0C0A]">
-      <div className="max-w-6xl mx-auto">
+    <section className="relative py-32 sm:py-44 px-4 sm:px-6 overflow-hidden">
+      {/* Image de fond */}
+      <img
+        src="https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?auto=format&fit=crop&w=1920&q=80"
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+      {/* Overlays */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/50 to-black/90" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
+      <div className="grain-layer" aria-hidden />
+
+      <div className="relative z-10 max-w-6xl mx-auto">
         <motion.div
-          className="relative rounded-3xl overflow-hidden"
-          initial={{ opacity: 0, y: 36 }}
+          className="text-center max-w-3xl mx-auto mb-14"
+          initial={{ opacity: 0, y: 32 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.75, ease: EASE }}
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-[#1A1A18] via-[#1C0D07] to-[#1A1A18]" />
-          <div className="grain-layer" aria-hidden />
-          <div className="absolute -top-24 -right-16 w-96 h-96 bg-[#C8553D]/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-16 -left-8 w-72 h-72 bg-[#D4A843]/7 rounded-full blur-3xl pointer-events-none" />
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[#D4A843]/40 bg-[#D4A843]/12 text-[#D4A843] text-xs font-bold uppercase tracking-widest mb-7 backdrop-blur-sm">
+            <MapPin className="w-3.5 h-3.5" />
+            Marketplace
+          </div>
 
-          <div className="relative z-10 p-8 sm:p-12 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-            {/* Left */}
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#D4A843]/12 border border-[#D4A843]/25 text-[#D4A843] text-xs font-bold uppercase tracking-widest mb-5">
-                <MapPin className="w-3 h-3" />
-                Marketplace
-              </div>
-              <h2
-                className="text-3xl sm:text-4xl font-bold text-white mb-4 leading-tight"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
-                Des millions de clients découvrent des restaurants chaque mois
-              </h2>
-              <p className="text-white/45 text-sm leading-relaxed mb-7 max-w-sm">
-                TérangaTable est aussi une marketplace de découverte — vos futurs clients y cherchent, commandent et réservent. Référencez votre restaurant et touchez une nouvelle clientèle dès aujourd&apos;hui.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
-                  <Link
-                    href="/decouvrir"
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#C8553D] text-white font-semibold text-sm hover:bg-[#A33D28] transition-colors shadow-xl shadow-[#C8553D]/20"
-                  >
-                    <MapPin className="w-4 h-4" />
-                    Explorer la marketplace
-                  </Link>
-                </motion.div>
-                <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
-                  <Link
-                    href="/register"
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-white/18 text-white/70 font-semibold text-sm hover:border-white/35 hover:text-white transition-all"
-                  >
-                    Référencer mon restaurant
-                  </Link>
-                </motion.div>
-              </div>
-            </div>
+          <h2
+            className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.06] tracking-tight mb-6"
+            style={{ fontFamily: 'var(--font-heading)', textShadow: '0 2px 32px rgba(0,0,0,0.6)' }}
+          >
+            Vos futurs clients vous cherchent déjà.
+          </h2>
+          <p className="text-white/60 text-base sm:text-lg leading-relaxed max-w-xl mx-auto mb-10">
+            TérangaTable est aussi une marketplace de découverte — référencez votre restaurant et touchez des milliers de nouveaux clients chaque mois.
+          </p>
 
-            {/* Right — city grid */}
-            <div>
-              <p className="text-white/25 text-[10px] uppercase tracking-[0.2em] font-semibold mb-4">Villes disponibles</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
-                {cities.map((city) => (
-                  <motion.div key={city.slug} whileHover={{ scale: 1.06, y: -2 }} transition={{ duration: 0.18 }}>
-                    <Link
-                      href={`/decouvrir/${city.slug}`}
-                      className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border transition-all ${
-                        city.highlight
-                          ? 'bg-[#C8553D]/15 border-[#C8553D]/30 hover:bg-[#C8553D]/22'
-                          : 'bg-white/5 border-white/8 hover:bg-white/10 hover:border-white/16'
-                      }`}
-                    >
-                      <span className="text-white/60 text-xs font-bold">{city.name.slice(0, 2).toUpperCase()}</span>
-                      <span className="text-white/75 text-xs font-semibold">{city.name}</span>
-                      <span className="text-white/30 text-[10px] font-mono">{city.count} restos</span>
-                    </Link>
-                  </motion.div>
-                ))}
-              </div>
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-14">
+            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
               <Link
                 href="/decouvrir"
-                className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-white/8 text-white/35 text-xs hover:text-white/60 hover:border-white/18 transition-colors"
+                className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-[#C8553D] text-white font-bold text-sm shadow-2xl shadow-[#C8553D]/30 hover:bg-[#A33D28] transition-colors"
               >
-                Voir toutes les villes <ArrowRight className="w-3 h-3" />
+                <MapPin className="w-4 h-4" />
+                Explorer la marketplace
               </Link>
-            </div>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+              <Link
+                href="/register"
+                className="inline-flex items-center gap-2 px-8 py-4 rounded-full font-semibold text-white text-sm backdrop-blur-sm transition-all hover:bg-white/15"
+                style={{ backgroundColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.25)' }}
+              >
+                Référencer mon restaurant
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </motion.div>
           </div>
+        </motion.div>
+
+        {/* Villes */}
+        <motion.div
+          className="flex flex-wrap justify-center gap-3"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.2, ease: EASE }}
+        >
+          <span className="text-white/35 text-xs font-semibold uppercase tracking-widest self-center mr-1">Disponible à</span>
+          {cities.map((city) => (
+            <motion.div key={city.slug} whileHover={{ scale: 1.07, y: -2 }} whileTap={{ scale: 0.96 }}>
+              <Link
+                href={`/decouvrir/${city.slug}`}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-sm border border-white/15 bg-white/8 text-white/75 text-sm font-medium hover:bg-white/16 hover:border-white/30 hover:text-white transition-all"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-[#2D6A4F]" />
+                {city.name}
+                <span className="text-white/35 text-xs font-mono">{city.count}</span>
+              </Link>
+            </motion.div>
+          ))}
+          <motion.div whileHover={{ scale: 1.07, y: -2 }}>
+            <Link
+              href="/decouvrir"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-dashed border-white/20 text-white/35 text-sm hover:text-white/60 hover:border-white/35 transition-all"
+            >
+              + d&apos;autres villes
+            </Link>
+          </motion.div>
         </motion.div>
       </div>
     </section>
@@ -1048,38 +1022,40 @@ function MarketplaceCtaSection() {
 // ── Testimonials ───────────────────────────────────────────────────────────────
 
 function TestimonialsSection() {
-  return (
-    <section className="py-24 px-4 sm:px-6 bg-[#111110]">
-      <div className="max-w-6xl mx-auto">
-        <SectionHeader
-          tag="Témoignages"
-          title="Ils nous font confiance"
-        />
+  const doubled = [...TESTIMONIALS, ...TESTIMONIALS, ...TESTIMONIALS];
 
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-3 gap-5"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
-          variants={{ visible: { transition: { staggerChildren: 0.12 } } }}
-        >
-          {TESTIMONIALS.map((t) => (
-            <motion.div
-              key={t.author}
-              className="relative rounded-2xl border border-white/8 bg-[#161614] p-6 flex flex-col gap-4 group"
-              variants={{
-                hidden: { opacity: 0, y: 28 },
-                visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
-              }}
-              whileHover={{ y: -5, borderColor: 'rgba(255,255,255,0.14)', transition: { duration: 0.22 } }}
+  return (
+    <section className="py-24 bg-[#111110] overflow-hidden">
+      <style>{`
+        @keyframes marquee-scroll {
+          from { transform: translateX(0); }
+          to { transform: translateX(-33.333%); }
+        }
+        .marquee-track { animation: marquee-scroll 22s linear infinite; }
+        .marquee-track:hover { animation-play-state: paused; }
+      `}</style>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 mb-12">
+        <SectionHeader tag="Témoignages" title="Ils nous font confiance" />
+      </div>
+
+      <div className="relative">
+        {/* Fade bords */}
+        <div className="absolute left-0 top-0 bottom-0 w-24 sm:w-40 bg-gradient-to-r from-[#111110] to-transparent z-10 pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-24 sm:w-40 bg-gradient-to-l from-[#111110] to-transparent z-10 pointer-events-none" />
+
+        {/* Piste défilante */}
+        <div className="marquee-track flex gap-5 w-max">
+          {doubled.map((t, i) => (
+            <div
+              key={i}
+              className="w-80 shrink-0 rounded-2xl border border-white/8 bg-[#161614] p-6 flex flex-col gap-4"
             >
-              {/* Quote mark */}
               <div className="text-5xl font-serif leading-none" style={{ color: `${t.color}30` }}>&ldquo;</div>
 
-              {/* Stars */}
               <div className="flex gap-1 -mt-3">
-                {Array.from({ length: t.rating }).map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-[#D4A843] text-[#D4A843]" />
+                {Array.from({ length: t.rating }).map((_, j) => (
+                  <Star key={j} className="w-4 h-4 fill-[#D4A843] text-[#D4A843]" />
                 ))}
               </div>
 
@@ -1100,92 +1076,143 @@ function TestimonialsSection() {
                 </div>
                 <div className="text-[10px] text-white/20 font-mono shrink-0">{t.city}</div>
               </div>
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );
 }
 
+
 // ── Pricing ────────────────────────────────────────────────────────────────────
 
 function PricingSection() {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const idx = Math.round(el.scrollLeft / el.offsetWidth);
+      setActive(Math.max(0, Math.min(idx, PLANS.length - 1)));
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const scrollTo = (i: number) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ left: i * el.offsetWidth, behavior: 'smooth' });
+  };
+
+  const PlanCard = ({ plan }: { plan: typeof PLANS[0] }) => (
+    <div
+      className={`relative rounded-2xl flex flex-col p-7 h-full ${
+        plan.highlight
+          ? 'bg-[#161614] border-2 shadow-[0_0_70px_rgba(200,85,61,0.18)]'
+          : 'bg-[#161614] border border-white/8'
+      }`}
+      style={plan.highlight ? { borderColor: 'rgba(200,85,61,0.55)' } : {}}
+    >
+      {plan.highlight && (
+        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-white text-xs font-bold bg-[#C8553D] shadow-lg shadow-[#C8553D]/30 whitespace-nowrap">
+          Le plus populaire
+        </div>
+      )}
+
+      <div className="mb-6">
+        <div className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: plan.color }}>
+          {plan.name}
+        </div>
+        <div className="flex items-end gap-2 mb-2">
+          <span className="text-4xl font-bold text-white" style={{ fontFamily: 'var(--font-heading)' }}>
+            {plan.price}
+          </span>
+          <span className="text-white/30 text-sm mb-1">{plan.currency} / mois</span>
+        </div>
+        <p className="text-white/30 text-xs">{plan.description}</p>
+      </div>
+
+      <ul className="flex-1 space-y-3 mb-7">
+        {plan.features.map((feature) => (
+          <li key={feature} className="flex items-start gap-2.5">
+            <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" style={{ color: plan.color }} />
+            <span className="text-white/60 text-sm">{feature}</span>
+          </li>
+        ))}
+      </ul>
+
+      <Link
+        href="/register"
+        className="block text-center py-3.5 rounded-xl font-bold text-sm transition-all"
+        style={
+          plan.highlight
+            ? { backgroundColor: plan.color, color: '#fff' }
+            : { backgroundColor: `${plan.color}14`, color: plan.color, border: `1px solid ${plan.color}28` }
+        }
+      >
+        {plan.cta}
+      </Link>
+    </div>
+  );
+
   return (
-    <section id="tarifs" className="py-24 px-4 sm:px-6 bg-[#0C0C0A]">
-      <div className="max-w-5xl mx-auto">
+    <section id="tarifs" className="py-24 bg-[#0C0C0A] overflow-hidden">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
         <SectionHeader
           tag="Tarifs"
           title="Des tarifs adaptés à votre restaurant"
           sub="Commencez gratuitement pendant 14 jours. Aucune carte bancaire requise."
         />
+      </div>
 
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-3 gap-5"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
-          variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
+      {/* ── Mobile : carousel swipeable ── */}
+      <div className="md:hidden">
+        <div
+          ref={scrollRef}
+          className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide gap-4 px-4 sm:px-6 pb-2"
         >
           {PLANS.map((plan) => (
-            <motion.div
-              key={plan.name}
-              className={`relative rounded-2xl flex flex-col p-7 ${
-                plan.highlight
-                  ? 'bg-[#161614] border-2 shadow-[0_0_70px_rgba(200,85,61,0.18)]'
-                  : 'bg-[#161614] border border-white/8'
-              }`}
-              style={plan.highlight ? { borderColor: 'rgba(200,85,61,0.55)' } : {}}
-              variants={{
-                hidden: { opacity: 0, y: 28 },
-                visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
-              }}
-              whileHover={{ y: -4, transition: { duration: 0.22 } }}
-            >
-              {plan.highlight && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-white text-xs font-bold bg-[#C8553D] shadow-lg shadow-[#C8553D]/30 whitespace-nowrap">
-                  Le plus populaire
-                </div>
-              )}
-
-              <div className="mb-6">
-                <div className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: plan.color }}>
-                  {plan.name}
-                </div>
-                <div className="flex items-end gap-2 mb-2">
-                  <span className="text-4xl font-bold text-white" style={{ fontFamily: 'var(--font-heading)' }}>
-                    {plan.price}
-                  </span>
-                  <span className="text-white/30 text-sm mb-1">{plan.currency} / mois</span>
-                </div>
-                <p className="text-white/30 text-xs">{plan.description}</p>
-              </div>
-
-              <ul className="flex-1 space-y-3 mb-7">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" style={{ color: plan.color }} />
-                    <span className="text-white/60 text-sm">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
-                <Link
-                  href="/register"
-                  className="block text-center py-3.5 rounded-xl font-bold text-sm transition-all"
-                  style={
-                    plan.highlight
-                      ? { backgroundColor: plan.color, color: '#fff' }
-                      : { backgroundColor: `${plan.color}14`, color: plan.color, border: `1px solid ${plan.color}28` }
-                  }
-                >
-                  {plan.cta}
-                </Link>
-              </motion.div>
-            </motion.div>
+            <div key={plan.name} className="snap-center shrink-0 w-[calc(100vw-3rem)] sm:w-[calc(100vw-4rem)]">
+              <PlanCard plan={plan} />
+            </div>
           ))}
-        </motion.div>
+        </div>
+
+        {/* Dots */}
+        <div className="flex justify-center gap-2 mt-5">
+          {PLANS.map((plan, i) => (
+            <button
+              key={i}
+              onClick={() => scrollTo(i)}
+              className="h-2 rounded-full transition-all duration-300 focus:outline-none"
+              style={{
+                width: i === active ? 20 : 8,
+                backgroundColor: i === active ? PLANS[active].color : 'rgba(255,255,255,0.2)',
+              }}
+              aria-label={plan.name}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* ── Desktop : grille 3 colonnes ── */}
+      <div className="hidden md:grid grid-cols-3 gap-5 max-w-5xl mx-auto px-6">
+        {PLANS.map((plan) => (
+          <motion.div
+            key={plan.name}
+            initial={{ opacity: 0, y: 28 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-80px' }}
+            transition={{ duration: 0.55, ease: EASE }}
+            whileHover={{ y: -4, transition: { duration: 0.22 } }}
+          >
+            <PlanCard plan={plan} />
+          </motion.div>
+        ))}
       </div>
     </section>
   );
@@ -1195,73 +1222,147 @@ function PricingSection() {
 
 function RegionsSection() {
   return (
-    <section id="regions" className="py-24 px-4 sm:px-6 bg-[#111110]">
-      <div className="max-w-5xl mx-auto">
-        <SectionHeader
-          tag="Couverture"
-          title="Disponible à travers l'Afrique"
-          sub="Localisé pour chaque marché — devises, langues et réglementations locales."
-        />
+    <section id="regions" className="relative py-24 px-4 sm:px-6 bg-[#0C0C0A] overflow-hidden">
+      {/* Fond décoratif */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#C8553D]/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-0 w-[400px] h-[300px] bg-[#2D6A4F]/5 rounded-full blur-[100px]" />
+      </div>
+      <div className="grain-layer" aria-hidden />
 
+      <div className="relative z-10 max-w-6xl mx-auto">
+        {/* Header deux colonnes */}
         <motion.div
-          className="grid grid-cols-2 sm:grid-cols-3 gap-4"
+          className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-14"
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.6, ease: EASE }}
+        >
+          <div>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#C8553D]/10 border border-[#C8553D]/20 text-[#C8553D] text-xs font-bold uppercase tracking-widest mb-5">
+              <MapPin className="w-3 h-3" />
+              Couverture
+            </div>
+            <h2
+              className="text-4xl sm:text-5xl font-bold text-white leading-[1.08] tracking-tight"
+              style={{ fontFamily: 'var(--font-heading)' }}
+            >
+              Disponible là où<br />vous êtes.
+            </h2>
+          </div>
+          <p className="text-white/35 text-sm leading-relaxed max-w-xs lg:text-right">
+            Devises, langues et réglementations locales — chaque marché a sa propre configuration.
+          </p>
+        </motion.div>
+
+        {/* Grille régions */}
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: '-60px' }}
-          variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
+          variants={{ visible: { transition: { staggerChildren: 0.07 } } }}
         >
           {REGIONS.map((r) => (
             <motion.div
               key={r.city}
-              className={`rounded-2xl border overflow-hidden flex flex-col ${
+              className={`group relative rounded-2xl overflow-hidden flex flex-col transition-all duration-300 ${
                 r.status === 'soon'
-                  ? 'bg-[#161614] border-white/5 opacity-45 cursor-default'
-                  : 'bg-[#161614] border-white/8 hover:border-white/18 hover:bg-[#1C1C1A] transition-all cursor-default'
+                  ? 'opacity-40 cursor-default'
+                  : 'cursor-default hover:scale-[1.02]'
               }`}
               variants={{
-                hidden: { opacity: 0, scale: 0.94 },
+                hidden: { opacity: 0, y: 20 },
                 visible: {
-                  opacity: r.status === 'soon' ? 0.45 : 1,
-                  scale: 1,
-                  transition: { duration: 0.4, ease: EASE },
+                  opacity: r.status === 'soon' ? 0.4 : 1,
+                  y: 0,
+                  transition: { duration: 0.5, ease: EASE },
                 },
               }}
-              whileHover={r.status !== 'soon' ? { y: -4, transition: { duration: 0.2 } } : {}}
+              style={{ border: `1px solid ${r.primary}22` }}
             >
-              {/* Flag stripes — 3px top border */}
-              <div className="flex h-[3px] shrink-0">
+              {/* Gradient de fond avec la couleur primaire du pays */}
+              <div
+                className="absolute inset-0"
+                style={{ background: `linear-gradient(135deg, ${r.primary}14 0%, rgba(22,22,20,0.95) 55%)` }}
+              />
+              <div className="absolute inset-0 bg-[#161614]/80" />
+
+              {/* Bande drapeau en haut */}
+              <div className="flex h-2 shrink-0 relative z-10">
                 {r.stripes.map((c, i) => (
                   <div key={i} className="flex-1" style={{ backgroundColor: c }} />
                 ))}
               </div>
 
-              <div className="p-5 flex flex-col gap-2.5 flex-1">
-                <div className="flex items-start justify-between">
+              {/* Contenu */}
+              <div className="relative z-10 p-6 flex flex-col gap-4 flex-1">
+                {/* Top row */}
+                <div className="flex items-center justify-between">
                   <span
-                    className="text-[11px] font-bold px-2 py-0.5 rounded-md"
-                    style={{ backgroundColor: `${r.primary}22`, color: r.primary }}
+                    className="text-xs font-black px-2.5 py-1 rounded-lg tracking-widest"
+                    style={{ backgroundColor: `${r.primary}20`, color: r.primary }}
                   >
                     {r.code}
                   </span>
                   {r.status === 'soon' ? (
-                    <span className="text-[10px] font-bold bg-[#D4A843]/12 text-[#D4A843] px-2 py-0.5 rounded-full border border-[#D4A843]/18">
+                    <span className="text-[10px] font-bold bg-[#D4A843]/10 text-[#D4A843] px-2.5 py-1 rounded-full border border-[#D4A843]/20">
                       Bientôt
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 text-[10px] text-[#2D6A4F] font-semibold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#2D6A4F] animate-pulse inline-block" />
+                    <span className="flex items-center gap-1.5 text-[10px] text-[#2D6A4F] font-bold uppercase tracking-wide">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#2D6A4F] animate-pulse" />
                       Actif
                     </span>
                   )}
                 </div>
+
+                {/* Ville + pays */}
                 <div>
-                  <div className="font-bold text-white text-base" style={{ fontFamily: 'var(--font-heading)' }}>{r.city}</div>
-                  <div className="text-white/38 text-sm">{r.country}</div>
+                  <div
+                    className="text-2xl font-bold text-white leading-tight mb-0.5"
+                    style={{ fontFamily: 'var(--font-heading)' }}
+                  >
+                    {r.city}
+                  </div>
+                  <div className="text-white/40 text-sm">{r.country}</div>
                 </div>
-                <div className="text-xs font-mono font-semibold" style={{ color: r.primary }}>{r.currency}</div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-between pt-3 border-t border-white/6">
+                  <span
+                    className="text-xs font-mono font-bold px-2.5 py-1 rounded-md"
+                    style={{ backgroundColor: `${r.primary}12`, color: `${r.primary}CC` }}
+                  >
+                    {r.currency}
+                  </span>
+                  {r.status !== 'soon' && (
+                    <Globe className="w-3.5 h-3.5 text-white/15 group-hover:text-white/30 transition-colors" />
+                  )}
+                </div>
               </div>
             </motion.div>
           ))}
+        </motion.div>
+
+        {/* Bas de section — expansion */}
+        <motion.div
+          className="mt-10 flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 rounded-2xl border border-white/6 bg-white/[0.02]"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
+          <p className="text-white/30 text-sm">
+            Expansion en cours — <span className="text-white/60">Bamako, Conakry, Lomé</span> arrivent prochainement.
+          </p>
+          <Link
+            href="/register"
+            className="shrink-0 text-xs font-semibold text-[#C8553D] hover:text-[#D4A843] transition-colors flex items-center gap-1"
+          >
+            Demander ma ville <ArrowRight className="w-3 h-3" />
+          </Link>
         </motion.div>
       </div>
     </section>
@@ -1355,7 +1456,7 @@ function LandingFooter() {
   ];
 
   return (
-    <footer className="bg-[#080807] text-white/38 border-t border-white/5">
+    <footer className="bg-[#080807] border-t border-white/8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-14 grid grid-cols-2 md:grid-cols-4 gap-10">
         {/* Brand */}
         <div className="col-span-2 md:col-span-1">
@@ -1365,7 +1466,7 @@ function LandingFooter() {
             </div>
             <span className="text-white font-bold" style={{ fontFamily: 'var(--font-heading)' }}>TérangaTable</span>
           </div>
-          <p className="text-sm leading-relaxed max-w-[200px] mb-5">
+          <p className="text-white/55 text-sm leading-relaxed max-w-[220px] mb-5">
             Le Shopify + Odoo de la Restauration en Afrique.
           </p>
           <div className="flex gap-2">
@@ -1373,7 +1474,7 @@ function LandingFooter() {
               <a
                 key={s}
                 href="#"
-                className="w-8 h-8 rounded-full border border-white/8 flex items-center justify-center text-xs hover:bg-[#C8553D]/18 hover:border-[#C8553D]/35 hover:text-white transition-all"
+                className="w-8 h-8 rounded-full border border-white/15 flex items-center justify-center text-xs text-white/50 hover:bg-[#C8553D]/20 hover:border-[#C8553D]/40 hover:text-white transition-all"
               >
                 {s}
               </a>
@@ -1383,11 +1484,11 @@ function LandingFooter() {
 
         {cols.map((col) => (
           <div key={col.title}>
-            <h4 className="text-white text-sm font-semibold mb-4">{col.title}</h4>
-            <ul className="space-y-2.5">
+            <h4 className="text-white font-semibold mb-4 text-sm">{col.title}</h4>
+            <ul className="space-y-3">
               {col.links.map((l) => (
                 <li key={l.label}>
-                  <a href={l.href} className="text-sm hover:text-white transition-colors">
+                  <a href={l.href} className="text-white/50 text-sm hover:text-white transition-colors">
                     {l.label}
                   </a>
                 </li>
@@ -1397,10 +1498,35 @@ function LandingFooter() {
         ))}
       </div>
 
-      <div className="border-t border-white/5 px-4 sm:px-6 py-5">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-          <p>© {new Date().getFullYear()} TérangaTable — Tous droits réservés.</p>
-          <p>Made with <span className="text-[#C8553D]">♥</span> pour la restauration africaine</p>
+      {/* Développeur */}
+      <div className="border-t border-white/8 px-4 sm:px-6 py-6">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <p className="text-white/70 text-xs">
+              © {new Date().getFullYear()} TérangaTable — Tous droits réservés.
+            </p>
+            <p className="text-white/35 text-xs">
+              Développé par{' '}
+              <a
+                href="https://innosoft.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#D4A843] hover:text-white transition-colors font-semibold"
+              >
+                InnoSoft Creation
+              </a>
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:items-end gap-1 text-white/40 text-xs">
+            <a href="mailto:innosoftcreation@gmail.com" className="hover:text-white/70 transition-colors">
+              innosoftcreation@gmail.com
+            </a>
+            <a href="tel:+221780186229" className="hover:text-white/70 transition-colors">
+              +221 78 018 62 29
+            </a>
+            <span>Ville verte, Thiès, Sénégal</span>
+          </div>
         </div>
       </div>
     </footer>
@@ -1417,7 +1543,6 @@ export default function HomePage() {
         <HeroSection />
         <StatsSection />
         <FeaturesSection />
-        <DashboardPreview />
         <MarketplaceCtaSection />
         <TestimonialsSection />
         <PricingSection />
