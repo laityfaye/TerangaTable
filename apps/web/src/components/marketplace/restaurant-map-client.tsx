@@ -32,13 +32,10 @@ function createRestaurantIcon(r: MarketplaceRestaurant): L.DivIcon {
 
   return L.divIcon({
     html: `<div style="
-      width:38px;height:38px;
-      background:${bg};
-      border:3px solid #fff;
-      border-radius:50%;
+      width:38px;height:38px;background:${bg};
+      border:3px solid #fff;border-radius:50%;
       display:flex;align-items:center;justify-content:center;
-      box-shadow:0 2px 10px rgba(0,0,0,.25);
-      cursor:pointer;
+      box-shadow:0 2px 10px rgba(0,0,0,.25);cursor:pointer;
     ">${inner}</div>`,
     className: '',
     iconSize: [38, 38],
@@ -49,10 +46,8 @@ function createRestaurantIcon(r: MarketplaceRestaurant): L.DivIcon {
 function createUserIcon(): L.DivIcon {
   return L.divIcon({
     html: `<div style="
-      width:22px;height:22px;
-      background:#3B82F6;
-      border:3px solid #fff;
-      border-radius:50%;
+      width:22px;height:22px;background:#3B82F6;
+      border:3px solid #fff;border-radius:50%;
       box-shadow:0 0 0 8px rgba(59,130,246,.2),0 2px 8px rgba(59,130,246,.5);
     "></div>`,
     className: '',
@@ -74,6 +69,9 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
   const [selected, setSelected] = useState<MarketplaceRestaurant | null>(null);
   const [locating, setLocating] = useState(false);
   const [geoError, setGeoError] = useState(false);
+  // Sur mobile/tablette la carte est verrouillée au démarrage pour ne pas
+  // bloquer le scroll de la page. L'utilisateur doit appuyer pour l'activer.
+  const [mapLocked, setMapLocked] = useState(true);
 
   const defaultCenter: [number, number] = CITY_CENTERS[citySlug] ?? [14.6928, -17.4467];
   const hasUserPos = userLat !== undefined && userLng !== undefined;
@@ -83,15 +81,22 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
-    const initialCenter: [number, number] = hasUserPos
-      ? [userLat!, userLng!]
-      : defaultCenter;
+    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const initialCenter: [number, number] = hasUserPos ? [userLat!, userLng!] : defaultCenter;
 
     const map = L.map(containerRef.current, {
       center: initialCenter,
       zoom: 14,
       zoomControl: false,
+      // Desktop : désactiver le scroll-wheel pour ne pas bloquer le scroll de page
+      scrollWheelZoom: false,
+      // Mobile/tablette : désactiver le drag au démarrage (overlay active ensuite)
+      dragging: !isTouch,
+      touchZoom: !isTouch,
     });
+
+    // Sur desktop, déverrouiller immédiatement (l'overlay est masqué par CSS de toute façon)
+    if (!isTouch) setMapLocked(false);
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
@@ -107,7 +112,6 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
     map.on('click', () => setSelected(null));
 
     mapRef.current = map;
-
     return () => {
       map.remove();
       mapRef.current = null;
@@ -117,15 +121,23 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── Activer la carte sur mobile (lever le verrou) ─────────────────────────
+  function unlockMap() {
+    setMapLocked(false);
+    if (mapRef.current) {
+      mapRef.current.dragging.enable();
+      mapRef.current.touchZoom.enable();
+    }
+  }
+
   // ── Mettre à jour les marqueurs restaurants ───────────────────────────────
   useEffect(() => {
     if (!markersLayerRef.current) return;
     markersLayerRef.current.clearLayers();
-
     restaurantsWithCoords.forEach((r) => {
       const marker = L.marker([r.lat!, r.lng!], { icon: createRestaurantIcon(r) });
       marker.on('click', (e) => {
-        L.DomEvent.stop(e); // empêche le click de remonter au fond de carte
+        L.DomEvent.stop(e);
         setSelected(r);
       });
       markersLayerRef.current!.addLayer(marker);
@@ -136,11 +148,9 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
   useEffect(() => {
     if (!userLayerRef.current) return;
     userLayerRef.current.clearLayers();
-
     if (hasUserPos) {
       L.marker([userLat!, userLng!], { icon: createUserIcon(), zIndexOffset: 1000 })
         .addTo(userLayerRef.current);
-
       if (maxDistanceKm !== undefined) {
         L.circle([userLat!, userLng!], {
           radius: maxDistanceKm * 1000,
@@ -154,7 +164,7 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
     }
   }, [userLat, userLng, maxDistanceKm, hasUserPos]);
 
-  // ── Centrer la carte sur l'utilisateur quand sa position devient disponible
+  // ── Centrer la carte quand la position utilisateur devient disponible ─────
   useEffect(() => {
     if (!mapRef.current || !hasUserPos) return;
     mapRef.current.setView([userLat!, userLng!], 15, { animate: true });
@@ -165,7 +175,6 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
     if (!navigator.geolocation) { setGeoError(true); return; }
     setLocating(true);
     setGeoError(false);
-
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const params = new URLSearchParams(searchParams.toString());
@@ -176,19 +185,14 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
         router.push(`${pathname}?${params.toString()}`, { scroll: false });
         setLocating(false);
       },
-      () => {
-        setGeoError(true);
-        setLocating(false);
-      },
+      () => { setGeoError(true); setLocating(false); },
       { timeout: 8000 },
     );
   }
 
   function getDirectionsUrl(r: MarketplaceRestaurant): string {
     const dest = `${r.lat},${r.lng}`;
-    if (hasUserPos) {
-      return `https://www.google.com/maps/dir/${userLat},${userLng}/${dest}`;
-    }
+    if (hasUserPos) return `https://www.google.com/maps/dir/${userLat},${userLng}/${dest}`;
     return `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
   }
 
@@ -196,8 +200,7 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
     <div className="relative rounded-xl overflow-hidden border border-[#E7E5E4] shadow-sm" style={{ height: 460 }}>
 
       {/* En-tête flottant */}
-      <div className="absolute top-3 left-3 right-3 z-[1000] flex items-center justify-between pointer-events-none">
-        {/* Compteur */}
+      <div className="absolute top-3 left-3 right-3 z-[1000] flex items-center justify-between">
         <div className="flex items-center gap-2 bg-white/95 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-sm pointer-events-none">
           <MapPin className="w-4 h-4 text-[#C8553D]" />
           <span className="text-xs font-semibold text-[#1C1917]">
@@ -209,7 +212,7 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
         <button
           onClick={handleLocate}
           disabled={locating || hasUserPos}
-          className={`pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm backdrop-blur-sm transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm backdrop-blur-sm transition-all ${
             hasUserPos
               ? 'bg-[#3B82F6] text-white cursor-default'
               : geoError
@@ -217,11 +220,9 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
               : 'bg-white/95 text-[#57534E] hover:text-[#C8553D] hover:bg-white'
           }`}
         >
-          {locating ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <LocateFixed className="w-3.5 h-3.5" />
-          )}
+          {locating
+            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            : <LocateFixed className="w-3.5 h-3.5" />}
           {hasUserPos ? 'Localisé' : geoError ? 'Erreur GPS' : 'Ma position'}
         </button>
       </div>
@@ -229,24 +230,34 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
       {/* Conteneur carte Leaflet */}
       <div ref={containerRef} className="w-full h-full" />
 
+      {/* ── Overlay mobile/tablette — déverrouille la carte au toucher ── */}
+      {mapLocked && (
+        <div
+          className="absolute inset-0 z-[1500] lg:hidden flex items-end justify-center pb-16"
+          style={{ background: 'rgba(0,0,0,0.03)' }}
+          onClick={unlockMap}
+        >
+          <div className="bg-white/95 backdrop-blur-sm px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 text-sm font-medium text-[#57534E] border border-[#E7E5E4] pointer-events-none">
+            <span className="text-base">👆</span>
+            Appuyez pour naviguer sur la carte
+          </div>
+        </div>
+      )}
+
       {/* Légende */}
       <div className="absolute bottom-10 left-3 z-[1000] flex items-center gap-3 bg-white/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm">
         <span className="flex items-center gap-1.5 text-[10px] text-[#57534E]">
-          <span className="w-3 h-3 rounded-full bg-[#C8553D] inline-block" />
-          Ouvert
+          <span className="w-3 h-3 rounded-full bg-[#C8553D] inline-block" />Ouvert
         </span>
         <span className="flex items-center gap-1.5 text-[10px] text-[#57534E]">
-          <span className="w-3 h-3 rounded-full bg-[#D4A843] inline-block" />
-          Sponsorisé
+          <span className="w-3 h-3 rounded-full bg-[#D4A843] inline-block" />Sponsorisé
         </span>
         <span className="flex items-center gap-1.5 text-[10px] text-[#57534E]">
-          <span className="w-3 h-3 rounded-full bg-[#A8A29E] inline-block" />
-          Fermé
+          <span className="w-3 h-3 rounded-full bg-[#A8A29E] inline-block" />Fermé
         </span>
         {hasUserPos && (
           <span className="flex items-center gap-1.5 text-[10px] text-[#57534E]">
-            <span className="w-3 h-3 rounded-full bg-[#3B82F6] inline-block" />
-            Ma position
+            <span className="w-3 h-3 rounded-full bg-[#3B82F6] inline-block" />Ma position
           </span>
         )}
       </div>
@@ -267,18 +278,13 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
           {selected.hero_image_url && (
             <img src={selected.hero_image_url} alt={selected.name} className="w-full h-24 object-cover" />
           )}
-
           <div className="p-3">
             <div className="flex items-start justify-between gap-2 pr-6">
               <div>
                 <h4 className="font-bold text-sm text-[#1C1917]">{selected.name}</h4>
                 <p className="text-xs text-[#57534E]">{selected.cuisine_types.join(' · ')}</p>
               </div>
-              <span
-                className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                  selected.is_open_now ? 'bg-[#2D6A4F]/10 text-[#2D6A4F]' : 'bg-[#F5F4F2] text-[#A8A29E]'
-                }`}
-              >
+              <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold ${selected.is_open_now ? 'bg-[#2D6A4F]/10 text-[#2D6A4F]' : 'bg-[#F5F4F2] text-[#A8A29E]'}`}>
                 {selected.is_open_now ? '● Ouvert' : '○ Fermé'}
               </span>
             </div>
@@ -290,8 +296,7 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
               </span>
               {selected.delivery_available && (
                 <span className="flex items-center gap-1">
-                  <Bike className="w-3.5 h-3.5" />
-                  {selected.estimated_delivery_time} min
+                  <Bike className="w-3.5 h-3.5" />{selected.estimated_delivery_time} min
                 </span>
               )}
               {selected.distance !== undefined && (
@@ -315,7 +320,6 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
               >
                 Voir le menu
               </Link>
-              {/* Bouton itinéraire — visible si le restaurant a des coordonnées GPS */}
               {selected.lat !== null && selected.lng !== null && (
                 <a
                   href={getDirectionsUrl(selected)}
@@ -332,7 +336,7 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
         </div>
       )}
 
-      {/* Aucune coordonnée disponible */}
+      {/* Aucun restaurant géolocalisé */}
       {restaurantsWithCoords.length === 0 && (
         <div className="absolute inset-0 z-[2000] flex flex-col items-center justify-center bg-white/85 backdrop-blur-sm">
           <MapPin className="w-10 h-10 text-[#E7E5E4] mb-2" />

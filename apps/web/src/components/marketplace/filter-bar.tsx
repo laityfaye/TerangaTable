@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { SlidersHorizontal, X, ChevronDown, Bike, Calendar, Clock, MapPin } from 'lucide-react';
+import { SlidersHorizontal, X, ChevronDown, Bike, Calendar, Clock, MapPin, LocateFixed, Loader2 } from 'lucide-react';
 import { CUISINE_TYPES, SORT_OPTIONS } from '@/types/marketplace';
 
 interface Props {
@@ -31,6 +31,7 @@ export default function FilterBar({ citySlug: _citySlug, totalCount }: Props) {
   const searchParams = useSearchParams();
   const [showMoreCuisines, setShowMoreCuisines] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [locating, setLocating] = useState(false);
 
   const currentCuisine = searchParams.get('cuisine') ?? '';
   const currentBudget = searchParams.get('budget') ?? '';
@@ -61,6 +62,24 @@ export default function FilterBar({ citySlug: _citySlug, totalCount }: Props) {
 
   function clearAll() {
     router.push(pathname, { scroll: false });
+  }
+
+  function requestLocation() {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('lat', String(pos.coords.latitude));
+        params.set('lng', String(pos.coords.longitude));
+        params.set('sort', 'distance');
+        params.delete('page');
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+        setLocating(false);
+      },
+      () => setLocating(false),
+      { timeout: 8000 },
+    );
   }
 
   type CuisineOption = (typeof CUISINE_TYPES)[number];
@@ -132,10 +151,23 @@ export default function FilterBar({ citySlug: _citySlug, totalCount }: Props) {
             Réservation
           </button>
 
-          {/* Filtre de rayon (seulement si géolocalisation active) */}
-          {hasLocation && (
+          {/* Rayon / géolocalisation — toujours visible */}
+          <div className="w-px h-6 bg-[#E7E5E4] shrink-0" />
+          {!hasLocation ? (
+            /* Bouton pour activer la géolocalisation */
+            <button
+              onClick={requestLocation}
+              disabled={locating}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-dashed border-[#C8553D]/50 bg-white text-[#C8553D] text-sm shrink-0 hover:bg-[#C8553D]/5 transition-all disabled:opacity-60"
+            >
+              {locating
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                : <LocateFixed className="w-3.5 h-3.5" />}
+              Près de moi
+            </button>
+          ) : (
+            /* Chips de distance quand la position est connue */
             <>
-              <div className="w-px h-6 bg-[#E7E5E4] shrink-0" />
               {DISTANCE_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
