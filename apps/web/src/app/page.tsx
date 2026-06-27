@@ -1314,16 +1314,17 @@ function LandingFooter() {
 
   return (
     <footer className="bg-[#080807] border-t border-white/8">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-14 flex flex-col items-center gap-10 md:grid md:grid-cols-4 md:items-start">
-        {/* Brand */}
-        <div className="flex flex-col items-center text-center md:items-start md:text-left md:col-span-1">
-          <div className="flex items-center gap-2 mb-4">
+      <div className="max-w-6xl mx-auto px-6 py-12">
+
+        {/* Brand — centré sur mobile */}
+        <div className="flex flex-col items-center text-center md:items-start md:text-left mb-10">
+          <div className="flex items-center gap-2 mb-3">
             <div className="w-7 h-7 rounded-lg bg-[#C8553D] flex items-center justify-center">
               <span className="text-white font-bold text-xs">T</span>
             </div>
             <span className="text-white font-bold" style={{ fontFamily: 'var(--font-heading)' }}>TérangaTable</span>
           </div>
-          <p className="text-white/55 text-sm leading-relaxed max-w-[220px] mb-5">
+          <p className="text-white/45 text-sm leading-relaxed mb-4 max-w-[240px]">
             Le Shopify + Odoo de la Restauration en Afrique.
           </p>
           <div className="flex gap-2">
@@ -1339,30 +1340,33 @@ function LandingFooter() {
           </div>
         </div>
 
-        {cols.map((col) => (
-          <div key={col.title}>
-            <h4 className="text-white font-semibold mb-4 text-sm">{col.title}</h4>
-            <ul className="space-y-3">
-              {col.links.map((l) => (
-                <li key={l.label}>
-                  <a href={l.href} className="text-white/50 text-sm hover:text-white transition-colors">
-                    {l.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+        {/* Colonnes : grille 3 sur mobile, 3 sur desktop */}
+        <div className="grid grid-cols-3 md:grid-cols-3 gap-6 md:gap-10">
+          {cols.map((col) => (
+            <div key={col.title}>
+              <h4 className="text-white font-semibold mb-3 text-xs sm:text-sm uppercase tracking-wider">{col.title}</h4>
+              <ul className="space-y-2.5">
+                {col.links.map((l) => (
+                  <li key={l.label}>
+                    <a href={l.href} className="text-white/45 text-xs sm:text-sm hover:text-white transition-colors leading-tight block">
+                      {l.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Développeur */}
-      <div className="border-t border-white/8 px-4 sm:px-6 py-6">
-        <div className="max-w-6xl mx-auto flex flex-col items-center text-center sm:flex-row sm:items-center sm:text-left justify-between gap-4">
+      {/* Barre bas */}
+      <div className="border-t border-white/8 px-6 py-5">
+        <div className="max-w-6xl mx-auto flex flex-col items-center gap-3 sm:flex-row sm:justify-between text-center sm:text-left">
           <div className="flex flex-col gap-1">
-            <p className="text-white/70 text-xs">
+            <p className="text-white/55 text-xs">
               © {new Date().getFullYear()} TérangaTable — Tous droits réservés.
             </p>
-            <p className="text-white/35 text-xs">
+            <p className="text-white/30 text-xs">
               Développé par{' '}
               <a
                 href="https://innosoft.com"
@@ -1374,12 +1378,11 @@ function LandingFooter() {
               </a>
             </p>
           </div>
-
-          <div className="flex flex-col items-center sm:items-end gap-1 text-white/40 text-xs">
-            <a href="mailto:innosoftcreation@gmail.com" className="hover:text-white/70 transition-colors">
+          <div className="flex flex-col items-center sm:items-end gap-1 text-white/35 text-xs">
+            <a href="mailto:innosoftcreation@gmail.com" className="hover:text-white/60 transition-colors">
               innosoftcreation@gmail.com
             </a>
-            <a href="tel:+221780186229" className="hover:text-white/70 transition-colors">
+            <a href="tel:+221780186229" className="hover:text-white/60 transition-colors">
               +221 78 018 62 29
             </a>
             <span>Ville verte, Thiès, Sénégal</span>
