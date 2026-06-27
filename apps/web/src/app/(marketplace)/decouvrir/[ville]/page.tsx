@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { Suspense } from 'react';
 import {
   fetchMarketplaceCities,
   fetchMarketplaceRestaurants,
@@ -11,14 +10,14 @@ import {
 import MarketplaceNav from '@/components/marketplace/marketplace-nav';
 import HeroDecouverte, { type FloatingMenuData, type FloatingRestaurantData } from '@/components/marketplace/hero-decouverte';
 import FilterBar from '@/components/marketplace/filter-bar';
-import RestaurantCard, { RestaurantCardSkeleton } from '@/components/marketplace/restaurant-card';
+import RestaurantCard from '@/components/marketplace/restaurant-card';
 import RestaurantMap from '@/components/marketplace/restaurant-map';
 import AIRecommendations from '@/components/marketplace/ai-recommendations';
 import SponsoredBanner from '@/components/marketplace/sponsored-banner';
 import MenuDuJour from '@/components/marketplace/menu-du-jour';
 import StatsLive from '@/components/marketplace/stats-live';
 import type { MarketplaceFilters } from '@/types/marketplace';
-import { LayoutGrid, List, Map, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Map, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
 export const revalidate = 30;
@@ -137,6 +136,7 @@ export default async function CityDiscoveryPage({ params, searchParams }: Props)
   const sortRaw = typeof sp['sort'] === 'string' ? sp['sort'] : null;
   const latRaw = typeof sp['lat'] === 'string' ? parseFloat(sp['lat']) : null;
   const lngRaw = typeof sp['lng'] === 'string' ? parseFloat(sp['lng']) : null;
+  const maxDistanceRaw = typeof sp['max_distance'] === 'string' ? parseFloat(sp['max_distance']) : null;
 
   const filters: MarketplaceFilters & { page: number; per_page: number } = {
     city_slug: ville,
@@ -149,6 +149,7 @@ export default async function CityDiscoveryPage({ params, searchParams }: Props)
     sort: (sortRaw as 'distance' | 'rating' | 'popular' | 'new' | undefined) ?? 'popular',
     ...(latRaw !== null ? { lat: latRaw } : {}),
     ...(lngRaw !== null ? { lng: lngRaw } : {}),
+    ...(maxDistanceRaw !== null ? { max_distance: maxDistanceRaw } : {}),
     page: sp['page'] ? parseInt(sp['page'] as string, 10) : 1,
     per_page: 20,
   };
@@ -352,6 +353,7 @@ export default async function CityDiscoveryPage({ params, searchParams }: Props)
                 {...(filters.lat !== undefined && filters.lng !== undefined
                   ? { userLat: filters.lat, userLng: filters.lng }
                   : {})}
+                {...(filters.max_distance !== undefined ? { maxDistanceKm: filters.max_distance } : {})}
               />
 
               {/* Stats en dessous de la carte */}
@@ -386,6 +388,7 @@ export default async function CityDiscoveryPage({ params, searchParams }: Props)
             {...(filters.lat !== undefined && filters.lng !== undefined
               ? { userLat: filters.lat, userLng: filters.lng }
               : {})}
+            {...(filters.max_distance !== undefined ? { maxDistanceKm: filters.max_distance } : {})}
           />
         </div>
       </div>

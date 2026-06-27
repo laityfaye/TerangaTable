@@ -133,6 +133,7 @@ export interface MarketplaceFilters {
   sort?: 'distance' | 'rating' | 'popular' | 'new';
   lat?: number;
   lng?: number;
+  max_distance?: number;  // en km — nécessite lat+lng
 }
 
 // ── Constantes ────────────────────────────────────────────────────────────────

@@ -52,6 +52,10 @@ export class MarketplaceQueryDto {
   @IsOptional() @Type(() => Number) @IsNumber()
   lng?: number;
 
+  /** Rayon maximum autour de l'utilisateur, en km (ex: 0.5 = 500m, 1 = 1km) */
+  @IsOptional() @Type(() => Number) @IsNumber() @Min(0)
+  max_distance?: number;
+
   /** Tri : "distance" | "rating" | "popular" | "new" */
   @IsOptional() @IsString()
   sort?: string;

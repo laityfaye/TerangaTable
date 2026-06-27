@@ -95,6 +95,7 @@ export async function fetchMarketplaceRestaurants(
   if (filters.sort) params['sort'] = filters.sort;
   if (filters.lat !== undefined) params['lat'] = filters.lat;
   if (filters.lng !== undefined) params['lng'] = filters.lng;
+  if (filters.max_distance !== undefined) params['max_distance'] = filters.max_distance;
   if (filters.page) params['page'] = filters.page;
   if (filters.per_page) params['per_page'] = filters.per_page;
 

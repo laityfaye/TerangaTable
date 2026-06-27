@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { SlidersHorizontal, X, ChevronDown, Bike, Calendar, Flame, Clock } from 'lucide-react';
+import { SlidersHorizontal, X, ChevronDown, Bike, Calendar, Clock, MapPin } from 'lucide-react';
 import { CUISINE_TYPES, SORT_OPTIONS } from '@/types/marketplace';
 
 interface Props {
@@ -16,7 +16,16 @@ const BUDGET_OPTIONS = [
   { value: '3', label: 'Premium', symbol: '₣₣₣', color: '#C8553D' },
 ];
 
-export default function FilterBar({ citySlug, totalCount }: Props) {
+const DISTANCE_OPTIONS = [
+  { value: '0.1', label: '100 m' },
+  { value: '0.2', label: '200 m' },
+  { value: '0.5', label: '500 m' },
+  { value: '1',   label: '1 km'  },
+  { value: '2',   label: '2 km'  },
+  { value: '5',   label: '5 km'  },
+];
+
+export default function FilterBar({ citySlug: _citySlug, totalCount }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -26,11 +35,13 @@ export default function FilterBar({ citySlug, totalCount }: Props) {
   const currentCuisine = searchParams.get('cuisine') ?? '';
   const currentBudget = searchParams.get('budget') ?? '';
   const currentSort = searchParams.get('sort') ?? 'popular';
+  const currentMaxDistance = searchParams.get('max_distance') ?? '';
   const isOpenNow = searchParams.get('open_now') === 'true';
   const hasDelivery = searchParams.get('delivery') === 'true';
   const hasReservations = searchParams.get('reservations') === 'true';
+  const hasLocation = !!(searchParams.get('lat') && searchParams.get('lng'));
 
-  const activeFiltersCount = [currentCuisine, currentBudget, isOpenNow, hasDelivery, hasReservations].filter(Boolean).length;
+  const activeFiltersCount = [currentCuisine, currentBudget, isOpenNow, hasDelivery, hasReservations, currentMaxDistance].filter(Boolean).length;
 
   function updateParam(key: string, value: string | null) {
     const params = new URLSearchParams(searchParams.toString());
@@ -39,7 +50,7 @@ export default function FilterBar({ citySlug, totalCount }: Props) {
     } else {
       params.set(key, value);
     }
-    params.delete('page'); // reset pagination on filter change
+    params.delete('page');
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }
 
@@ -52,13 +63,14 @@ export default function FilterBar({ citySlug, totalCount }: Props) {
     router.push(pathname, { scroll: false });
   }
 
-  const visibleCuisines = showMoreCuisines ? CUISINE_TYPES : CUISINE_TYPES.slice(0, 5);
+  type CuisineOption = (typeof CUISINE_TYPES)[number];
+  const visibleCuisines: readonly CuisineOption[] = showMoreCuisines ? CUISINE_TYPES : CUISINE_TYPES.slice(0, 5);
 
   return (
     <div className="sticky top-16 z-40 bg-[#FAFAF8]/95 backdrop-blur-sm border-b border-[#E7E5E4]">
       <div className="max-w-7xl mx-auto px-4 py-3">
 
-        {/* Ligne 1 : filtres rapides + bouton filtres avancés */}
+        {/* Ligne 1 : filtres rapides */}
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
 
           {/* Bouton "Filtres" */}
@@ -79,7 +91,6 @@ export default function FilterBar({ citySlug, totalCount }: Props) {
             )}
           </button>
 
-          {/* Séparateur */}
           <div className="w-px h-6 bg-[#E7E5E4] shrink-0" />
 
           {/* Ouvert maintenant */}
@@ -121,7 +132,27 @@ export default function FilterBar({ citySlug, totalCount }: Props) {
             Réservation
           </button>
 
-          {/* Séparateur */}
+          {/* Filtre de rayon (seulement si géolocalisation active) */}
+          {hasLocation && (
+            <>
+              <div className="w-px h-6 bg-[#E7E5E4] shrink-0" />
+              {DISTANCE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => toggleParam('max_distance', opt.value)}
+                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full border text-sm shrink-0 transition-all ${
+                    currentMaxDistance === opt.value
+                      ? 'bg-[#C8553D] border-[#C8553D] text-white font-semibold'
+                      : 'bg-white border-[#E7E5E4] text-[#57534E] hover:border-[#C8553D]/40'
+                  }`}
+                >
+                  <MapPin className="w-3.5 h-3.5" />
+                  &lt;{opt.label}
+                </button>
+              ))}
+            </>
+          )}
+
           <div className="w-px h-6 bg-[#E7E5E4] shrink-0" />
 
           {/* Types de cuisine */}
@@ -184,7 +215,11 @@ export default function FilterBar({ citySlug, totalCount }: Props) {
                           ? 'border-current font-semibold'
                           : 'border-[#E7E5E4] text-[#57534E] hover:border-current/40'
                       }`}
-                      style={{ color: b.color, borderColor: currentBudget === b.value ? b.color : undefined, backgroundColor: currentBudget === b.value ? `${b.color}15` : undefined }}
+                      style={{
+                        color: b.color,
+                        borderColor: currentBudget === b.value ? b.color : undefined,
+                        backgroundColor: currentBudget === b.value ? `${b.color}15` : undefined,
+                      }}
                     >
                       {b.symbol}
                     </button>
@@ -213,7 +248,7 @@ export default function FilterBar({ citySlug, totalCount }: Props) {
                 </div>
               </div>
 
-              {/* Options supplémentaires */}
+              {/* Services */}
               <div>
                 <h4 className="text-xs font-bold text-[#1C1917] uppercase tracking-wide mb-2">Services</h4>
                 <div className="flex flex-col gap-2">
@@ -230,7 +265,11 @@ export default function FilterBar({ citySlug, totalCount }: Props) {
                         }`}
                         style={{ color: opt.color }}
                       >
-                        {opt.value && <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                        {opt.value && (
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
                       </div>
                       <span className="flex items-center gap-2 text-sm text-[#57534E]" style={{ color: opt.value ? opt.color : undefined }}>
                         {opt.icon}
@@ -241,6 +280,39 @@ export default function FilterBar({ citySlug, totalCount }: Props) {
                 </div>
               </div>
             </div>
+
+            {/* Section rayon (seulement si géolocalisation active) */}
+            {hasLocation && (
+              <div className="mt-4 pt-4 border-t border-[#F5F4F2]">
+                <h4 className="text-xs font-bold text-[#1C1917] uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-[#C8553D]" />
+                  Rayon autour de moi
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {DISTANCE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => toggleParam('max_distance', opt.value)}
+                      className={`px-3 py-1.5 rounded-full border text-sm transition-all ${
+                        currentMaxDistance === opt.value
+                          ? 'bg-[#C8553D] border-[#C8553D] text-white font-semibold'
+                          : 'bg-white border-[#E7E5E4] text-[#57534E] hover:border-[#C8553D]/40'
+                      }`}
+                    >
+                      &lt;{opt.label}
+                    </button>
+                  ))}
+                  {currentMaxDistance && (
+                    <button
+                      onClick={() => updateParam('max_distance', null)}
+                      className="px-3 py-1.5 rounded-full border border-red-200 bg-red-50 text-red-500 text-sm hover:bg-red-100 transition-all flex items-center gap-1"
+                    >
+                      <X className="w-3 h-3" /> Tout afficher
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#F5F4F2]">
               {totalCount !== undefined && (
@@ -264,19 +336,33 @@ export default function FilterBar({ citySlug, totalCount }: Props) {
         )}
 
         {/* Résumé des filtres actifs */}
-        {(currentCuisine || currentBudget) && (
+        {(currentCuisine || currentBudget || currentMaxDistance) && (
           <div className="flex items-center gap-2 mt-2 flex-wrap">
             <span className="text-xs text-[#57534E]">Filtres actifs :</span>
             {currentCuisine && (
               <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1A1A18] text-white text-xs">
-                {CUISINE_TYPES.find((c) => c.value === currentCuisine)?.emoji} {CUISINE_TYPES.find((c) => c.value === currentCuisine)?.label}
-                <button onClick={() => updateParam('cuisine', null)} className="ml-1 text-white/60 hover:text-white"><X className="w-3 h-3" /></button>
+                {CUISINE_TYPES.find((c) => c.value === currentCuisine)?.emoji}{' '}
+                {CUISINE_TYPES.find((c) => c.value === currentCuisine)?.label}
+                <button onClick={() => updateParam('cuisine', null)} className="ml-1 text-white/60 hover:text-white">
+                  <X className="w-3 h-3" />
+                </button>
               </span>
             )}
             {currentBudget && (
               <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1A1A18] text-white text-xs">
                 {BUDGET_OPTIONS.find((b) => b.value === currentBudget)?.symbol}
-                <button onClick={() => updateParam('budget', null)} className="ml-1 text-white/60 hover:text-white"><X className="w-3 h-3" /></button>
+                <button onClick={() => updateParam('budget', null)} className="ml-1 text-white/60 hover:text-white">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {currentMaxDistance && (
+              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#C8553D] text-white text-xs">
+                <MapPin className="w-3 h-3" />
+                &lt;{DISTANCE_OPTIONS.find((d) => d.value === currentMaxDistance)?.label ?? `${currentMaxDistance} km`}
+                <button onClick={() => updateParam('max_distance', null)} className="ml-1 text-white/60 hover:text-white">
+                  <X className="w-3 h-3" />
+                </button>
               </span>
             )}
           </div>

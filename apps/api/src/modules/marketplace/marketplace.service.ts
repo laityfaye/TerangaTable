@@ -206,6 +206,7 @@ export class MarketplaceService {
       per_page = 20,
       lat,
       lng,
+      max_distance,
       sort = 'popular',
     } = query;
 
@@ -309,6 +310,7 @@ export class MarketplaceService {
         if (open_now && !r.is_open_now) return false;
         if (delivery && !r.delivery_available) return false;
         if (needsReservations && !r.reservations_available) return false;
+        if (max_distance !== undefined && r.distance !== undefined && r.distance > max_distance) return false;
         if (q) {
           // Axe 1 : nom / description du restaurant
           const nameDescMatch = matchesSearch(r.name, r.description ?? '', q);
