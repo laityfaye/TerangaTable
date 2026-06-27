@@ -28,12 +28,6 @@ const DISTANCE_OPTIONS = [
   { value: '5',   label: '5 km'  },
 ];
 
-const SERVICES = [
-  { key: 'open_now',     label: 'Ouvert maintenant',    icon: Clock,    color: '#2D6A4F' },
-  { key: 'delivery',     label: 'Livraison disponible', icon: Bike,     color: '#3B82F6' },
-  { key: 'reservations', label: 'Réservation en ligne', icon: Calendar, color: '#D4A843' },
-] as const;
-
 export default function FilterBar({ citySlug: _citySlug, totalCount }: Props) {
   const router       = useRouter();
   const pathname     = usePathname();
@@ -51,12 +45,6 @@ export default function FilterBar({ citySlug: _citySlug, totalCount }: Props) {
   const hasDelivery        = searchParams.get('delivery')     === 'true';
   const hasReservations    = searchParams.get('reservations') === 'true';
   const hasLocation        = !!(searchParams.get('lat') && searchParams.get('lng'));
-
-  const serviceValues: Record<string, boolean> = {
-    open_now:     isOpenNow,
-    delivery:     hasDelivery,
-    reservations: hasReservations,
-  };
 
   const activeFiltersCount = [
     currentCuisine, currentBudget, isOpenNow,
@@ -104,176 +92,183 @@ export default function FilterBar({ citySlug: _citySlug, totalCount }: Props) {
     showMoreCuisines ? CUISINE_TYPES : CUISINE_TYPES.slice(0, 5);
 
   /* ─────────────────────────────────────────────────────────────────────────
-     Toggle iOS-style (services)
+     Contenu du panneau — rendu sur desktop (inline) ET mobile (bottom sheet)
   ───────────────────────────────────────────────────────────────────────── */
-  function Toggle({ active, color }: { active: boolean; color: string }) {
-    return (
-      <div
-        className="relative shrink-0 w-11 h-6 rounded-full transition-colors duration-200"
-        style={{ backgroundColor: active ? color : '#D6D3D1' }}
-      >
-        <span
-          className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
-          style={{ transform: active ? 'translateX(20px)' : 'translateX(0)' }}
-        />
+  const panelContent = (
+    <div className="p-4">
+      {/* En-tête visible sur mobile uniquement */}
+      <div className="flex items-center justify-between mb-4 sm:hidden">
+        <h3 className="font-bold text-[#1C1917] text-base">Filtres avancés</h3>
+        <button
+          onClick={() => setShowFilters(false)}
+          className="w-8 h-8 rounded-full bg-[#F5F4F2] flex items-center justify-center text-[#57534E]"
+        >
+          <X className="w-4 h-4" />
+        </button>
       </div>
-    );
-  }
 
-  /* ─────────────────────────────────────────────────────────────────────────
-     Panneau desktop (inline dans la barre sticky)
-  ───────────────────────────────────────────────────────────────────────── */
-  const desktopPanel = (
-    <div className="hidden sm:block border-t border-[#E7E5E4] bg-white">
-      <div className="max-w-7xl mx-auto p-4">
-        <div className="grid grid-cols-3 gap-6">
+      {/* Grille : 1 col mobile, 3 col sm+ */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
 
-          {/* Budget */}
-          <div>
-            <h4 className="text-xs font-bold text-[#1C1917] uppercase tracking-wide mb-2">Budget</h4>
-            <div className="flex gap-2">
-              {BUDGET_OPTIONS.map((b) => (
-                <button
-                  key={b.value}
-                  onClick={() => toggleParam('budget', b.value)}
-                  className={`flex-1 py-2 px-3 rounded-lg border text-sm font-mono transition-all ${
-                    currentBudget === b.value ? 'font-semibold' : 'border-[#E7E5E4] text-[#57534E]'
-                  }`}
-                  style={{
-                    color: b.color,
-                    borderColor: currentBudget === b.value ? b.color : undefined,
-                    backgroundColor: currentBudget === b.value ? `${b.color}15` : undefined,
-                  }}
-                >
-                  {b.symbol}
-                </button>
-              ))}
-            </div>
+        {/* Budget */}
+        <div>
+          <h4 className="text-xs font-bold text-[#1C1917] uppercase tracking-wide mb-2">Budget</h4>
+          <div className="flex gap-2">
+            {BUDGET_OPTIONS.map((b) => (
+              <button
+                key={b.value}
+                onClick={() => toggleParam('budget', b.value)}
+                className={`flex-1 py-2.5 sm:py-2 px-3 rounded-lg border text-sm font-mono transition-all ${
+                  currentBudget === b.value ? 'font-semibold' : 'border-[#E7E5E4] text-[#57534E]'
+                }`}
+                style={{
+                  color: b.color,
+                  borderColor: currentBudget === b.value ? b.color : undefined,
+                  backgroundColor: currentBudget === b.value ? `${b.color}15` : undefined,
+                }}
+              >
+                {b.symbol}
+              </button>
+            ))}
           </div>
+        </div>
 
-          {/* Tri */}
-          <div>
-            <h4 className="text-xs font-bold text-[#1C1917] uppercase tracking-wide mb-2">Trier par</h4>
-            <div className="flex flex-col gap-1">
-              {SORT_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => updateParam('sort', opt.value)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-all ${
-                    currentSort === opt.value
-                      ? 'bg-[#C8553D]/10 text-[#C8553D] font-semibold'
-                      : 'text-[#57534E] hover:bg-[#FAFAF8]'
+        {/* Tri */}
+        <div>
+          <h4 className="text-xs font-bold text-[#1C1917] uppercase tracking-wide mb-2">Trier par</h4>
+          <div className="flex flex-col gap-1">
+            {SORT_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => updateParam('sort', opt.value)}
+                className={`flex items-center gap-2 px-3 py-2.5 sm:py-2 rounded-lg text-sm text-left transition-all ${
+                  currentSort === opt.value
+                    ? 'bg-[#C8553D]/10 text-[#C8553D] font-semibold'
+                    : 'text-[#57534E] hover:bg-[#FAFAF8]'
+                }`}
+              >
+                {currentSort === opt.value && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#C8553D] shrink-0" />
+                )}
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Services */}
+        <div>
+          <h4 className="text-xs font-bold text-[#1C1917] uppercase tracking-wide mb-2">Services</h4>
+          <div className="flex flex-col gap-3 sm:gap-2">
+            {[
+              { key: 'open_now',     label: 'Ouvert maintenant',    icon: <Clock    className="w-4 h-4" />, value: isOpenNow,       color: '#2D6A4F' },
+              { key: 'delivery',     label: 'Livraison disponible', icon: <Bike     className="w-4 h-4" />, value: hasDelivery,     color: '#3B82F6' },
+              { key: 'reservations', label: 'Réservation en ligne', icon: <Calendar className="w-4 h-4" />, value: hasReservations, color: '#D4A843' },
+            ].map((opt) => (
+              <label key={opt.key} className="flex items-center gap-3 cursor-pointer group select-none">
+                <div
+                  onClick={() => updateParam(opt.key, opt.value ? null : 'true')}
+                  className={`w-6 h-6 sm:w-5 sm:h-5 rounded border-2 flex items-center justify-center transition-all cursor-pointer shrink-0 ${
+                    opt.value ? 'border-current bg-current' : 'border-[#E7E5E4] group-hover:border-current/50'
                   }`}
+                  style={{ color: opt.color }}
                 >
-                  {currentSort === opt.value && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#C8553D] shrink-0" />
+                  {opt.value && (
+                    <svg className="w-3.5 h-3.5 sm:w-3 sm:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
                   )}
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Services */}
-          <div>
-            <h4 className="text-xs font-bold text-[#1C1917] uppercase tracking-wide mb-2">Services</h4>
-            <div className="flex flex-col gap-2">
-              {SERVICES.map((s) => (
-                <button
-                  key={s.key}
-                  onClick={() => updateParam(s.key, serviceValues[s.key] ? null : 'true')}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-all text-[#57534E] hover:bg-[#FAFAF8]"
-                >
-                  <Toggle active={serviceValues[s.key]} color={s.color} />
-                  <s.icon className="w-4 h-4" />
-                  {s.label}
-                </button>
-              ))}
-            </div>
+                </div>
+                <span className="flex items-center gap-2 text-sm text-[#57534E]"
+                  style={{ color: opt.value ? opt.color : undefined }}>
+                  {opt.icon}{opt.label}
+                </span>
+              </label>
+            ))}
           </div>
         </div>
+      </div>
 
-        {/* Rayon — desktop */}
-        <div className="mt-4 pt-4 border-t border-[#F5F4F2]">
-          <h4 className="text-xs font-bold text-[#1C1917] uppercase tracking-wide mb-3 flex items-center gap-1.5">
-            <MapPin className="w-3.5 h-3.5 text-[#C8553D]" />
-            Rayon autour de moi
-          </h4>
-          {!hasLocation ? (
-            <button
-              onClick={() => { requestLocation(); setShowFilters(false); }}
-              disabled={locating}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-[#C8553D]/40 text-[#C8553D] text-sm font-medium hover:bg-[#C8553D]/5 transition-all disabled:opacity-60"
-            >
-              {locating ? <Loader2 className="w-4 h-4 animate-spin" /> : <LocateFixed className="w-4 h-4" />}
-              Activer ma position pour filtrer par distance
-            </button>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {DISTANCE_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => toggleParam('max_distance', opt.value)}
-                  className={`px-3 py-1.5 rounded-full border text-sm transition-all ${
-                    currentMaxDistance === opt.value
-                      ? 'bg-[#C8553D] border-[#C8553D] text-white font-semibold'
-                      : 'bg-white border-[#E7E5E4] text-[#57534E] hover:border-[#C8553D]/40'
-                  }`}
-                >
-                  &lt;{opt.label}
-                </button>
-              ))}
-              {currentMaxDistance && (
-                <button
-                  onClick={() => updateParam('max_distance', null)}
-                  className="px-3 py-1.5 rounded-full border border-red-200 bg-red-50 text-red-500 text-sm flex items-center gap-1 hover:bg-red-100 transition-all"
-                >
-                  <X className="w-3 h-3" /> Tout afficher
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Actions desktop */}
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#F5F4F2]">
-          {totalCount !== undefined && (
-            <p className="text-sm text-[#57534E]">
-              <span className="font-semibold text-[#1C1917]">{totalCount}</span>{' '}
-              résultat{totalCount !== 1 ? 's' : ''}
-            </p>
-          )}
-          <div className="flex gap-2 ml-auto">
-            <button
-              onClick={clearAll}
-              className="text-sm text-[#57534E] hover:text-[#C8553D] px-3 py-1.5 transition-colors"
-            >
-              Réinitialiser
-            </button>
-            <button
-              onClick={() => setShowFilters(false)}
-              className="px-5 py-2 rounded-full bg-[#C8553D] text-white text-sm font-semibold hover:bg-[#A33D28] transition-colors"
-            >
-              Appliquer
-            </button>
+      {/* Rayon — toujours visible, propose l'activation si pas de position */}
+      <div className="mt-5 sm:mt-4 pt-4 border-t border-[#F5F4F2]">
+        <h4 className="text-xs font-bold text-[#1C1917] uppercase tracking-wide mb-3 flex items-center gap-1.5">
+          <MapPin className="w-3.5 h-3.5 text-[#C8553D]" />
+          Rayon autour de moi
+        </h4>
+        {!hasLocation ? (
+          <button
+            onClick={() => { requestLocation(); setShowFilters(false); }}
+            disabled={locating}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-[#C8553D]/40 text-[#C8553D] text-sm font-medium hover:bg-[#C8553D]/5 transition-all disabled:opacity-60"
+          >
+            {locating ? <Loader2 className="w-4 h-4 animate-spin" /> : <LocateFixed className="w-4 h-4" />}
+            Activer ma position pour filtrer par distance
+          </button>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {DISTANCE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => toggleParam('max_distance', opt.value)}
+                className={`px-4 py-2 sm:px-3 sm:py-1.5 rounded-full border text-sm transition-all ${
+                  currentMaxDistance === opt.value
+                    ? 'bg-[#C8553D] border-[#C8553D] text-white font-semibold'
+                    : 'bg-white border-[#E7E5E4] text-[#57534E] hover:border-[#C8553D]/40'
+                }`}
+              >
+                &lt;{opt.label}
+              </button>
+            ))}
+            {currentMaxDistance && (
+              <button
+                onClick={() => updateParam('max_distance', null)}
+                className="px-3 py-2 sm:py-1.5 rounded-full border border-red-200 bg-red-50 text-red-500 text-sm flex items-center gap-1 hover:bg-red-100 transition-all"
+              >
+                <X className="w-3 h-3" /> Tout afficher
+              </button>
+            )}
           </div>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center justify-between mt-5 sm:mt-4 pt-4 border-t border-[#F5F4F2]">
+        {totalCount !== undefined && (
+          <p className="text-sm text-[#57534E]">
+            <span className="font-semibold text-[#1C1917]">{totalCount}</span>{' '}
+            résultat{totalCount !== 1 ? 's' : ''}
+          </p>
+        )}
+        <div className="flex gap-2 ml-auto">
+          <button
+            onClick={clearAll}
+            className="text-sm text-[#57534E] hover:text-[#C8553D] px-3 py-1.5 transition-colors"
+          >
+            Réinitialiser
+          </button>
+          <button
+            onClick={() => setShowFilters(false)}
+            className="px-5 py-2.5 sm:py-2 rounded-full bg-[#C8553D] text-white text-sm font-semibold hover:bg-[#A33D28] transition-colors"
+          >
+            Appliquer
+          </button>
         </div>
       </div>
     </div>
   );
 
+  /* ═══════════════════════════════════════════════════════════════════════ */
+
   return (
     <>
-      {/* ══════════════════════════════════════════════════════════════════════
-          Barre sticky
-      ══════════════════════════════════════════════════════════════════════ */}
+      {/* ── Barre sticky ────────────────────────────────────────────────── */}
       <div className="sticky top-16 z-40 bg-[#FAFAF8]/95 backdrop-blur-sm border-b border-[#E7E5E4]">
         <div className="max-w-7xl mx-auto px-4 py-3">
 
           {/* Ligne scrollable */}
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
 
-            {/* Filtres */}
+            {/* Bouton Filtres */}
             <button
               onClick={() => setShowFilters(v => !v)}
               aria-expanded={showFilters}
@@ -337,14 +332,16 @@ export default function FilterBar({ citySlug: _citySlug, totalCount }: Props) {
 
             <div className="w-px h-6 bg-[#E7E5E4] shrink-0" />
 
-            {/* Bouton rayon unique */}
+            {/* ── Rayon : 1 bouton compact, pas 6 chips dans la barre ── */}
             {!hasLocation ? (
               <button
                 onClick={requestLocation}
                 disabled={locating}
                 className="flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-dashed border-[#C8553D]/50 bg-white text-[#C8553D] text-sm shrink-0 hover:bg-[#C8553D]/5 transition-all disabled:opacity-60"
               >
-                {locating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LocateFixed className="w-3.5 h-3.5" />}
+                {locating
+                  ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  : <LocateFixed className="w-3.5 h-3.5" />}
                 <span>Près de moi</span>
               </button>
             ) : currentMaxDistance ? (
@@ -368,7 +365,7 @@ export default function FilterBar({ citySlug: _citySlug, totalCount }: Props) {
 
             <div className="w-px h-6 bg-[#E7E5E4] shrink-0" />
 
-            {/* Cuisine — emoji seul sur mobile */}
+            {/* Cuisine — emoji seul sur mobile, emoji + label sur sm+ */}
             {visibleCuisines.map((cuisine) => (
               <button
                 key={cuisine.value}
@@ -408,7 +405,7 @@ export default function FilterBar({ citySlug: _citySlug, totalCount }: Props) {
             )}
           </div>
 
-          {/* Résumé filtres actifs */}
+          {/* Résumé des filtres actifs */}
           {(currentCuisine || currentBudget || currentMaxDistance) && (
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               <span className="text-xs text-[#A8A29E]">Actifs :</span>
@@ -444,131 +441,34 @@ export default function FilterBar({ citySlug: _citySlug, totalCount }: Props) {
           )}
         </div>
 
-        {/* Panneau desktop (inline, s'étend sous la barre) */}
-        {showFilters && desktopPanel}
+        {/* Panneau avancé — DESKTOP (inline dans la barre sticky, elle s'étend) */}
+        {showFilters && (
+          <div className="hidden sm:block border-t border-[#E7E5E4] bg-white">
+            <div className="max-w-7xl mx-auto">
+              {panelContent}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* ══════════════════════════════════════════════════════════════════════
-          MOBILE — bottom sheet partiel (style Google Maps)
-          La carte reste visible au-dessus. Pas d'overlay sombre.
-      ══════════════════════════════════════════════════════════════════════ */}
+      {/* Panneau avancé — MOBILE (bottom sheet avec overlay) */}
       {showFilters && (
-        <div className="sm:hidden fixed inset-x-0 bottom-0 z-50">
-          {/* Poignée de fermeture invisible (tap en dehors du panel) */}
+        <>
           <div
-            className="absolute inset-x-0 top-0 bottom-full"
+            className="fixed inset-0 bg-black/50 z-50 sm:hidden"
             onClick={() => setShowFilters(false)}
           />
-
-          {/* Panel */}
-          <div className="relative bg-white rounded-t-3xl shadow-[0_-4px_24px_rgba(0,0,0,0.12)]">
-            {/* Drag handle */}
-            <div className="flex justify-center pt-3 pb-2">
+          <div
+            className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl bg-white shadow-2xl sm:hidden"
+            style={{ maxHeight: '82vh', overflowY: 'auto' }}
+          >
+            {/* Poignée de drag */}
+            <div className="flex justify-center pt-3 pb-1">
               <div className="w-10 h-1 rounded-full bg-[#E7E5E4]" />
             </div>
-
-            {/* Services — toggles iOS-style */}
-            <div className="divide-y divide-[#F5F4F2]">
-              {SERVICES.map((s) => {
-                const active = serviceValues[s.key];
-                return (
-                  <button
-                    key={s.key}
-                    onClick={() => updateParam(s.key, active ? null : 'true')}
-                    className="w-full flex items-center justify-between px-5 py-4 text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <s.icon
-                        className="w-5 h-5 shrink-0"
-                        style={{ color: active ? s.color : '#A8A29E' }}
-                      />
-                      <span
-                        className="text-sm font-medium"
-                        style={{ color: active ? '#1C1917' : '#57534E' }}
-                      >
-                        {s.label}
-                      </span>
-                    </div>
-                    {/* Toggle switch */}
-                    <div
-                      className="relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0"
-                      style={{ backgroundColor: active ? s.color : '#D6D3D1' }}
-                    >
-                      <span
-                        className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
-                        style={{ transform: active ? 'translateX(20px)' : 'translateX(0)' }}
-                      />
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Rayon autour de moi */}
-            <div className="border-t border-[#F5F4F2] px-5 py-4">
-              <p className="text-xs font-bold text-[#1C1917] uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-[#C8553D]" />
-                Rayon autour de moi
-              </p>
-
-              {!hasLocation ? (
-                <button
-                  onClick={() => { requestLocation(); setShowFilters(false); }}
-                  disabled={locating}
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-[#C8553D]/40 text-[#C8553D] text-sm font-medium disabled:opacity-60"
-                >
-                  {locating
-                    ? <Loader2 className="w-4 h-4 animate-spin" />
-                    : <LocateFixed className="w-4 h-4" />}
-                  Activer ma position
-                </button>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {DISTANCE_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => toggleParam('max_distance', opt.value)}
-                      className={`px-4 py-2 rounded-full border text-sm transition-all ${
-                        currentMaxDistance === opt.value
-                          ? 'bg-[#C8553D] border-[#C8553D] text-white font-semibold'
-                          : 'bg-white border-[#E7E5E4] text-[#57534E]'
-                      }`}
-                    >
-                      &lt;{opt.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center justify-between px-5 py-4 border-t border-[#F5F4F2]">
-              {totalCount !== undefined ? (
-                <p className="text-sm text-[#57534E]">
-                  <span className="font-bold text-[#1C1917]">{totalCount}</span>{' '}
-                  résultat{totalCount !== 1 ? 's' : ''}
-                </p>
-              ) : <span />}
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={clearAll}
-                  className="text-sm text-[#57534E] font-medium"
-                >
-                  Réinitialiser
-                </button>
-                <button
-                  onClick={() => setShowFilters(false)}
-                  className="px-5 py-2.5 rounded-full bg-[#C8553D] text-white text-sm font-semibold"
-                >
-                  Appliquer
-                </button>
-              </div>
-            </div>
-
-            {/* Safe area iOS */}
-            <div className="h-safe-bottom" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} />
+            {panelContent}
           </div>
-        </div>
+        </>
       )}
     </>
   );
