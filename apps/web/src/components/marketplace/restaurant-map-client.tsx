@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import 'leaflet/dist/leaflet.css';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import L from 'leaflet';
-import { MapPin, Star, Navigation, X, Bike } from 'lucide-react';
+import { MapPin, Star, Navigation, X, Bike, Loader2, LocateFixed } from 'lucide-react';
 import Link from 'next/link';
 import type { MarketplaceRestaurant } from '@/types/marketplace';
 
@@ -37,7 +37,7 @@ function createRestaurantIcon(r: MarketplaceRestaurant): L.DivIcon {
       border:3px solid #fff;
       border-radius:50%;
       display:flex;align-items:center;justify-content:center;
-      box-shadow:0 2px 10px rgba(0,0,0,.22);
+      box-shadow:0 2px 10px rgba(0,0,0,.25);
       cursor:pointer;
     ">${inner}</div>`,
     className: '',
@@ -53,7 +53,7 @@ function createUserIcon(): L.DivIcon {
       background:#3B82F6;
       border:3px solid #fff;
       border-radius:50%;
-      box-shadow:0 0 0 7px rgba(59,130,246,.22),0 2px 8px rgba(59,130,246,.4);
+      box-shadow:0 0 0 8px rgba(59,130,246,.2),0 2px 8px rgba(59,130,246,.5);
     "></div>`,
     className: '',
     iconSize: [22, 22],
@@ -62,21 +62,30 @@ function createUserIcon(): L.DivIcon {
 }
 
 export default function RestaurantMapClient({ restaurants, citySlug, userLat, userLng, maxDistanceKm }: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const userLayerRef = useRef<L.LayerGroup | null>(null);
+
   const [selected, setSelected] = useState<MarketplaceRestaurant | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [geoError, setGeoError] = useState(false);
 
   const defaultCenter: [number, number] = CITY_CENTERS[citySlug] ?? [14.6928, -17.4467];
+  const hasUserPos = userLat !== undefined && userLng !== undefined;
   const restaurantsWithCoords = restaurants.filter((r) => r.lat != null && r.lng != null);
 
-  // Initialiser la carte une seule fois
+  // ── Initialiser la carte une seule fois ───────────────────────────────────
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
-    const initialCenter: [number, number] =
-      userLat !== undefined && userLng !== undefined ? [userLat, userLng] : defaultCenter;
+    const initialCenter: [number, number] = hasUserPos
+      ? [userLat!, userLng!]
+      : defaultCenter;
 
     const map = L.map(containerRef.current, {
       center: initialCenter,
@@ -94,6 +103,9 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
     markersLayerRef.current = L.layerGroup().addTo(map);
     userLayerRef.current = L.layerGroup().addTo(map);
 
+    // Fermer le popup en cliquant sur le fond de carte
+    map.on('click', () => setSelected(null));
+
     mapRef.current = map;
 
     return () => {
@@ -105,7 +117,7 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Mettre à jour les marqueurs restaurants
+  // ── Mettre à jour les marqueurs restaurants ───────────────────────────────
   useEffect(() => {
     if (!markersLayerRef.current) return;
     markersLayerRef.current.clearLayers();
@@ -113,24 +125,24 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
     restaurantsWithCoords.forEach((r) => {
       const marker = L.marker([r.lat!, r.lng!], { icon: createRestaurantIcon(r) });
       marker.on('click', (e) => {
-        L.DomEvent.stopPropagation(e);
+        L.DomEvent.stop(e); // empêche le click de remonter au fond de carte
         setSelected(r);
       });
       markersLayerRef.current!.addLayer(marker);
     });
   }, [restaurants]);
 
-  // Mettre à jour la position utilisateur et le cercle de rayon
+  // ── Mettre à jour la position utilisateur + cercle de rayon ──────────────
   useEffect(() => {
     if (!userLayerRef.current) return;
     userLayerRef.current.clearLayers();
 
-    if (userLat !== undefined && userLng !== undefined) {
-      L.marker([userLat, userLng], { icon: createUserIcon(), zIndexOffset: 1000 })
+    if (hasUserPos) {
+      L.marker([userLat!, userLng!], { icon: createUserIcon(), zIndexOffset: 1000 })
         .addTo(userLayerRef.current);
 
       if (maxDistanceKm !== undefined) {
-        L.circle([userLat, userLng], {
+        L.circle([userLat!, userLng!], {
           radius: maxDistanceKm * 1000,
           color: '#C8553D',
           fillColor: '#C8553D',
@@ -140,11 +152,41 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
         }).addTo(userLayerRef.current);
       }
     }
-  }, [userLat, userLng, maxDistanceKm]);
+  }, [userLat, userLng, maxDistanceKm, hasUserPos]);
+
+  // ── Centrer la carte sur l'utilisateur quand sa position devient disponible
+  useEffect(() => {
+    if (!mapRef.current || !hasUserPos) return;
+    mapRef.current.setView([userLat!, userLng!], 15, { animate: true });
+  }, [userLat, userLng, hasUserPos]);
+
+  // ── Géolocalisation depuis la carte ──────────────────────────────────────
+  function handleLocate() {
+    if (!navigator.geolocation) { setGeoError(true); return; }
+    setLocating(true);
+    setGeoError(false);
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('lat', String(pos.coords.latitude));
+        params.set('lng', String(pos.coords.longitude));
+        params.set('sort', 'distance');
+        params.delete('page');
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+        setLocating(false);
+      },
+      () => {
+        setGeoError(true);
+        setLocating(false);
+      },
+      { timeout: 8000 },
+    );
+  }
 
   function getDirectionsUrl(r: MarketplaceRestaurant): string {
     const dest = `${r.lat},${r.lng}`;
-    if (userLat !== undefined && userLng !== undefined) {
+    if (hasUserPos) {
       return `https://www.google.com/maps/dir/${userLat},${userLng}/${dest}`;
     }
     return `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
@@ -153,18 +195,39 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
   return (
     <div className="relative rounded-xl overflow-hidden border border-[#E7E5E4] shadow-sm" style={{ height: 460 }}>
 
-      {/* Compteur restaurants */}
-      <div className="absolute top-3 left-3 z-[1000] pointer-events-none">
-        <div className="flex items-center gap-2 bg-white/95 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-sm">
+      {/* En-tête flottant */}
+      <div className="absolute top-3 left-3 right-3 z-[1000] flex items-center justify-between pointer-events-none">
+        {/* Compteur */}
+        <div className="flex items-center gap-2 bg-white/95 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-sm pointer-events-none">
           <MapPin className="w-4 h-4 text-[#C8553D]" />
           <span className="text-xs font-semibold text-[#1C1917]">
-            {restaurantsWithCoords.length} restaurant{restaurantsWithCoords.length !== 1 ? 's' : ''} sur la carte
+            {restaurantsWithCoords.length} restaurant{restaurantsWithCoords.length !== 1 ? 's' : ''}
           </span>
         </div>
+
+        {/* Bouton Ma position */}
+        <button
+          onClick={handleLocate}
+          disabled={locating || hasUserPos}
+          className={`pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm backdrop-blur-sm transition-all ${
+            hasUserPos
+              ? 'bg-[#3B82F6] text-white cursor-default'
+              : geoError
+              ? 'bg-red-50 text-red-600 border border-red-200'
+              : 'bg-white/95 text-[#57534E] hover:text-[#C8553D] hover:bg-white'
+          }`}
+        >
+          {locating ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <LocateFixed className="w-3.5 h-3.5" />
+          )}
+          {hasUserPos ? 'Localisé' : geoError ? 'Erreur GPS' : 'Ma position'}
+        </button>
       </div>
 
       {/* Conteneur carte Leaflet */}
-      <div ref={containerRef} className="w-full h-full" onClick={() => setSelected(null)} />
+      <div ref={containerRef} className="w-full h-full" />
 
       {/* Légende */}
       <div className="absolute bottom-10 left-3 z-[1000] flex items-center gap-3 bg-white/95 backdrop-blur-sm rounded-lg px-3 py-2 shadow-sm">
@@ -180,7 +243,7 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
           <span className="w-3 h-3 rounded-full bg-[#A8A29E] inline-block" />
           Fermé
         </span>
-        {userLat !== undefined && (
+        {hasUserPos && (
           <span className="flex items-center gap-1.5 text-[10px] text-[#57534E]">
             <span className="w-3 h-3 rounded-full bg-[#3B82F6] inline-block" />
             Ma position
@@ -252,7 +315,8 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
               >
                 Voir le menu
               </Link>
-              {selected.lat && selected.lng && (
+              {/* Bouton itinéraire — visible si le restaurant a des coordonnées GPS */}
+              {selected.lat !== null && selected.lng !== null && (
                 <a
                   href={getDirectionsUrl(selected)}
                   target="_blank"
@@ -268,7 +332,7 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
         </div>
       )}
 
-      {/* Message aucune coordonnée */}
+      {/* Aucune coordonnée disponible */}
       {restaurantsWithCoords.length === 0 && (
         <div className="absolute inset-0 z-[2000] flex flex-col items-center justify-center bg-white/85 backdrop-blur-sm">
           <MapPin className="w-10 h-10 text-[#E7E5E4] mb-2" />
