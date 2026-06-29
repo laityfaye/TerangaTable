@@ -383,12 +383,12 @@ function LandingNav() {
               Se connecter
             </a>
             <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
-              <Link
-                href="/register"
+              <a
+                href="https://terangatable.cloud/register"
                 className="text-sm font-bold px-5 py-2.5 rounded-full text-white bg-[#C8553D] hover:bg-[#A33D28] transition-colors shadow-lg shadow-[#C8553D]/25"
               >
                 Essai gratuit
-              </Link>
+              </a>
             </motion.div>
 
             {/* Hamburger */}
@@ -449,13 +449,13 @@ function LandingNav() {
               transition={{ delay: 0.3 }}
               className="mt-4 flex flex-col gap-3 items-center"
             >
-              <Link
-                href="/register"
+              <a
+                href="https://terangatable.cloud/register"
                 onClick={() => setMenuOpen(false)}
                 className="px-10 py-4 rounded-full bg-[#C8553D] text-white font-bold text-lg shadow-2xl shadow-[#C8553D]/30"
               >
                 Essai gratuit →
-              </Link>
+              </a>
               <a href="https://terangatable.cloud/login" onClick={() => setMenuOpen(false)} className="text-white/35 text-sm">
                 Se connecter
               </a>
@@ -612,14 +612,14 @@ function HeroSection() {
           {/* CTAs — statiques, ne changent pas avec le slide */}
           <div className="flex flex-col sm:flex-row gap-3 mt-7 sm:mt-8 items-center justify-center lg:justify-start">
             <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
-              <Link
-                href="/register"
+              <a
+                href="https://terangatable.cloud/register"
                 className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full font-bold text-white text-sm transition-colors shadow-2xl shadow-black/40"
                 style={{ backgroundColor: '#C8553D' }}
               >
                 Commencer gratuitement
                 <ArrowRight className="w-4 h-4" />
-              </Link>
+              </a>
             </motion.div>
             <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
               <a
@@ -889,15 +889,15 @@ function FeaturesSection() {
 
               {/* CTA */}
               <div className="px-6 pb-6 pt-1">
-                <Link
-                  href="/register"
+                <a
+                  href="https://terangatable.cloud/register"
                   className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-bold text-white text-sm"
                   style={{ background: selected.gradient }}
                   onClick={() => setSelected(null)}
                 >
                   Commencer gratuitement
                   <ArrowRight className="w-4 h-4" />
-                </Link>
+                </a>
                 <button
                   onClick={() => setSelected(null)}
                   className="w-full mt-2.5 py-2.5 text-white/35 text-sm hover:text-white/60 transition-colors"
@@ -972,14 +972,14 @@ function MarketplaceCtaSection() {
               </Link>
             </motion.div>
             <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
-              <Link
-                href="/register"
+              <a
+                href="https://terangatable.cloud/register"
                 className="inline-flex items-center gap-2 px-8 py-4 rounded-full font-semibold text-white text-sm backdrop-blur-sm transition-all hover:bg-white/15"
                 style={{ backgroundColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.25)' }}
               >
                 Référencer mon restaurant
                 <ArrowRight className="w-4 h-4" />
-              </Link>
+              </a>
             </motion.div>
           </div>
         </motion.div>
@@ -1145,8 +1145,8 @@ function PricingSection() {
         ))}
       </ul>
 
-      <Link
-        href="/register"
+      <a
+        href="https://terangatable.cloud/register"
         className="block text-center py-3.5 rounded-xl font-bold text-sm transition-all"
         style={
           plan.highlight
@@ -1155,7 +1155,7 @@ function PricingSection() {
         }
       >
         {plan.cta}
-      </Link>
+      </a>
     </div>
   );
 
@@ -1260,13 +1260,13 @@ function CtaSection() {
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
-            <Link
-              href="/register"
+            <a
+              href="https://terangatable.cloud/register"
               className="inline-flex items-center gap-2 px-9 py-4 rounded-full font-bold text-white bg-[#C8553D] hover:bg-[#A33D28] transition-colors shadow-2xl shadow-[#C8553D]/35 text-sm"
             >
               Commencer gratuitement
               <ArrowRight className="w-4 h-4" />
-            </Link>
+            </a>
           </motion.div>
           <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
             <a

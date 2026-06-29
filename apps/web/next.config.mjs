@@ -6,16 +6,6 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
-  async redirects() {
-    return [
-      {
-        source: '/:path*',
-        has: [{ type: 'host', value: 'www.terangatable.cloud' }],
-        destination: 'https://terangatable.cloud/:path*',
-        permanent: true,
-      },
-    ];
-  },
   // Required so the standalone bundle includes workspace package files
   outputFileTracingRoot: path.join(__dirname, '../../'),
   transpilePackages: ['@terangatable/shared', '@terangatable/ui'],
