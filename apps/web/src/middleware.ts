@@ -79,9 +79,9 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Redirect root to the right home depending on role
+  // Redirect authenticated users from root to their dashboard
   if (pathname === '/') {
-    if (!isAuthenticated) return NextResponse.redirect(new URL('/login', req.url));
+    if (!isAuthenticated) return NextResponse.next();
     if (roles.includes('super_admin')) return NextResponse.redirect(new URL('/super-admin', req.url));
     if (roles.includes('regional_admin') && regionSlug) {
       return NextResponse.redirect(new URL(`/super-admin/regions/${regionSlug}`, req.url));
