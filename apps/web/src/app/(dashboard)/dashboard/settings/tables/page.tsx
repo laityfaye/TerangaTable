@@ -15,6 +15,7 @@ import {
   type Table,
   type Zone,
 } from '@/hooks/reservations/use-tables';
+import { useAuthStore } from '@/stores/auth.store';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -34,7 +35,8 @@ function buildQrUrl(slug: string, tableNumber: string): string {
     typeof window !== 'undefined'
       ? window.location.origin
       : (process.env['NEXT_PUBLIC_APP_URL'] ?? 'http://localhost:3000');
-  return `${base}/${slug}/menu?table=${encodeURIComponent(tableNumber)}`;
+  const cleanSlug = slug.replace(/^\/+|\/+$/g, '');
+  return `${base}/${cleanSlug}/menu?table=${encodeURIComponent(tableNumber)}`;
 }
 
 // ── QR Code Modal ──────────────────────────────────────────────────────────────
@@ -488,33 +490,13 @@ function ZoneSection({
   );
 }
 
-// ── Slug resolver ─────────────────────────────────────────────────────────────
-// Lit le slug du tenant depuis l'API auth/me ou depuis les cookies de session.
-// Si indisponible on laisse vide — l'URL reste fonctionnelle en relatif.
-
-function useTenantSlug(): string {
-  const [slug, setSlug] = useState('');
-
-  useEffect(() => {
-    fetch('/api/auth/me', { credentials: 'include' })
-      .then((r) => r.json())
-      .then((d: any) => {
-        const s = d?.data?.tenant?.slug ?? d?.tenant?.slug ?? '';
-        if (s) setSlug(s);
-      })
-      .catch(() => {/* ignore */});
-  }, []);
-
-  return slug;
-}
-
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function TablesSettingsPage() {
   const { data: tables = [], isLoading: loadingTables } = useTables();
   const { data: zones = [], isLoading: loadingZones } = useZones();
   const { mutate: createZone, isPending: creatingZone } = useCreateZone();
-  const slug = useTenantSlug();
+  const slug = useAuthStore((s) => s.user?.tenantSlug ?? '');
 
   const [showZoneForm, setShowZoneForm] = useState(false);
   const [zoneName, setZoneName] = useState('');
