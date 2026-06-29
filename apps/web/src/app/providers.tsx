@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useLayoutEffect } from 'react';
+import { useState, useLayoutEffect, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
@@ -8,6 +8,14 @@ import { makeQueryClient } from '@/lib/query-client';
 import { useAuthStore } from '@/stores/auth.store';
 
 const AUTH_PAGES = ['/login', '/forgot-password', '/reset-password'];
+
+function ScrollToTop() {
+  const pathname = usePathname();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
 
 function SessionRestorer() {
   const restoreSession = useAuthStore((s) => s.restoreSession);
@@ -34,6 +42,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <SessionRestorer />
+      <ScrollToTop />
       {children}
       <Toaster richColors position="top-right" />
     </QueryClientProvider>
