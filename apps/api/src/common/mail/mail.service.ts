@@ -67,7 +67,6 @@ export class MailService implements OnModuleInit {
     to: string,
     ownerName: string,
     restaurantName: string,
-    tenantSlug: string,
     tempPassword: string,
   ) {
     const appUrl = this.config.get<string>('APP_URL', 'http://localhost:3000');
@@ -82,7 +81,7 @@ export class MailService implements OnModuleInit {
           <li>Email : ${to}</li>
           <li>Mot de passe temporaire : <strong>${tempPassword}</strong></li>
         </ul>
-        <p><a href="${appUrl}/${tenantSlug}/login">Accéder à mon espace →</a></p>
+        <p><a href="${appUrl}/login">Accéder à mon espace →</a></p>
         <p>Pensez à changer votre mot de passe dès votre première connexion.</p>
         <br/>
         <p>L'équipe TérangaTable</p>

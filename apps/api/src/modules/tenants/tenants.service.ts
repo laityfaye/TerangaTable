@@ -397,7 +397,6 @@ export class TenantsService {
       owner.email,
       firstName ?? 'Owner',
       request.restaurantName,
-      tenant.slug,
       tempPassword,
     );
 
