@@ -31,12 +31,14 @@ function shapeLabel(s: TableShape) {
 
 /** Construit l'URL du menu QR pour une table donnée */
 function buildQrUrl(slug: string, tableNumber: string): string {
-  const base =
+  const base = (
     typeof window !== 'undefined'
       ? window.location.origin
-      : (process.env['NEXT_PUBLIC_APP_URL'] ?? 'http://localhost:3000');
-  const cleanSlug = slug.replace(/^\/+|\/+$/g, '');
-  return `${base}/${cleanSlug}/menu?table=${encodeURIComponent(tableNumber)}`;
+      : (process.env['NEXT_PUBLIC_APP_URL'] ?? 'http://localhost:3000')
+  ).trim();
+  const cleanSlug = slug.trim().replace(/^\/+|\/+$/g, '');
+  const cleanTable = tableNumber.trim();
+  return `${base}/${cleanSlug}/menu?table=${encodeURIComponent(cleanTable)}`;
 }
 
 // ── QR Code Modal ──────────────────────────────────────────────────────────────
@@ -75,49 +77,28 @@ function QrModal({
     const canvas = canvasRef.current?.querySelector('canvas');
     if (!canvas) return;
     const dataUrl = canvas.toDataURL('image/png');
-    const win = window.open('', '_blank');
-    if (!win) return;
-    win.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>QR Code — Table ${table.number}</title>
-          <style>
-            body {
-              margin: 0;
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              justify-content: center;
-              min-height: 100vh;
-              font-family: system-ui, sans-serif;
-              background: #fff;
-            }
-            .card {
-              border: 2px solid #e5e5e5;
-              border-radius: 16px;
-              padding: 32px 40px;
-              text-align: center;
-              box-shadow: 0 4px 24px rgba(0,0,0,.08);
-            }
-            h1 { margin: 0 0 4px; font-size: 28px; font-weight: 800; color: #1c1917; }
-            p  { margin: 0 0 24px; font-size: 14px; color: #78716c; }
-            img { display: block; width: 240px; height: 240px; }
-            small { display: block; margin-top: 16px; font-size: 11px; color: #a8a29e; word-break: break-all; }
-          </style>
-        </head>
-        <body>
-          <div class="card">
-            <h1>Table ${table.number}</h1>
-            <p>Scannez pour commander</p>
-            <img src="${dataUrl}" alt="QR Code table ${table.number}" />
-            <small>${qrUrl}</small>
-          </div>
-          <script>window.onload = () => { window.print(); window.close(); }<\/script>
-        </body>
-      </html>
-    `);
-    win.document.close();
+    const html = `<!DOCTYPE html><html><head>
+<title>QR Code — Table ${table.number}</title>
+<style>
+body{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:system-ui,sans-serif;background:#fff}
+.card{border:2px solid #e5e5e5;border-radius:16px;padding:32px 40px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+h1{margin:0 0 4px;font-size:28px;font-weight:800;color:#1c1917}
+p{margin:0 0 24px;font-size:14px;color:#78716c}
+img{display:block;width:240px;height:240px}
+small{display:block;margin-top:16px;font-size:11px;color:#a8a29e;word-break:break-all}
+</style></head><body>
+<div class="card">
+<h1>Table ${table.number}</h1>
+<p>Scannez pour commander</p>
+<img src="${dataUrl}" alt="QR Code table ${table.number}" />
+<small>${qrUrl}</small>
+</div>
+<script>window.onload=function(){window.print();window.close();}<\/script>
+</body></html>`;
+    const blob = new Blob([html], { type: 'text/html' });
+    const blobUrl = URL.createObjectURL(blob);
+    const win = window.open(blobUrl, '_blank');
+    if (win) win.addEventListener('afterprint', () => URL.revokeObjectURL(blobUrl));
   };
 
   return (
@@ -150,15 +131,9 @@ function QrModal({
           >
             <QRCodeCanvas
               value={qrUrl}
-              size={200}
-              level="H"
-              includeMargin={false}
-              imageSettings={{
-                src: '',
-                height: 0,
-                width: 0,
-                excavate: false,
-              }}
+              size={220}
+              level="M"
+              marginSize={2}
             />
           </div>
 
