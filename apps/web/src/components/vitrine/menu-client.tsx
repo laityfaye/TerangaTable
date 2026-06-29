@@ -367,25 +367,23 @@ function DailyDishesCarousel({
 function TableBanner({ tableNumber, primaryColor }: { tableNumber: string; primaryColor: string }) {
   return (
     <motion.div
-      className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-2.5 py-2.5 px-4"
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] flex items-center gap-2.5 py-2.5 px-5 rounded-full shadow-2xl"
       style={{
-        background: `linear-gradient(135deg, ${primaryColor}F0, ${primaryColor}D0)`,
-        backdropFilter: 'blur(12px)',
-        boxShadow: `0 2px 20px ${primaryColor}50`,
+        background: primaryColor,
+        boxShadow: `0 4px 24px ${primaryColor}80`,
       }}
-      initial={{ y: -48, opacity: 0 }}
+      initial={{ y: 40, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: 'spring', damping: 22, stiffness: 260, delay: 0.3 }}
     >
-      {/* Icône table */}
-      <svg className="w-4 h-4 text-white/90 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-4 h-4 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
           d="M3 10h18M3 14h18M10 3v18M14 3v18" />
       </svg>
       <span className="text-white font-semibold text-sm tracking-wide">
         Table&nbsp;<span className="font-bold">{tableNumber}</span>
       </span>
-      <span className="text-white/70 text-xs ml-1">· Commande sur place</span>
+      <span className="text-white/70 text-xs">· Sur place</span>
     </motion.div>
   );
 }
@@ -628,7 +626,7 @@ function CartDrawer({
   }, [onClose]);
 
   // Détermine si le mode actuel nécessite un nom ou un numéro de table
-  const needsName       = isDineIn || orderType === 'online';
+  const needsName       = !isDineIn && orderType === 'online';
   const needsTableInput = !isDineIn && (orderType === 'dine_in' || orderType === 'takeaway');
 
   const handleSubmit = async () => {
@@ -1125,7 +1123,6 @@ export default function MenuClient({
   primaryColor,
   restaurantName,
   heroImageUrl,
-  logoUrl,
   slug,
   tableNumber,
 }: Props) {
