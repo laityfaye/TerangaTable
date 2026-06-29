@@ -34,8 +34,16 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Tenant subdomain detection — attach slug header
+  // Redirect www → apex domain
   const host = req.headers.get('host') ?? '';
+  if (host.startsWith('www.')) {
+    const apex = host.slice(4);
+    const url = req.nextUrl.clone();
+    url.host = apex;
+    return NextResponse.redirect(url, 308);
+  }
+
+  // Tenant subdomain detection — attach slug header
   const withoutPort = host.split(':')[0] ?? '';
   if (withoutPort.endsWith(`.${PLATFORM_DOMAIN}`)) {
     const slug = withoutPort.slice(0, -(PLATFORM_DOMAIN.length + 1));
