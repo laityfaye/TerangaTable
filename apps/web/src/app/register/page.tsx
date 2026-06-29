@@ -1,6 +1,6 @@
 'use client'
 
-import { useReducer } from 'react'
+import { useReducer, useEffect } from 'react'
 import WizardProgress from './components/wizard-progress'
 import Step1Region from './components/step-1-region'
 import Step2Info from './components/step-2-info'
@@ -92,6 +92,10 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
 
 export default function RegisterPage() {
   const [state, dispatch] = useReducer(wizardReducer, initialState)
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [state.currentStep])
 
   if (state.submittedId) {
     return <SuccessPage state={state} />
