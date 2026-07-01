@@ -14,7 +14,7 @@ import {
   PowerOff,
   Trash2,
 } from 'lucide-react';
-import { useAdmins, useToggleAdmin, useDeleteAdmin, useInviteAdmin, type AdminUser } from '@/hooks/use-super-admin';
+import { useAdmins, useToggleAdmin, useDeleteAdmin, useInviteAdmin, useRegions, type AdminUser } from '@/hooks/use-super-admin';
 
 // ── Mock data ──────────────────────────────────────────────────────────────────
 
@@ -276,23 +276,16 @@ function AdminDrawer({
 
 // ── Invite modal ───────────────────────────────────────────────────────────────
 
-const REGION_OPTIONS = [
-  { value: 'dakar', label: 'Dakar' },
-  { value: 'thies', label: 'Thiès' },
-  { value: 'saint-louis', label: 'Saint-Louis' },
-  { value: 'abidjan', label: 'Abidjan' },
-  { value: 'casablanca', label: 'Casablanca' },
-  { value: 'paris', label: 'Paris' },
-];
-
 function InviteModal({
   open,
   loading,
+  regionOptions,
   onConfirm,
   onCancel,
 }: {
   open: boolean;
   loading: boolean;
+  regionOptions: { value: string; label: string }[];
   onConfirm: (payload: {
     email: string;
     first_name: string;
@@ -401,7 +394,7 @@ function InviteModal({
                   className="w-full appearance-none bg-slate-800 border border-white/10 rounded-lg px-3 pr-8 h-10 text-sm text-slate-200 focus:outline-none focus:border-violet-500/50 cursor-pointer"
                 >
                   <option value="">Sélectionner une région</option>
-                  {REGION_OPTIONS.map((r) => (
+                  {regionOptions.map((r) => (
                     <option key={r.value} value={r.value}>
                       {r.label}
                     </option>
@@ -454,9 +447,12 @@ export default function AdminsPage() {
   if (search) adminFilters.search = search;
 
   const { data: apiData } = useAdmins(adminFilters);
+  const { data: regions } = useRegions();
   const toggleMutation = useToggleAdmin();
   const deleteMutation = useDeleteAdmin();
   const inviteMutation = useInviteAdmin();
+
+  const regionOptions = (regions ?? []).map((r) => ({ value: r.slug, label: r.name }));
 
   const allAdmins = apiData ?? MOCK_ADMINS;
   const admins = allAdmins.filter((a) => {
@@ -697,6 +693,7 @@ export default function AdminsPage() {
       <InviteModal
         open={inviteOpen}
         loading={inviteMutation.isPending}
+        regionOptions={regionOptions}
         onConfirm={(payload) => void handleInvite(payload)}
         onCancel={() => setInviteOpen(false)}
       />

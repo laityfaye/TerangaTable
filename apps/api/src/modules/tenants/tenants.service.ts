@@ -174,6 +174,13 @@ export class TenantsService {
 
   // ── Tenant Requests ───────────────────────────────────────────────────────
 
+  async findAllRequestsByRegionSlug(regionSlug?: string) {
+    if (!regionSlug) return { data: [] };
+    const region = await this.prisma.region.findUnique({ where: { slug: regionSlug }, select: { id: true } });
+    if (!region) return { data: [] };
+    return this.findAllRequests(region.id);
+  }
+
   async findAllRequests(regionId?: string) {
     const rows = await this.prisma.tenantRequest.findMany({
       where: { ...(regionId && { regionId }) },

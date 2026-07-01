@@ -99,6 +99,32 @@ export class RegionsService {
     return { id: updated.id, is_active: updated.isActive };
   }
 
+  async assignAdmin(id: string, userId: string | null) {
+    const region = await this.prisma.region.findUnique({ where: { id } });
+    if (!region) throw new NotFoundException('Région introuvable');
+
+    if (userId !== null) {
+      const user = await this.prisma.user.findFirst({ where: { id: userId, tenantId: null } });
+      if (!user) throw new NotFoundException('Utilisateur introuvable ou n\'est pas un admin plateforme');
+    }
+
+    const updated = await this.prisma.region.update({
+      where: { id },
+      data: { adminId: userId },
+      select: {
+        id: true,
+        admin: { select: { id: true, email: true, firstName: true, lastName: true } },
+      },
+    });
+
+    return {
+      id: updated.id,
+      regional_admin: updated.admin
+        ? { id: updated.admin.id, email: updated.admin.email, first_name: updated.admin.firstName, last_name: updated.admin.lastName }
+        : null,
+    };
+  }
+
   async findBySlug(slug: string) {
     const region = await this.prisma.region.findUnique({
       where: { slug, isActive: true },

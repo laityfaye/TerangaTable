@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Building2, Clock, ShoppingCart, DollarSign, ArrowRight, CheckCircle, XCircle } from 'lucide-react';
+import { Building2, Clock, ShoppingCart, DollarSign, ArrowRight, CheckCircle, XCircle, ExternalLink, Globe } from 'lucide-react';
 import {
   LineChart,
   Line,
@@ -151,25 +151,37 @@ export default function RegionDashboardPage({ params }: { params: { slug: string
   return (
     <div className="space-y-6 text-white">
       {/* Header */}
-      <div className="flex items-start gap-4">
-        <span className="text-4xl leading-none mt-0.5">
-          {FLAG[region.country_code] ?? '🌍'}
-        </span>
-        <div>
-          <h1 className="font-heading text-2xl font-bold text-white">
-            {region.platform_label}
-          </h1>
-          <p className="mt-0.5 text-sm text-slate-400">
-            {region.country_name} · {region.currency_code} ({region.currency_symbol}) ·{' '}
-            <span
-              className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                region.is_active ? 'bg-green-500/20 text-green-400' : 'bg-slate-700 text-slate-400'
-              }`}
-            >
-              {region.is_active ? 'Inscriptions ouvertes' : 'Inscriptions fermées'}
-            </span>
-          </p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-4">
+          <span className="text-4xl leading-none mt-0.5">
+            {FLAG[region.country_code] ?? '🌍'}
+          </span>
+          <div>
+            <h1 className="font-heading text-2xl font-bold text-white">
+              {region.platform_label}
+            </h1>
+            <p className="mt-0.5 text-sm text-slate-400">
+              {region.country_name} · {region.currency_code} ({region.currency_symbol}) ·{' '}
+              <span
+                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                  region.is_active ? 'bg-green-500/20 text-green-400' : 'bg-slate-700 text-slate-400'
+                }`}
+              >
+                {region.is_active ? 'Inscriptions ouvertes' : 'Inscriptions fermées'}
+              </span>
+            </p>
+          </div>
         </div>
+        <a
+          href={`https://terangatable.cloud/decouvrir/${slug}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 h-9 px-3 rounded-lg bg-slate-800 border border-white/10 text-slate-400 hover:text-white hover:border-violet-500/40 transition-all text-xs font-medium flex-shrink-0"
+        >
+          <Globe size={13} />
+          Page publique
+          <ExternalLink size={11} className="opacity-60" />
+        </a>
       </div>
 
       {/* KPIs */}
@@ -297,7 +309,7 @@ export default function RegionDashboardPage({ params }: { params: { slug: string
       </div>
 
       {/* Quick links */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Link
           href={`/super-admin/regions/${slug}/requests`}
           className="flex items-center justify-between p-4 bg-slate-800/60 border border-white/10 rounded-xl hover:border-violet-500/30 hover:bg-slate-800 transition-all group"
@@ -328,6 +340,23 @@ export default function RegionDashboardPage({ params }: { params: { slug: string
           </div>
           <ArrowRight size={16} className="text-slate-500 group-hover:text-violet-400 transition-colors" />
         </Link>
+        <a
+          href={`https://terangatable.cloud/decouvrir/${slug}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between p-4 bg-slate-800/60 border border-white/10 rounded-xl hover:border-green-500/30 hover:bg-slate-800 transition-all group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-green-500/20 flex items-center justify-center">
+              <Globe size={16} className="text-green-400" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-white">Page de découverte</p>
+              <p className="text-xs text-slate-500">terangatable.cloud</p>
+            </div>
+          </div>
+          <ExternalLink size={16} className="text-slate-500 group-hover:text-green-400 transition-colors" />
+        </a>
       </div>
     </div>
   );

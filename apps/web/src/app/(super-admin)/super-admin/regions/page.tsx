@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Plus, X, UserCheck } from 'lucide-react';
-import { useRegions, useToggleRegion, useCreateRegion, type Region } from '@/hooks/use-super-admin';
+import { Plus, X, UserCheck, UserCog, UserMinus, ExternalLink } from 'lucide-react';
+import { useRegions, useToggleRegion, useCreateRegion, useAssignAdmin, useAdmins, type Region } from '@/hooks/use-super-admin';
 
 // ── Mock data (seed data from REGIONS.md) ─────────────────────────────────────
 
@@ -233,15 +233,125 @@ function CreateRegionModal({
   );
 }
 
+// ── Assign admin modal ────────────────────────────────────────────────────────
+
+function AssignAdminModal({
+  region,
+  onClose,
+  onAssign,
+  loading,
+}: {
+  region: Region;
+  onClose: () => void;
+  onAssign: (userId: string | null) => void;
+  loading: boolean;
+}) {
+  const { data: admins = [] } = useAdmins();
+  const [selected, setSelected] = useState<string | null>(region.regional_admin?.id ?? null);
+
+  const platformAdmins = admins.filter((a) => a.is_active);
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div className="relative bg-slate-900 border border-white/10 rounded-xl w-full max-w-md shadow-2xl">
+        <div className="px-6 py-5 border-b border-white/10 flex items-center justify-between">
+          <div>
+            <h3 className="font-heading font-bold text-white">Admin régional</h3>
+            <p className="text-xs text-slate-500 mt-0.5">{region.name}</p>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="px-6 py-4 max-h-72 overflow-y-auto space-y-1.5">
+          {/* Option retirer l'admin */}
+          <label
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
+              selected === null ? 'bg-slate-700/80 border border-white/20' : 'hover:bg-white/5 border border-transparent'
+            }`}
+          >
+            <input
+              type="radio"
+              name="admin-select"
+              className="sr-only"
+              checked={selected === null}
+              onChange={() => setSelected(null)}
+            />
+            <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0">
+              <UserMinus size={14} className="text-slate-400" />
+            </div>
+            <span className="text-sm text-slate-400 italic">Aucun admin (retirer)</span>
+          </label>
+
+          {platformAdmins.length === 0 && (
+            <p className="text-center text-slate-500 text-sm py-4">Aucun admin plateforme disponible.</p>
+          )}
+
+          {platformAdmins.map((a) => (
+            <label
+              key={a.id}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
+                selected === a.id ? 'bg-violet-500/20 border border-violet-500/40' : 'hover:bg-white/5 border border-transparent'
+              }`}
+            >
+              <input
+                type="radio"
+                name="admin-select"
+                className="sr-only"
+                checked={selected === a.id}
+                onChange={() => setSelected(a.id)}
+              />
+              <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0 text-xs font-bold text-violet-300">
+                {a.first_name[0]}{a.last_name[0]}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm text-slate-200 font-medium">
+                  {a.first_name} {a.last_name}
+                </p>
+                <p className="text-xs text-slate-500 truncate">{a.email}</p>
+              </div>
+              {a.region_name && (
+                <span className="ml-auto text-[10px] bg-slate-700 text-slate-400 px-1.5 py-0.5 rounded flex-shrink-0">
+                  {a.region_name}
+                </span>
+              )}
+            </label>
+          ))}
+        </div>
+
+        <div className="px-6 py-5 border-t border-white/10 flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 h-10 rounded-lg border border-white/10 text-slate-400 hover:text-white transition-colors text-sm"
+          >
+            Annuler
+          </button>
+          <button
+            onClick={() => onAssign(selected)}
+            disabled={loading}
+            className="flex-1 h-10 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition-colors disabled:opacity-50"
+          >
+            {loading ? 'Enregistrement...' : 'Confirmer'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Region card ────────────────────────────────────────────────────────────────
 
 function RegionCard({
   region,
   onToggle,
+  onAssign,
   loading,
 }: {
   region: Region;
   onToggle: (r: Region) => void;
+  onAssign: (r: Region) => void;
   loading: boolean;
 }) {
   return (
@@ -300,19 +410,29 @@ function RegionCard({
       </div>
 
       {/* Admin régional */}
-      <div className="flex items-center gap-2">
-        <UserCheck size={13} className="text-slate-500" />
-        {region.regional_admin ? (
-          <p className="text-sm text-slate-300">
-            {region.regional_admin.first_name} {region.regional_admin.last_name}
-          </p>
-        ) : (
-          <p className="text-sm text-slate-500 italic">Aucun admin régional</p>
-        )}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <UserCheck size={13} className="text-slate-500 flex-shrink-0" />
+          {region.regional_admin ? (
+            <p className="text-sm text-slate-300 truncate">
+              {region.regional_admin.first_name} {region.regional_admin.last_name}
+            </p>
+          ) : (
+            <p className="text-sm text-slate-500 italic">Aucun admin régional</p>
+          )}
+        </div>
+        <button
+          onClick={() => onAssign(region)}
+          className="flex items-center gap-1.5 px-2 py-1 rounded text-xs text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 transition-colors flex-shrink-0"
+          title="Assigner un admin régional"
+        >
+          <UserCog size={12} />
+          {region.regional_admin ? 'Changer' : 'Assigner'}
+        </button>
       </div>
 
-      {/* Status badge */}
-      <div>
+      {/* Footer : status + lien public */}
+      <div className="flex items-center justify-between gap-2">
         <span
           className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${
             region.is_active
@@ -322,6 +442,17 @@ function RegionCard({
         >
           {region.is_active ? 'Inscriptions ouvertes' : 'Inscriptions fermées'}
         </span>
+        <a
+          href={`https://terangatable.cloud/decouvrir/${region.slug}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center gap-1 text-[11px] text-slate-500 hover:text-green-400 transition-colors"
+          title="Voir la page de découverte"
+        >
+          <ExternalLink size={11} />
+          Voir la page
+        </a>
       </div>
     </div>
   );
@@ -331,10 +462,12 @@ function RegionCard({
 
 export default function RegionsPage() {
   const [showCreate, setShowCreate] = useState(false);
+  const [assignTarget, setAssignTarget] = useState<Region | null>(null);
 
   const { data: apiData } = useRegions();
   const toggleMutation = useToggleRegion();
   const createMutation = useCreateRegion();
+  const assignMutation = useAssignAdmin();
 
   const regions = apiData ?? MOCK_REGIONS;
 
@@ -358,6 +491,21 @@ export default function RegionsPage() {
       setShowCreate(false);
     } catch {
       toast.error('Erreur lors de la création');
+    }
+  }
+
+  async function handleAssign(userId: string | null) {
+    if (!assignTarget) return;
+    try {
+      await assignMutation.mutateAsync({ regionId: assignTarget.id, userId });
+      toast.success(
+        userId
+          ? `Admin assigné à ${assignTarget.name}.`
+          : `Admin retiré de ${assignTarget.name}.`,
+      );
+      setAssignTarget(null);
+    } catch {
+      toast.error("Erreur lors de l'assignation");
     }
   }
 
@@ -387,6 +535,7 @@ export default function RegionsPage() {
             key={region.id}
             region={region}
             onToggle={(r) => void handleToggle(r)}
+            onAssign={(r) => setAssignTarget(r)}
             loading={toggleMutation.isPending}
           />
         ))}
@@ -398,6 +547,16 @@ export default function RegionsPage() {
           onClose={() => setShowCreate(false)}
           onSubmit={(data) => void handleCreate(data)}
           loading={createMutation.isPending}
+        />
+      )}
+
+      {/* Assign admin modal */}
+      {assignTarget && (
+        <AssignAdminModal
+          region={assignTarget}
+          onClose={() => setAssignTarget(null)}
+          onAssign={(userId) => void handleAssign(userId)}
+          loading={assignMutation.isPending}
         />
       )}
     </div>

@@ -3,6 +3,7 @@ import { ApiOperation, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { RegionsService } from './regions.service';
 import { CreateRegionDto } from './dto/create-region.dto';
 import { ToggleRegionDto } from './dto/toggle-region.dto';
+import { AssignAdminDto } from './dto/assign-admin.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SuperAdminGuard } from '../../common/guards/super-admin.guard';
 
@@ -31,6 +32,14 @@ export class RegionsController {
   @ApiOperation({ summary: 'Activer / désactiver une région (SuperAdmin)' })
   async toggle(@Param('id') id: string, @Body() dto: ToggleRegionDto) {
     return this.regionsService.toggle(id, dto.is_active);
+  }
+
+  @Patch(':id/assign-admin')
+  @UseGuards(JwtAuthGuard, SuperAdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Assigner ou retirer un admin régional (SuperAdmin)' })
+  async assignAdmin(@Param('id') id: string, @Body() dto: AssignAdminDto) {
+    return this.regionsService.assignAdmin(id, dto.userId);
   }
 
   @Get(':slug')

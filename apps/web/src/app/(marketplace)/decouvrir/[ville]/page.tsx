@@ -50,15 +50,31 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
       ? `Restaurants ${cuisine} à ${city.name} — TérangaTable`
       : `Restaurants à ${city.name} — TérangaTable`;
 
+    const description = `Découvrez les ${city.restaurant_count}+ restaurants de ${city.name}. Menus du jour, livraison, réservations et avis clients sur TérangaTable.`;
+
     return {
       title,
-      description: `Découvrez les ${city.restaurant_count}+ restaurants de ${city.name}. Menus du jour, livraison, réservations et avis clients sur TérangaTable.`,
-      alternates: { canonical: `https://terangatable.com/decouvrir/${ville}` },
+      description,
+      keywords: [
+        `restaurants ${city.name}`,
+        `livraison repas ${city.name}`,
+        `menus du jour ${city.name}`,
+        `réservation restaurant ${city.name}`,
+        `TérangaTable ${city.name}`,
+        city.country_name,
+      ],
+      alternates: { canonical: `/decouvrir/${ville}` },
       openGraph: {
         title,
-        description: `${city.restaurant_count}+ restaurants à ${city.name} sur TérangaTable`,
+        description,
         type: 'website',
-        images: city.image_url ? [{ url: city.image_url }] : [],
+        url: `/decouvrir/${ville}`,
+        images: city.image_url ? [{ url: city.image_url, alt: `Restaurants à ${city.name}` }] : [],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
       },
     };
   } catch {

@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   title: 'Découvrez les restaurants près de vous — TérangaTable',
   description:
     "Tous les meilleurs restaurants d'Afrique en un seul endroit — menus du jour, livraison, réservations et avis clients.",
-  alternates: { canonical: 'https://terangatable.com/decouvrir' },
+  alternates: { canonical: '/decouvrir' },
   openGraph: {
     title: 'TérangaTable — Découvrez les restaurants',
     description: 'Trouvez les meilleurs restaurants africains près de chez vous.',

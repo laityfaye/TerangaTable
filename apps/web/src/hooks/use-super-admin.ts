@@ -364,6 +364,19 @@ export function useDeleteAdmin() {
   });
 }
 
+export function useAssignAdmin() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ regionId, userId }: { regionId: string; userId: string | null }) => {
+      const { data } = await apiClient.patch(`/regions/${regionId}/assign-admin`, { userId });
+      return data;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['super-admin', 'regions'] });
+    },
+  });
+}
+
 export function useInviteAdmin() {
   const queryClient = useQueryClient();
   return useMutation({

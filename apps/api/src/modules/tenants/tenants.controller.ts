@@ -23,7 +23,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SuperAdminGuard } from '../../common/guards/super-admin.guard';
 
 interface AuthenticatedRequest {
-  user: { id: string; tenantId: string | null; roles: string[] };
+  user: { id: string; tenantId: string | null; roles: string[]; regionSlug?: string | null };
 }
 
 @ApiTags('Tenants')
@@ -90,9 +90,11 @@ export class TenantsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Liste des demandes (SuperAdmin ou RegionalAdmin)' })
   findAllRequests(@Request() req: AuthenticatedRequest, @Query('regionId') regionId?: string) {
-    const isSuperAdmin = req.user.roles.includes('super_admin');
-    // RegionalAdmin ne voit que sa région (contrôlé par le guard)
-    return this.tenantsService.findAllRequests(isSuperAdmin ? regionId : undefined);
+    const isRegionalAdmin = req.user.roles.includes('regional_admin');
+    if (isRegionalAdmin) {
+      return this.tenantsService.findAllRequestsByRegionSlug(req.user.regionSlug ?? undefined);
+    }
+    return this.tenantsService.findAllRequests(regionId);
   }
 
   @Post('tenant-requests')

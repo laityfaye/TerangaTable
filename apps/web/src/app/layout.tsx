@@ -16,8 +16,29 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'TérangaTable',
-  description: 'Plateforme SaaS de gestion pour restaurants africains',
+  metadataBase: new URL('https://terangatable.cloud'),
+  title: {
+    default: 'TérangaTable — Restaurants africains en ligne',
+    template: '%s — TérangaTable',
+  },
+  description:
+    'TérangaTable : découvrez les meilleurs restaurants africains à Dakar, Thiès, Abidjan, Casablanca et plus. Menus du jour, livraison et réservations en ligne.',
+  keywords: [
+    'restaurants Dakar', 'restaurants Thiès', 'restaurants Abidjan', 'restaurants Casablanca',
+    'restaurant africain', 'livraison repas Sénégal', 'menus du jour Dakar', 'TérangaTable',
+  ],
+  authors: [{ name: 'TérangaTable', url: 'https://terangatable.cloud' }],
+  creator: 'TérangaTable',
+  openGraph: {
+    siteName: 'TérangaTable',
+    locale: 'fr_FR',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@terangatable',
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
