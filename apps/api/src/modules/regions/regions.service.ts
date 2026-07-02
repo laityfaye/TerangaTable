@@ -1,4 +1,5 @@
 import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateRegionDto } from './dto/create-region.dto';
 
@@ -137,9 +138,9 @@ export class RegionsService {
 
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const tenantScope = {
+    const tenantScope: Prisma.TenantWhereInput = {
       regionId: region.id,
-      status: { in: ['active', 'trial'] as const },
+      status: { in: ['active', 'trial'] },
       slug: { not: '__platform__' },
     };
 
