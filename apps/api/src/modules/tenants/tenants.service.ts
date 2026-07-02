@@ -31,13 +31,27 @@ export class TenantsService {
 
   // ── Tenants ───────────────────────────────────────────────────────────────
 
+  async findAllByRegionSlug(regionSlug: string | undefined, dto: ListTenantsDto) {
+    const empty = { data: [], meta: { total: 0, page: dto.page ?? 1, limit: dto.limit ?? 20, totalPages: 0 } };
+    if (!regionSlug) return empty;
+    const region = await this.prisma.region.findUnique({ where: { slug: regionSlug }, select: { id: true } });
+    if (!region) return empty;
+    return this.findAll({ ...dto, regionId: region.id });
+  }
+
   async findAll(dto: ListTenantsDto) {
-    const { page = 1, limit = 20, regionId, status } = dto;
+    const { page = 1, limit = 20, regionId, status, search } = dto;
     const skip = (page - 1) * limit;
 
     const where = {
       ...(regionId && { regionId }),
       ...(status && { status: status as never }),
+      ...(search && {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' as const } },
+          { slug: { contains: search, mode: 'insensitive' as const } },
+        ],
+      }),
     };
 
     const [rows, total] = await Promise.all([

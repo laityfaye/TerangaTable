@@ -23,8 +23,18 @@ export class ListTenantsDto {
   @IsUUID()
   regionId?: string;
 
+  @ApiPropertyOptional({ description: 'Slug de région (ignoré si regionId est fourni)' })
+  @IsOptional()
+  @IsString()
+  region?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
   status?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  search?: string;
 }

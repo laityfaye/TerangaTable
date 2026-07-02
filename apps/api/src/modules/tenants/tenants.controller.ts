@@ -35,11 +35,17 @@ export class TenantsController {
   // ── Tenants ───────────────────────────────────────────────────────────────
 
   @Get('tenants')
-  @UseGuards(JwtAuthGuard, SuperAdminGuard)
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Liste paginée des tenants (SuperAdmin)' })
-  findAll(@Query() dto: ListTenantsDto) {
-    return this.tenantsService.findAll(dto);
+  @ApiOperation({ summary: 'Liste paginée des tenants (SuperAdmin ou RegionalAdmin)' })
+  findAll(@Request() req: AuthenticatedRequest, @Query() dto: ListTenantsDto) {
+    if (req.user.roles.includes('regional_admin')) {
+      return this.tenantsService.findAllByRegionSlug(req.user.regionSlug ?? undefined, dto);
+    }
+    if (req.user.roles.includes('super_admin')) {
+      return this.tenantsService.findAll(dto);
+    }
+    throw new ForbiddenException('Accès réservé aux administrateurs');
   }
 
   @Post('tenants')
