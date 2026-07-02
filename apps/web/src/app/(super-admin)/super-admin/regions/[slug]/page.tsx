@@ -20,8 +20,6 @@ import {
   type TenantHistoryPoint,
 } from '@/hooks/use-super-admin';
 
-// ── Mock data ──────────────────────────────────────────────────────────────────
-
 const FLAG: Record<string, string> = {
   SN: '🇸🇳',
   CI: '🇨🇮',
@@ -29,23 +27,7 @@ const FLAG: Record<string, string> = {
   FR: '🇫🇷',
 };
 
-const MOCK_STATS: Record<string, RegionStats> = {
-  dakar:        { active_tenants: 34, orders_today: 127, pending_requests: 4,  revenue_month: 12500000 },
-  thies:        { active_tenants: 12, orders_today: 38,  pending_requests: 1,  revenue_month: 4200000  },
-  'saint-louis':{ active_tenants: 8,  orders_today: 21,  pending_requests: 0,  revenue_month: 2800000  },
-  abidjan:      { active_tenants: 18, orders_today: 74,  pending_requests: 2,  revenue_month: 7800000  },
-  casablanca:   { active_tenants: 11, orders_today: 45,  pending_requests: 1,  revenue_month: 5500000  },
-  paris:        { active_tenants: 0,  orders_today: 0,   pending_requests: 0,  revenue_month: 0        },
-};
-
-const MOCK_HISTORY: Record<string, TenantHistoryPoint[]> = {
-  dakar:         [{ month: 'Déc', active_tenants: 24 }, { month: 'Jan', active_tenants: 26 }, { month: 'Fév', active_tenants: 28 }, { month: 'Mar', active_tenants: 29 }, { month: 'Avr', active_tenants: 31 }, { month: 'Mai', active_tenants: 34 }],
-  thies:         [{ month: 'Déc', active_tenants: 8  }, { month: 'Jan', active_tenants: 9  }, { month: 'Fév', active_tenants: 9  }, { month: 'Mar', active_tenants: 10 }, { month: 'Avr', active_tenants: 11 }, { month: 'Mai', active_tenants: 12 }],
-  'saint-louis': [{ month: 'Déc', active_tenants: 5  }, { month: 'Jan', active_tenants: 6  }, { month: 'Fév', active_tenants: 6  }, { month: 'Mar', active_tenants: 7  }, { month: 'Avr', active_tenants: 7  }, { month: 'Mai', active_tenants: 8  }],
-  abidjan:       [{ month: 'Déc', active_tenants: 12 }, { month: 'Jan', active_tenants: 13 }, { month: 'Fév', active_tenants: 14 }, { month: 'Mar', active_tenants: 15 }, { month: 'Avr', active_tenants: 16 }, { month: 'Mai', active_tenants: 18 }],
-  casablanca:    [{ month: 'Déc', active_tenants: 7  }, { month: 'Jan', active_tenants: 8  }, { month: 'Fév', active_tenants: 9  }, { month: 'Mar', active_tenants: 9  }, { month: 'Avr', active_tenants: 10 }, { month: 'Mai', active_tenants: 11 }],
-  paris:         [{ month: 'Déc', active_tenants: 0  }, { month: 'Jan', active_tenants: 0  }, { month: 'Fév', active_tenants: 0  }, { month: 'Mar', active_tenants: 0  }, { month: 'Avr', active_tenants: 0  }, { month: 'Mai', active_tenants: 0  }],
-};
+const EMPTY_STATS: RegionStats = { active_tenants: 0, orders_today: 0, pending_requests: 0, revenue_month: 0 };
 
 const STATUS_BADGE: Record<string, string> = {
   pending:  'bg-amber-500/20 text-amber-300 border border-amber-500/30',
@@ -115,13 +97,13 @@ export default function RegionDashboardPage({ params }: { params: { slug: string
   const { slug } = params;
 
   const { data: regionsData, isLoading: regionLoading, isError: regionError } = useRegions();
-  const { data: statsData }    = useRegionStats(slug);
-  const { data: historyData }  = useRegionTenantsHistory(slug);
+  const { data: statsData, isLoading: statsLoading, isError: statsError } = useRegionStats(slug);
+  const { data: historyData, isLoading: historyLoading } = useRegionTenantsHistory(slug);
   const { data: requestsData, isLoading: requestsLoading, isError: requestsError } = useRequests({ region: slug });
 
   const region = (regionsData ?? []).find((r) => r.slug === slug);
-  const stats   = statsData   ?? MOCK_STATS[slug]   ?? MOCK_STATS['dakar']!;
-  const history = historyData ?? MOCK_HISTORY[slug] ?? MOCK_HISTORY['dakar']!;
+  const stats   = statsData   ?? EMPTY_STATS;
+  const history = historyData ?? [];
 
   const regionRequests = (requestsData ?? [])
     .filter((r) => r.region_id === slug || r.region_name === region?.name)
@@ -175,30 +157,35 @@ export default function RegionDashboardPage({ params }: { params: { slug: string
       </div>
 
       {/* KPIs */}
+      {statsError && (
+        <p className="text-xs text-red-400">
+          Impossible de charger les statistiques de la région. Les chiffres ci-dessous peuvent être incomplets.
+        </p>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
           icon={<Building2 size={20} />}
           label="Tenants actifs"
-          value={stats.active_tenants}
+          value={statsLoading ? '…' : stats.active_tenants}
           sub="dans cette région"
         />
         <StatCard
           icon={<ShoppingCart size={20} />}
           label="Commandes aujourd'hui"
-          value={stats.orders_today}
+          value={statsLoading ? '…' : stats.orders_today}
           sub="agrégat tous tenants"
         />
         <StatCard
           icon={<Clock size={20} />}
           label="Demandes en attente"
-          value={stats.pending_requests}
+          value={statsLoading ? '…' : stats.pending_requests}
           sub="à traiter"
-          pulse={stats.pending_requests > 0}
+          pulse={!statsLoading && stats.pending_requests > 0}
         />
         <StatCard
           icon={<DollarSign size={20} />}
           label="CA du mois"
-          value={formatCurrency(stats.revenue_month ?? 0, region.currency_code, region.currency_symbol)}
+          value={statsLoading ? '…' : formatCurrency(stats.revenue_month ?? 0, region.currency_code, region.currency_symbol)}
           sub="abonnements actifs"
         />
       </div>
@@ -210,6 +197,9 @@ export default function RegionDashboardPage({ params }: { params: { slug: string
           <h2 className="font-heading font-semibold text-white text-base mb-4">
             Tenants actifs sur 6 mois
           </h2>
+          {historyLoading ? (
+            <p className="text-sm text-slate-500 py-16 text-center">Chargement…</p>
+          ) : (
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={history} margin={{ top: 4, right: 16, bottom: 0, left: -10 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
@@ -245,6 +235,7 @@ export default function RegionDashboardPage({ params }: { params: { slug: string
               />
             </LineChart>
           </ResponsiveContainer>
+          )}
         </div>
 
         {/* Feed demandes récentes */}

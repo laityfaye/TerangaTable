@@ -63,6 +63,32 @@ export class MailService implements OnModuleInit {
     });
   }
 
+  async sendNewRequestNotification(
+    to: string,
+    adminFirstName: string,
+    restaurantName: string,
+    ownerName: string,
+    regionName: string,
+    regionSlug: string,
+  ) {
+    const appUrl = this.config.get<string>('APP_URL', 'http://localhost:3000');
+    await this.send({
+      to,
+      subject: `Nouvelle demande d'inscription — ${regionName}`,
+      html: `
+        <p>Bonjour ${adminFirstName},</p>
+        <p>Une nouvelle demande d'inscription vient d'être soumise pour votre région <strong>${regionName}</strong> :</p>
+        <ul>
+          <li>Restaurant : <strong>${restaurantName}</strong></li>
+          <li>Demandeur : ${ownerName}</li>
+        </ul>
+        <p><a href="${appUrl}/super-admin/regions/${regionSlug}/requests">Traiter les demandes →</a></p>
+        <br/>
+        <p>L'équipe TérangaTable</p>
+      `,
+    });
+  }
+
   async sendOnboardingCredentials(
     to: string,
     ownerName: string,

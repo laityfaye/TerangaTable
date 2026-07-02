@@ -131,6 +131,67 @@ export class RegionsService {
     };
   }
 
+  async getStats(slug: string) {
+    const region = await this.prisma.region.findUnique({ where: { slug }, select: { id: true } });
+    if (!region) throw new NotFoundException(`Région introuvable : ${slug}`);
+
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tenantScope = {
+      regionId: region.id,
+      status: { in: ['active', 'trial'] as const },
+      slug: { not: '__platform__' },
+    };
+
+    const [activeTenants, ordersToday, pendingRequests, activeTenantPlans] = await Promise.all([
+      this.prisma.tenant.count({ where: tenantScope }),
+      this.prisma.order.count({
+        where: { createdAt: { gte: startOfDay }, tenant: { regionId: region.id } },
+      }),
+      this.prisma.tenantRequest.count({ where: { regionId: region.id, status: 'pending' } }),
+      this.prisma.tenant.findMany({
+        where: tenantScope,
+        select: { plan: { select: { priceMonthly: true } } },
+      }),
+    ]);
+
+    const revenueMonth = activeTenantPlans.reduce(
+      (sum, t) => sum + Number(t.plan.priceMonthly),
+      0,
+    );
+
+    return {
+      active_tenants: activeTenants,
+      orders_today: ordersToday,
+      pending_requests: pendingRequests,
+      revenue_month: revenueMonth,
+    };
+  }
+
+  async getTenantsHistory(slug: string) {
+    const region = await this.prisma.region.findUnique({ where: { slug }, select: { id: true } });
+    if (!region) throw new NotFoundException(`Région introuvable : ${slug}`);
+
+    const MONTH_LABELS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+    const now = new Date();
+
+    return Promise.all(
+      Array.from({ length: 6 }, (_, i) => 5 - i).map(async (monthsAgo) => {
+        const monthStart = new Date(now.getFullYear(), now.getMonth() - monthsAgo, 1);
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() - monthsAgo + 1, 1);
+        const active_tenants = await this.prisma.tenant.count({
+          where: {
+            regionId: region.id,
+            slug: { not: '__platform__' },
+            status: { in: ['active', 'trial'] },
+            createdAt: { lt: monthEnd },
+          },
+        });
+        return { month: MONTH_LABELS[monthStart.getMonth()]!, active_tenants };
+      }),
+    );
+  }
+
   async findBySlug(slug: string) {
     const region = await this.prisma.region.findUnique({
       where: { slug, isActive: true },

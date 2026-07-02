@@ -271,23 +271,27 @@ export function useRegion(slug: string) {
   });
 }
 
-export function useRegionStats(_slug: string) {
+export function useRegionStats(slug: string) {
   return useQuery({
-    queryKey: ['super-admin', 'regions', _slug, 'stats'],
-    queryFn: async (): Promise<RegionStats> => ({
-      active_tenants: 0,
-      orders_today: 0,
-      pending_requests: 0,
-    }),
-    enabled: false,
+    queryKey: ['super-admin', 'regions', slug, 'stats'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: RegionStats }>(`/regions/${slug}/stats`);
+      return data.data;
+    },
+    enabled: Boolean(slug),
   });
 }
 
-export function useRegionTenantsHistory(_slug: string) {
+export function useRegionTenantsHistory(slug: string) {
   return useQuery({
-    queryKey: ['super-admin', 'regions', _slug, 'history'],
-    queryFn: async (): Promise<TenantHistoryPoint[]> => [],
-    enabled: false,
+    queryKey: ['super-admin', 'regions', slug, 'history'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: TenantHistoryPoint[] }>(
+        `/regions/${slug}/tenants-history`,
+      );
+      return data.data;
+    },
+    enabled: Boolean(slug),
   });
 }
 

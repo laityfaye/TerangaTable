@@ -230,6 +230,7 @@ export class TenantsService {
     // Vérifier que la région existe et est active
     const region = await this.prisma.region.findUnique({
       where: { id: dto.regionId, isActive: true },
+      include: { admin: { select: { email: true, firstName: true } } },
     });
     if (!region) throw new NotFoundException('Région introuvable ou inactive');
 
@@ -247,6 +248,17 @@ export class TenantsService {
     });
 
     await this.mail.sendRequestConfirmation(dto.ownerEmail, dto.ownerName, dto.restaurantName);
+
+    if (region.admin) {
+      await this.mail.sendNewRequestNotification(
+        region.admin.email,
+        region.admin.firstName,
+        dto.restaurantName,
+        dto.ownerName,
+        region.name,
+        region.slug,
+      );
+    }
 
     return request;
   }
