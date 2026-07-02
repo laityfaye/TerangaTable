@@ -426,7 +426,7 @@ export default function RegionsPage() {
         <p className="text-center text-slate-500 text-sm py-12">Chargement des régions…</p>
       ) : regionsError ? (
         <p className="text-center text-red-400 text-sm py-12">
-          Impossible de charger les régions. Vérifiez vos droits d'accès ou réessayez.
+          Impossible de charger les régions. Vérifiez vos droits d&apos;accès ou réessayez.
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">

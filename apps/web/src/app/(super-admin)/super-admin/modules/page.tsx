@@ -115,7 +115,7 @@ export default function ModulesPage() {
         <p className="text-center text-slate-500 text-sm py-12">Chargement des modules…</p>
       ) : isError ? (
         <p className="text-center text-red-400 text-sm py-12">
-          Impossible de charger les modules. Vérifiez vos droits d'accès ou réessayez.
+          Impossible de charger les modules. Vérifiez vos droits d&apos;accès ou réessayez.
         </p>
       ) : (
         <>

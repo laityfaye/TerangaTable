@@ -547,7 +547,7 @@ export default function AdminsPage() {
               ) : adminsError ? (
                 <tr>
                   <td colSpan={6} className="px-5 py-12 text-center text-red-400">
-                    Impossible de charger les administrateurs. Vérifiez vos droits d'accès ou réessayez.
+                    Impossible de charger les administrateurs. Vérifiez vos droits d&apos;accès ou réessayez.
                   </td>
                 </tr>
               ) : admins.length === 0 ? (

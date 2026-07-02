@@ -468,7 +468,7 @@ export default function TenantsPage() {
               ) : tenantsError ? (
                 <tr>
                   <td colSpan={7} className="px-5 py-12 text-center text-red-400">
-                    Impossible de charger les tenants. Vérifiez vos droits d'accès ou réessayez.
+                    Impossible de charger les tenants. Vérifiez vos droits d&apos;accès ou réessayez.
                   </td>
                 </tr>
               ) : tenants.length === 0 ? (

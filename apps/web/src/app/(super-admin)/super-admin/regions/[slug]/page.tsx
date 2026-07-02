@@ -18,7 +18,6 @@ import {
   useRequests,
   type RegionStats,
   type TenantHistoryPoint,
-  type TenantRequest,
 } from '@/hooks/use-super-admin';
 
 // ── Mock data ──────────────────────────────────────────────────────────────────
@@ -134,7 +133,7 @@ export default function RegionDashboardPage({ params }: { params: { slug: string
   if (regionError || !region) {
     return (
       <p className="text-center text-red-400 text-sm py-16">
-        Impossible de charger cette région. Vérifiez vos droits d'accès ou réessayez.
+        Impossible de charger cette région. Vérifiez vos droits d&apos;accès ou réessayez.
       </p>
     );
   }

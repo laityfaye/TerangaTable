@@ -313,7 +313,7 @@ export default function RegionRequestsPage({ params }: { params: { slug: string 
               ) : requestsError ? (
                 <tr>
                   <td colSpan={6} className="px-5 py-12 text-center text-red-400">
-                    Impossible de charger les demandes. Vérifiez vos droits d'accès ou réessayez.
+                    Impossible de charger les demandes. Vérifiez vos droits d&apos;accès ou réessayez.
                   </td>
                 </tr>
               ) : requests.length === 0 ? (
