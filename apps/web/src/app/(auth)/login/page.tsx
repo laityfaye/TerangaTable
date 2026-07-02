@@ -136,11 +136,15 @@ function LoginContent() {
     try {
       await login(data);
       const user = useAuthStore.getState().user;
-      const isPlatformUser =
-        user?.roles.includes('super_admin') || user?.roles.includes('regional_admin');
 
-      if (isPlatformUser) {
+      if (user?.roles.includes('super_admin')) {
         router.push('/super-admin');
+        return;
+      }
+      if (user?.roles.includes('regional_admin')) {
+        router.push(
+          user.regionSlug ? `/super-admin/regions/${user.regionSlug}` : '/super-admin/no-region',
+        );
         return;
       }
 

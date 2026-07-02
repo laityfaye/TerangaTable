@@ -14,7 +14,19 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
     const user = await this.prisma.runAsSuperAdmin((tx) =>
       tx.user.findUnique({
         where: { email },
-        include: { userRoles: { include: { role: true } } },
+        include: {
+          userRoles: { include: { role: true } },
+          adminOfRegion: { select: { slug: true } },
+          tenant: {
+            select: {
+              slug: true,
+              tenantModules: {
+                where: { isActive: true },
+                include: { module: { select: { slug: true } } },
+              },
+            },
+          },
+        },
       }),
     );
 

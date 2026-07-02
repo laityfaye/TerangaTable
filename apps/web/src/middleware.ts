@@ -7,6 +7,7 @@ const PUBLIC_PATHS = ['/_next', '/favicon.ico', '/api/'];
 const AUTH_PATHS = ['/login', '/forgot-password', '/reset-password'];
 const PROTECTED_PATHS = ['/dashboard'];
 const SUPER_ADMIN_PATHS = ['/super-admin'];
+const NO_REGION_PATH = '/super-admin/no-region';
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
   try {
@@ -69,9 +70,12 @@ export function middleware(req: NextRequest) {
       if (roles.includes('super_admin')) {
         return NextResponse.redirect(new URL('/super-admin', req.url));
       }
-      if (roles.includes('regional_admin') && regionSlug) {
+      if (roles.includes('regional_admin')) {
         return NextResponse.redirect(
-          new URL(`/super-admin/regions/${regionSlug}`, req.url),
+          new URL(
+            regionSlug ? `/super-admin/regions/${regionSlug}` : NO_REGION_PATH,
+            req.url,
+          ),
         );
       }
       return NextResponse.redirect(new URL('/dashboard', req.url));
@@ -83,8 +87,10 @@ export function middleware(req: NextRequest) {
   if (pathname === '/') {
     if (!isAuthenticated) return NextResponse.next();
     if (roles.includes('super_admin')) return NextResponse.redirect(new URL('/super-admin', req.url));
-    if (roles.includes('regional_admin') && regionSlug) {
-      return NextResponse.redirect(new URL(`/super-admin/regions/${regionSlug}`, req.url));
+    if (roles.includes('regional_admin')) {
+      return NextResponse.redirect(
+        new URL(regionSlug ? `/super-admin/regions/${regionSlug}` : NO_REGION_PATH, req.url),
+      );
     }
     return NextResponse.redirect(new URL('/dashboard', req.url));
   }
@@ -97,7 +103,12 @@ export function middleware(req: NextRequest) {
     if (roles.includes('super_admin')) {
       return NextResponse.next();
     }
-    if (roles.includes('regional_admin') && regionSlug) {
+    if (roles.includes('regional_admin')) {
+      if (!regionSlug) {
+        return pathname === NO_REGION_PATH
+          ? NextResponse.next()
+          : NextResponse.redirect(new URL(NO_REGION_PATH, req.url));
+      }
       const regionMatch = pathname.match(/^\/super-admin\/regions\/([^/]+)(\/|$)/);
       if (regionMatch && regionMatch[1] === regionSlug) {
         return NextResponse.next();
