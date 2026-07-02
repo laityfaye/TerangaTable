@@ -48,9 +48,6 @@ export class AuthService {
   }
 
   private extractRoles(user: NonNullable<UserWithRoles>): string[] {
-    if (user.tenantId === null) {
-      return user.adminOfRegion?.length ? ['regional_admin'] : ['super_admin'];
-    }
     return user.userRoles.map((ur) => ur.role.slug);
   }
 

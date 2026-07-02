@@ -3,101 +3,6 @@
 import { toast } from 'sonner';
 import { useModules, useToggleModule, type PlatformModule } from '@/hooks/use-super-admin';
 
-// ── Mock data (aligned with seed) ─────────────────────────────────────────────
-
-const MOCK_MODULES: PlatformModule[] = [
-  {
-    id: '1',
-    name: 'Menu & Carte',
-    slug: 'menu',
-    description: 'Gestion des catégories, plats, options et photos. Multi-langues disponible.',
-    required_plan: 'starter',
-    is_active: true,
-    active_tenants_count: 83,
-  },
-  {
-    id: '2',
-    name: 'Commandes',
-    slug: 'orders',
-    description: 'Prise de commande sur place, emporté et en ligne. Tickets cuisine.',
-    required_plan: 'starter',
-    is_active: true,
-    active_tenants_count: 81,
-  },
-  {
-    id: '3',
-    name: 'Paiements',
-    slug: 'payments',
-    description: 'Wave, Orange Money, carte bancaire, espèces. Réconciliation automatique.',
-    required_plan: 'starter',
-    is_active: true,
-    active_tenants_count: 78,
-  },
-  {
-    id: '4',
-    name: 'Caisse (POS)',
-    slug: 'pos',
-    description: 'Interface caisse tactile, tickets de caisse, clôture de caisse.',
-    required_plan: 'growth',
-    is_active: true,
-    active_tenants_count: 42,
-  },
-  {
-    id: '5',
-    name: 'Réservations',
-    slug: 'reservations',
-    description: 'Gestion des tables, réservations en ligne, confirmation par SMS.',
-    required_plan: 'growth',
-    is_active: true,
-    active_tenants_count: 38,
-  },
-  {
-    id: '6',
-    name: 'Analytics',
-    slug: 'analytics',
-    description: "Tableaux de bord CA, commandes, tendances, heures de pointe, produits phares.",
-    required_plan: 'growth',
-    is_active: true,
-    active_tenants_count: 35,
-  },
-  {
-    id: '7',
-    name: 'Site Vitrine',
-    slug: 'website',
-    description: 'Site web personnalisable avec menu en ligne, commande directe et SEO.',
-    required_plan: 'growth',
-    is_active: true,
-    active_tenants_count: 29,
-  },
-  {
-    id: '8',
-    name: 'Livraison',
-    slug: 'delivery',
-    description: 'Gestion des livreurs, zones, tarifs, suivi en temps réel.',
-    required_plan: 'growth',
-    is_active: true,
-    active_tenants_count: 24,
-  },
-  {
-    id: '9',
-    name: 'CRM Clients',
-    slug: 'customers',
-    description: 'Fidélité, historique commandes, segmentation, campagnes SMS/email.',
-    required_plan: 'enterprise',
-    is_active: true,
-    active_tenants_count: 11,
-  },
-  {
-    id: '10',
-    name: 'Multi-langues',
-    slug: 'multilang',
-    description: 'Interface et menu en français, anglais, arabe et wolof.',
-    required_plan: 'enterprise',
-    is_active: false,
-    active_tenants_count: 0,
-  },
-];
-
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 const PLAN_BADGE: Record<string, string> = {
@@ -173,10 +78,10 @@ function ModuleRow({
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function ModulesPage() {
-  const { data: apiData } = useModules();
+  const { data: apiData, isLoading, isError } = useModules();
   const toggleMutation = useToggleModule();
 
-  const modules = apiData ?? MOCK_MODULES;
+  const modules = apiData ?? [];
   const activeCount = modules.filter((m) => m.is_active).length;
 
   async function handleToggle(module: PlatformModule) {
@@ -206,49 +111,59 @@ export default function ModulesPage() {
         </div>
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-4">
-        {byPlan.map(({ plan, modules: planMods }) => (
-          <div
-            key={plan}
-            className="bg-slate-800/60 border border-white/10 rounded-xl p-4 flex items-center gap-3"
-          >
-            <div className="w-9 h-9 rounded-lg bg-violet-500/20 flex items-center justify-center flex-shrink-0">
-              <span className="text-sm font-bold text-violet-400">
-                {planMods.filter((m) => m.is_active).length}/{planMods.length}
-              </span>
-            </div>
-            <div>
-              <p className="text-xs text-slate-500">Plan</p>
-              <p className="text-sm font-semibold text-white capitalize">{PLAN_LABEL[plan]}</p>
-            </div>
+      {isLoading ? (
+        <p className="text-center text-slate-500 text-sm py-12">Chargement des modules…</p>
+      ) : isError ? (
+        <p className="text-center text-red-400 text-sm py-12">
+          Impossible de charger les modules. Vérifiez vos droits d'accès ou réessayez.
+        </p>
+      ) : (
+        <>
+          {/* Summary cards */}
+          <div className="grid grid-cols-3 gap-4">
+            {byPlan.map(({ plan, modules: planMods }) => (
+              <div
+                key={plan}
+                className="bg-slate-800/60 border border-white/10 rounded-xl p-4 flex items-center gap-3"
+              >
+                <div className="w-9 h-9 rounded-lg bg-violet-500/20 flex items-center justify-center flex-shrink-0">
+                  <span className="text-sm font-bold text-violet-400">
+                    {planMods.filter((m) => m.is_active).length}/{planMods.length}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs text-slate-500">Plan</p>
+                  <p className="text-sm font-semibold text-white capitalize">{PLAN_LABEL[plan]}</p>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      {/* Module list grouped by plan */}
-      {byPlan.map(({ plan, modules: planMods }) => (
-        <div key={plan} className="bg-slate-800/60 border border-white/10 rounded-xl overflow-hidden">
-          <div className="px-5 py-3 border-b border-white/10 flex items-center gap-2">
-            <span
-              className={`inline-flex px-2 py-0.5 rounded text-xs font-semibold ${PLAN_BADGE[plan]}`}
-            >
-              {PLAN_LABEL[plan]}
-            </span>
-            <span className="text-xs text-slate-500">
-              — requis à partir de ce plan
-            </span>
-          </div>
-          {planMods.map((mod) => (
-            <ModuleRow
-              key={mod.id}
-              module={mod}
-              onToggle={(m) => void handleToggle(m)}
-              loading={toggleMutation.isPending}
-            />
+          {/* Module list grouped by plan */}
+          {byPlan.map(({ plan, modules: planMods }) => (
+            <div key={plan} className="bg-slate-800/60 border border-white/10 rounded-xl overflow-hidden">
+              <div className="px-5 py-3 border-b border-white/10 flex items-center gap-2">
+                <span
+                  className={`inline-flex px-2 py-0.5 rounded text-xs font-semibold ${PLAN_BADGE[plan]}`}
+                >
+                  {PLAN_LABEL[plan]}
+                </span>
+                <span className="text-xs text-slate-500">
+                  — requis à partir de ce plan
+                </span>
+              </div>
+              {planMods.map((mod) => (
+                <ModuleRow
+                  key={mod.id}
+                  module={mod}
+                  onToggle={(m) => void handleToggle(m)}
+                  loading={toggleMutation.isPending}
+                />
+              ))}
+            </div>
           ))}
-        </div>
-      ))}
+        </>
+      )}
     </div>
   );
 }

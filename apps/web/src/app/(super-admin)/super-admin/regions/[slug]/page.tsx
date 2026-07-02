@@ -16,7 +16,6 @@ import {
   useRegionStats,
   useRegionTenantsHistory,
   useRequests,
-  type Region,
   type RegionStats,
   type TenantHistoryPoint,
   type TenantRequest,
@@ -30,15 +29,6 @@ const FLAG: Record<string, string> = {
   MA: '🇲🇦',
   FR: '🇫🇷',
 };
-
-const MOCK_REGIONS: Region[] = [
-  { id: '1', name: 'Dakar', slug: 'dakar', country_code: 'SN', country_name: 'Sénégal', platform_label: 'TérangaTable Dakar', timezone: 'Africa/Dakar', currency_code: 'XOF', currency_symbol: 'F CFA', locale: 'fr-SN', phone_prefix: '+221', is_active: true, tenants_count: 34, pending_requests_count: 4 },
-  { id: '2', name: 'Thiès', slug: 'thies', country_code: 'SN', country_name: 'Sénégal', platform_label: 'TérangaTable Thiès', timezone: 'Africa/Dakar', currency_code: 'XOF', currency_symbol: 'F CFA', locale: 'fr-SN', phone_prefix: '+221', is_active: true, tenants_count: 12, pending_requests_count: 1 },
-  { id: '3', name: 'Saint-Louis', slug: 'saint-louis', country_code: 'SN', country_name: 'Sénégal', platform_label: 'TérangaTable Saint-Louis', timezone: 'Africa/Dakar', currency_code: 'XOF', currency_symbol: 'F CFA', locale: 'fr-SN', phone_prefix: '+221', is_active: true, tenants_count: 8, pending_requests_count: 0 },
-  { id: '4', name: 'Abidjan', slug: 'abidjan', country_code: 'CI', country_name: "Côte d'Ivoire", platform_label: 'TérangaTable Abidjan', timezone: 'Africa/Abidjan', currency_code: 'XOF', currency_symbol: 'F CFA', locale: 'fr-CI', phone_prefix: '+225', is_active: true, tenants_count: 18, pending_requests_count: 2 },
-  { id: '5', name: 'Casablanca', slug: 'casablanca', country_code: 'MA', country_name: 'Maroc', platform_label: 'TérangaTable Casablanca', timezone: 'Africa/Casablanca', currency_code: 'MAD', currency_symbol: 'DH', locale: 'fr-MA', phone_prefix: '+212', is_active: true, tenants_count: 11, pending_requests_count: 1 },
-  { id: '6', name: 'Paris', slug: 'paris', country_code: 'FR', country_name: 'France', platform_label: 'TérangaTable Paris', timezone: 'Europe/Paris', currency_code: 'EUR', currency_symbol: '€', locale: 'fr-FR', phone_prefix: '+33', is_active: false, tenants_count: 0, pending_requests_count: 0 },
-];
 
 const MOCK_STATS: Record<string, RegionStats> = {
   dakar:        { active_tenants: 34, orders_today: 127, pending_requests: 4,  revenue_month: 12500000 },
@@ -57,15 +47,6 @@ const MOCK_HISTORY: Record<string, TenantHistoryPoint[]> = {
   casablanca:    [{ month: 'Déc', active_tenants: 7  }, { month: 'Jan', active_tenants: 8  }, { month: 'Fév', active_tenants: 9  }, { month: 'Mar', active_tenants: 9  }, { month: 'Avr', active_tenants: 10 }, { month: 'Mai', active_tenants: 11 }],
   paris:         [{ month: 'Déc', active_tenants: 0  }, { month: 'Jan', active_tenants: 0  }, { month: 'Fév', active_tenants: 0  }, { month: 'Mar', active_tenants: 0  }, { month: 'Avr', active_tenants: 0  }, { month: 'Mai', active_tenants: 0  }],
 };
-
-const MOCK_REQUESTS: TenantRequest[] = [
-  { id: '1', req_number: 'REQ-2026-0012', restaurant_name: 'Le Teranga', owner_name: 'Moussa Diop', email: 'moussa@example.com', phone: '+221 77 123 45 67', region_id: 'dakar', region_name: 'Dakar', city: 'Plateau', message: 'Restaurant traditionnel sénégalais.', desired_modules: ['menu', 'orders'], status: 'pending', created_at: '2026-05-15T10:30:00Z' },
-  { id: '2', req_number: 'REQ-2026-0011', restaurant_name: "Saveurs d'Abidjan", owner_name: 'Kofi Asante', email: 'kofi@example.com', phone: '+225 07 123 45 67', region_id: 'abidjan', region_name: 'Abidjan', city: 'Plateau', message: 'Restaurant ivoirien.', desired_modules: ['menu', 'orders'], status: 'approved', created_at: '2026-05-14T08:15:00Z', reviewed_at: '2026-05-14T11:00:00Z' },
-  { id: '3', req_number: 'REQ-2026-0010', restaurant_name: 'Délices Casablanca', owner_name: 'Rachid Benali', email: 'rachid@example.com', phone: '+212 06 123 45 67', region_id: 'casablanca', region_name: 'Casablanca', city: 'Maarif', message: 'Brasserie marocaine.', desired_modules: ['menu', 'orders', 'pos'], status: 'pending', created_at: '2026-05-13T14:20:00Z' },
-  { id: '4', req_number: 'REQ-2026-0009', restaurant_name: 'Resto Thiès', owner_name: 'Fatou Sow', email: 'fatou@example.com', region_id: 'thies', region_name: 'Thiès', city: 'Thiès', message: '', desired_modules: ['menu'], status: 'rejected', rejection_reason: 'Informations incomplètes.', created_at: '2026-05-12T09:45:00Z', reviewed_at: '2026-05-12T16:00:00Z' },
-  { id: '5', req_number: 'REQ-2026-0008', restaurant_name: 'La Médina', owner_name: 'Ibrahima Ba', email: 'ibrahima@example.com', region_id: 'dakar', region_name: 'Dakar', city: 'Médina', message: 'Restaurant familial.', desired_modules: ['menu', 'orders'], status: 'approved', created_at: '2026-05-11T11:00:00Z', reviewed_at: '2026-05-11T15:30:00Z' },
-  { id: '6', req_number: 'REQ-2026-0007', restaurant_name: 'Chez Aminata', owner_name: 'Aminata Coulibaly', email: 'aminata@example.com', region_id: 'abidjan', region_name: 'Abidjan', city: 'Cocody', message: 'Maquis ivoirien.', desired_modules: ['menu', 'orders'], status: 'pending', created_at: '2026-05-10T16:00:00Z' },
-];
 
 const STATUS_BADGE: Record<string, string> = {
   pending:  'bg-amber-500/20 text-amber-300 border border-amber-500/30',
@@ -134,19 +115,29 @@ function StatCard({
 export default function RegionDashboardPage({ params }: { params: { slug: string } }) {
   const { slug } = params;
 
-  const { data: regionsData }  = useRegions();
+  const { data: regionsData, isLoading: regionLoading, isError: regionError } = useRegions();
   const { data: statsData }    = useRegionStats(slug);
   const { data: historyData }  = useRegionTenantsHistory(slug);
-  const { data: requestsData } = useRequests({ region: slug });
+  const { data: requestsData, isLoading: requestsLoading, isError: requestsError } = useRequests({ region: slug });
 
-  const region = (regionsData ?? MOCK_REGIONS).find((r) => r.slug === slug) ?? MOCK_REGIONS[0]!;
+  const region = (regionsData ?? []).find((r) => r.slug === slug);
   const stats   = statsData   ?? MOCK_STATS[slug]   ?? MOCK_STATS['dakar']!;
   const history = historyData ?? MOCK_HISTORY[slug] ?? MOCK_HISTORY['dakar']!;
 
-  const allRequests = requestsData ?? MOCK_REQUESTS;
-  const regionRequests = allRequests
-    .filter((r) => r.region_id === slug || r.region_name === region.name)
+  const regionRequests = (requestsData ?? [])
+    .filter((r) => r.region_id === slug || r.region_name === region?.name)
     .slice(0, 5);
+
+  if (regionLoading) {
+    return <p className="text-center text-slate-500 text-sm py-16">Chargement de la région…</p>;
+  }
+  if (regionError || !region) {
+    return (
+      <p className="text-center text-red-400 text-sm py-16">
+        Impossible de charger cette région. Vérifiez vos droits d'accès ou réessayez.
+      </p>
+    );
+  }
 
   return (
     <div className="space-y-6 text-white">
@@ -271,7 +262,15 @@ export default function RegionDashboardPage({ params }: { params: { slug: string
             </Link>
           </div>
 
-          {regionRequests.length === 0 ? (
+          {requestsLoading ? (
+            <p className="text-sm text-slate-500 py-4 text-center flex-1 flex items-center justify-center">
+              Chargement…
+            </p>
+          ) : requestsError ? (
+            <p className="text-sm text-red-400 py-4 text-center flex-1 flex items-center justify-center">
+              Impossible de charger les demandes.
+            </p>
+          ) : regionRequests.length === 0 ? (
             <p className="text-sm text-slate-500 py-4 text-center flex-1 flex items-center justify-center">
               Aucune demande dans cette région.
             </p>

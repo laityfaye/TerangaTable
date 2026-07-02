@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
   Request,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { TenantsService } from './tenants.service';
@@ -90,11 +91,13 @@ export class TenantsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Liste des demandes (SuperAdmin ou RegionalAdmin)' })
   findAllRequests(@Request() req: AuthenticatedRequest, @Query('regionId') regionId?: string) {
-    const isRegionalAdmin = req.user.roles.includes('regional_admin');
-    if (isRegionalAdmin) {
+    if (req.user.roles.includes('regional_admin')) {
       return this.tenantsService.findAllRequestsByRegionSlug(req.user.regionSlug ?? undefined);
     }
-    return this.tenantsService.findAllRequests(regionId);
+    if (req.user.roles.includes('super_admin')) {
+      return this.tenantsService.findAllRequests(regionId);
+    }
+    throw new ForbiddenException('Accès réservé aux administrateurs');
   }
 
   @Post('tenant-requests')

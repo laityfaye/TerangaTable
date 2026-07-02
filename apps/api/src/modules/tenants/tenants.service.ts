@@ -530,7 +530,10 @@ export class TenantsService {
   async findAllAdmins(filters: { role?: string; region?: string; search?: string } = {}) {
     const users = await this.prisma.user.findMany({
       where: { tenantId: null },
-      include: { adminOfRegion: { select: { id: true, name: true } } },
+      include: {
+        adminOfRegion: { select: { id: true, name: true } },
+        userRoles: { select: { role: { select: { slug: true } } } },
+      },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -539,7 +542,11 @@ export class TenantsService {
       email: u.email,
       first_name: u.firstName,
       last_name: u.lastName,
-      role: u.adminOfRegion.length > 0 ? ('regional_admin' as const) : ('super_admin' as const),
+      role: (u.userRoles.find((ur) => ur.role.slug === 'super_admin')
+        ? 'super_admin'
+        : u.userRoles.find((ur) => ur.role.slug === 'regional_admin')
+          ? 'regional_admin'
+          : undefined) as 'super_admin' | 'regional_admin' | undefined,
       region_id: u.adminOfRegion[0]?.id ?? undefined,
       region_name: u.adminOfRegion[0]?.name ?? undefined,
       is_active: u.isActive,
@@ -582,26 +589,48 @@ export class TenantsService {
       if (!region) throw new NotFoundException(`Région introuvable : ${dto.region_id}`);
     }
 
+    const platformRole = await this.prisma.role.findFirst({
+      where: { tenantId: null, slug: dto.role },
+      select: { id: true },
+    });
+    if (!platformRole) throw new NotFoundException(`Rôle plateforme introuvable : ${dto.role}`);
+
+    const platformTenant = await this.prisma.tenant.findUnique({
+      where: { slug: '__platform__' },
+      select: { id: true },
+    });
+    if (!platformTenant) throw new NotFoundException('Tenant plateforme introuvable (seed manquant)');
+
     const tempPassword = randomBytes(8).toString('hex');
     const passwordHash = await bcrypt.hash(tempPassword, 12);
 
-    const user = await this.prisma.user.create({
-      data: {
-        tenantId: null,
-        email: dto.email,
-        firstName: dto.first_name,
-        lastName: dto.last_name,
-        passwordHash,
-        isActive: true,
-      },
-    });
-
-    if (region) {
-      await this.prisma.region.update({
-        where: { id: region.id },
-        data: { adminId: user.id },
+    const user = await this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          tenantId: null,
+          email: dto.email,
+          firstName: dto.first_name,
+          lastName: dto.last_name,
+          passwordHash,
+          isActive: true,
+        },
       });
-    }
+
+      await tx.$executeRaw`
+        INSERT INTO user_roles (user_id, role_id, tenant_id)
+        VALUES (${user.id}::uuid, ${platformRole.id}::uuid, ${platformTenant.id}::uuid)
+        ON CONFLICT DO NOTHING
+      `;
+
+      if (region) {
+        await tx.region.update({
+          where: { id: region.id },
+          data: { adminId: user.id },
+        });
+      }
+
+      return user;
+    });
 
     this.logger.log(
       `[ADMIN INVITE] ${dto.email} (${dto.role}) | Mot de passe temporaire : ${tempPassword}`,

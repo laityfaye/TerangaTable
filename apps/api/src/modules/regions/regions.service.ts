@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateRegionDto } from './dto/create-region.dto';
 
@@ -104,8 +104,14 @@ export class RegionsService {
     if (!region) throw new NotFoundException('Région introuvable');
 
     if (userId !== null) {
-      const user = await this.prisma.user.findFirst({ where: { id: userId, tenantId: null } });
+      const user = await this.prisma.user.findFirst({
+        where: { id: userId, tenantId: null },
+        include: { userRoles: { select: { role: { select: { slug: true } } } } },
+      });
       if (!user) throw new NotFoundException('Utilisateur introuvable ou n\'est pas un admin plateforme');
+      if (!user.userRoles.some((ur) => ur.role.slug === 'regional_admin')) {
+        throw new BadRequestException("Cet utilisateur n'a pas le rôle admin régional");
+      }
     }
 
     const updated = await this.prisma.region.update({

@@ -14,28 +14,8 @@ import {
   Package,
   AlertTriangle,
 } from 'lucide-react';
-import { useTenants, useToggleTenant, useRegions, type Tenant, type Region } from '@/hooks/use-super-admin';
+import { useTenants, useToggleTenant, useRegions, type Tenant } from '@/hooks/use-super-admin';
 import { useAuthStore } from '@/stores/auth.store';
-
-// ── Mock data ──────────────────────────────────────────────────────────────────
-
-const MOCK_REGIONS: Region[] = [
-  { id: '1', name: 'Dakar', slug: 'dakar', country_code: 'SN', country_name: 'Sénégal', platform_label: 'TérangaTable Dakar', timezone: 'Africa/Dakar', currency_code: 'XOF', currency_symbol: 'F CFA', locale: 'fr-SN', phone_prefix: '+221', is_active: true },
-  { id: '2', name: 'Thiès', slug: 'thies', country_code: 'SN', country_name: 'Sénégal', platform_label: 'TérangaTable Thiès', timezone: 'Africa/Dakar', currency_code: 'XOF', currency_symbol: 'F CFA', locale: 'fr-SN', phone_prefix: '+221', is_active: true },
-  { id: '3', name: 'Saint-Louis', slug: 'saint-louis', country_code: 'SN', country_name: 'Sénégal', platform_label: 'TérangaTable Saint-Louis', timezone: 'Africa/Dakar', currency_code: 'XOF', currency_symbol: 'F CFA', locale: 'fr-SN', phone_prefix: '+221', is_active: true },
-  { id: '4', name: 'Abidjan', slug: 'abidjan', country_code: 'CI', country_name: "Côte d'Ivoire", platform_label: 'TérangaTable Abidjan', timezone: 'Africa/Abidjan', currency_code: 'XOF', currency_symbol: 'F CFA', locale: 'fr-CI', phone_prefix: '+225', is_active: true },
-  { id: '5', name: 'Casablanca', slug: 'casablanca', country_code: 'MA', country_name: 'Maroc', platform_label: 'TérangaTable Casablanca', timezone: 'Africa/Casablanca', currency_code: 'MAD', currency_symbol: 'DH', locale: 'fr-MA', phone_prefix: '+212', is_active: true },
-  { id: '6', name: 'Paris', slug: 'paris', country_code: 'FR', country_name: 'France', platform_label: 'TérangaTable Paris', timezone: 'Europe/Paris', currency_code: 'EUR', currency_symbol: '€', locale: 'fr-FR', phone_prefix: '+33', is_active: false },
-];
-
-const MOCK_TENANTS: Tenant[] = [
-  { id: '1', name: 'Le Teranga', slug: 'le-teranga', region_id: 'dakar', region_name: 'Dakar', plan: 'growth', status: 'active', created_at: '2026-04-01T00:00:00Z', orders_total: 342, revenue_total: 2850000, users: [{ id: 'u1', email: 'moussa@teranga.sn', first_name: 'Moussa', last_name: 'Diop' }], modules: ['menu', 'orders', 'reservations', 'payments', 'analytics'] },
-  { id: '2', name: "Saveurs d'Abidjan", slug: 'saveurs-abidjan', region_id: 'abidjan', region_name: 'Abidjan', plan: 'starter', status: 'trial', created_at: '2026-04-15T00:00:00Z', orders_total: 58, revenue_total: 425000, users: [{ id: 'u3', email: 'kofi@saveurs.ci', first_name: 'Kofi', last_name: 'Asante' }], modules: ['menu', 'orders', 'delivery'] },
-  { id: '3', name: 'Délices Casablanca', slug: 'delices-casablanca', region_id: 'casablanca', region_name: 'Casablanca', plan: 'enterprise', status: 'active', created_at: '2026-03-10T00:00:00Z', orders_total: 891, revenue_total: 7200000, users: [{ id: 'u4', email: 'rachid@delices.ma', first_name: 'Rachid', last_name: 'Benali' }, { id: 'u5', email: 'chef@delices.ma', first_name: 'Youssef', last_name: 'Amrani' }], modules: ['menu', 'orders', 'pos', 'analytics', 'customers'] },
-  { id: '4', name: 'La Médina', slug: 'la-medina', region_id: 'dakar', region_name: 'Dakar', plan: 'starter', status: 'active', created_at: '2026-02-20T00:00:00Z', orders_total: 156, revenue_total: 980000, users: [{ id: 'u7', email: 'ibrahima@lamedina.sn', first_name: 'Ibrahima', last_name: 'Ba' }], modules: ['menu', 'orders', 'customers'] },
-  { id: '5', name: 'Chez Aminata', slug: 'chez-aminata', region_id: 'abidjan', region_name: 'Abidjan', plan: 'growth', status: 'suspended', created_at: '2026-01-05T00:00:00Z', orders_total: 203, revenue_total: 1540000, users: [{ id: 'u8', email: 'aminata@chezaminata.ci', first_name: 'Aminata', last_name: 'Coulibaly' }], modules: ['menu', 'orders', 'website'] },
-  { id: '6', name: 'Atlas Restaurant', slug: 'atlas-restaurant', region_id: 'casablanca', region_name: 'Casablanca', plan: 'growth', status: 'active', created_at: '2026-03-28T00:00:00Z', orders_total: 412, revenue_total: 3100000, users: [{ id: 'u9', email: 'hassan@atlas.ma', first_name: 'Hassan', last_name: 'Idrissi' }], modules: ['menu', 'orders', 'reservations', 'payments', 'analytics'] },
-];
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -186,18 +166,17 @@ export default function RegionTenantsPage({ params }: { params: { slug: string }
   const isRegionalAdmin = user?.roles.includes('regional_admin') ?? false;
 
   const { data: regionsData } = useRegions();
-  const region = (regionsData ?? MOCK_REGIONS).find((r) => r.slug === slug);
+  const region = (regionsData ?? []).find((r) => r.slug === slug);
   const regionName = region?.name ?? slug;
 
   const tenantFilters: Parameters<typeof useTenants>[0] = { region: slug };
   if (statusFilter !== 'Tous') tenantFilters.status = statusFilter;
   if (search) tenantFilters.search = search;
-  const { data: apiData } = useTenants(tenantFilters);
+  const { data: apiData, isLoading: tenantsLoading, isError: tenantsError } = useTenants(tenantFilters);
 
   const toggleMutation = useToggleTenant();
 
-  const allTenants = apiData ?? MOCK_TENANTS;
-  const tenants = allTenants.filter((t) => {
+  const tenants = (apiData ?? []).filter((t) => {
     if (t.region_id !== slug && t.region_name !== regionName) return false;
     if (statusFilter !== 'Tous' && t.status !== statusFilter) return false;
     if (search) {
@@ -271,7 +250,19 @@ export default function RegionTenantsPage({ params }: { params: { slug: string }
               </tr>
             </thead>
             <tbody>
-              {tenants.length === 0 ? (
+              {tenantsLoading ? (
+                <tr>
+                  <td colSpan={6} className="px-5 py-12 text-center text-slate-500">
+                    Chargement des tenants…
+                  </td>
+                </tr>
+              ) : tenantsError ? (
+                <tr>
+                  <td colSpan={6} className="px-5 py-12 text-center text-red-400">
+                    Impossible de charger les tenants. Vérifiez vos droits d'accès ou réessayez.
+                  </td>
+                </tr>
+              ) : tenants.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-5 py-12 text-center text-slate-500">
                     Aucun tenant trouvé pour cette région.

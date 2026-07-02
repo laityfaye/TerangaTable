@@ -8,30 +8,8 @@ import {
   useReviewRequest,
   useRegions,
   type TenantRequest,
-  type Region,
 } from '@/hooks/use-super-admin';
 import { useAuthStore } from '@/stores/auth.store';
-
-// ── Mock data ──────────────────────────────────────────────────────────────────
-
-const MOCK_REGIONS: Region[] = [
-  { id: '1', name: 'Dakar', slug: 'dakar', country_code: 'SN', country_name: 'Sénégal', platform_label: 'TérangaTable Dakar', timezone: 'Africa/Dakar', currency_code: 'XOF', currency_symbol: 'F CFA', locale: 'fr-SN', phone_prefix: '+221', is_active: true },
-  { id: '2', name: 'Thiès', slug: 'thies', country_code: 'SN', country_name: 'Sénégal', platform_label: 'TérangaTable Thiès', timezone: 'Africa/Dakar', currency_code: 'XOF', currency_symbol: 'F CFA', locale: 'fr-SN', phone_prefix: '+221', is_active: true },
-  { id: '3', name: 'Saint-Louis', slug: 'saint-louis', country_code: 'SN', country_name: 'Sénégal', platform_label: 'TérangaTable Saint-Louis', timezone: 'Africa/Dakar', currency_code: 'XOF', currency_symbol: 'F CFA', locale: 'fr-SN', phone_prefix: '+221', is_active: true },
-  { id: '4', name: 'Abidjan', slug: 'abidjan', country_code: 'CI', country_name: "Côte d'Ivoire", platform_label: 'TérangaTable Abidjan', timezone: 'Africa/Abidjan', currency_code: 'XOF', currency_symbol: 'F CFA', locale: 'fr-CI', phone_prefix: '+225', is_active: true },
-  { id: '5', name: 'Casablanca', slug: 'casablanca', country_code: 'MA', country_name: 'Maroc', platform_label: 'TérangaTable Casablanca', timezone: 'Africa/Casablanca', currency_code: 'MAD', currency_symbol: 'DH', locale: 'fr-MA', phone_prefix: '+212', is_active: true },
-  { id: '6', name: 'Paris', slug: 'paris', country_code: 'FR', country_name: 'France', platform_label: 'TérangaTable Paris', timezone: 'Europe/Paris', currency_code: 'EUR', currency_symbol: '€', locale: 'fr-FR', phone_prefix: '+33', is_active: false },
-];
-
-const MOCK_REQUESTS: TenantRequest[] = [
-  { id: '1', req_number: 'REQ-2026-0012', restaurant_name: 'Le Teranga', owner_name: 'Moussa Diop', email: 'moussa@example.com', phone: '+221 77 123 45 67', region_id: 'dakar', region_name: 'Dakar', city: 'Plateau', message: 'Restaurant traditionnel sénégalais en plein centre-ville. 40 couverts, cuisine du terroir.', desired_modules: ['menu', 'orders', 'reservations', 'payments'], status: 'pending', created_at: '2026-05-15T10:30:00Z' },
-  { id: '2', req_number: 'REQ-2026-0011', restaurant_name: "Saveurs d'Abidjan", owner_name: 'Kofi Asante', email: 'kofi@example.com', phone: '+225 07 123 45 67', region_id: 'abidjan', region_name: 'Abidjan', city: 'Plateau', message: 'Restaurant ivoirien spécialisé en cuisine locale.', desired_modules: ['menu', 'orders', 'delivery'], status: 'approved', created_at: '2026-05-14T08:15:00Z', reviewed_at: '2026-05-14T11:00:00Z' },
-  { id: '3', req_number: 'REQ-2026-0010', restaurant_name: 'Délices Casablanca', owner_name: 'Rachid Benali', email: 'rachid@example.com', phone: '+212 06 123 45 67', region_id: 'casablanca', region_name: 'Casablanca', city: 'Maarif', message: 'Brasserie marocaine moderne avec terrasse.', desired_modules: ['menu', 'orders', 'pos', 'analytics'], status: 'pending', created_at: '2026-05-13T14:20:00Z' },
-  { id: '4', req_number: 'REQ-2026-0009', restaurant_name: 'Resto Thiès', owner_name: 'Fatou Sow', email: 'fatou@example.com', phone: '+221 76 987 65 43', region_id: 'thies', region_name: 'Thiès', city: 'Thiès', message: '', desired_modules: ['menu'], status: 'rejected', rejection_reason: 'Informations incomplètes. Aucune description fournie.', created_at: '2026-05-12T09:45:00Z', reviewed_at: '2026-05-12T16:00:00Z' },
-  { id: '5', req_number: 'REQ-2026-0008', restaurant_name: 'La Médina', owner_name: 'Ibrahima Ba', email: 'ibrahima@example.com', phone: '+221 78 456 78 90', region_id: 'dakar', region_name: 'Dakar', city: 'Médina', message: 'Restaurant familial avec plats traditionnels sénégalais.', desired_modules: ['menu', 'orders', 'customers'], status: 'approved', created_at: '2026-05-11T11:00:00Z', reviewed_at: '2026-05-11T15:30:00Z' },
-  { id: '6', req_number: 'REQ-2026-0007', restaurant_name: 'Chez Aminata', owner_name: 'Aminata Coulibaly', email: 'aminata@example.com', phone: '+225 05 678 90 12', region_id: 'abidjan', region_name: 'Abidjan', city: 'Cocody', message: 'Maquis ivoirien avec grande terrasse ombragée.', desired_modules: ['menu', 'orders', 'website'], status: 'pending', created_at: '2026-05-10T16:00:00Z' },
-  { id: '7', req_number: 'REQ-2026-0006', restaurant_name: 'Atlas Restaurant', owner_name: 'Hassan Idrissi', email: 'hassan@example.com', phone: '+212 06 789 01 23', region_id: 'casablanca', region_name: 'Casablanca', city: 'Ain Diab', message: 'Restaurant de spécialités berbères avec vue sur mer.', desired_modules: ['menu', 'orders', 'reservations', 'payments', 'analytics'], status: 'pending', created_at: '2026-05-09T13:30:00Z' },
-];
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -226,18 +204,17 @@ export default function RegionRequestsPage({ params }: { params: { slug: string 
   const isRegionalAdmin = user?.roles.includes('regional_admin') ?? false;
 
   const { data: regionsData } = useRegions();
-  const region = (regionsData ?? MOCK_REGIONS).find((r) => r.slug === slug);
+  const region = (regionsData ?? []).find((r) => r.slug === slug);
   const regionName = region?.name ?? slug;
 
-  const { data: apiData } = useRequests({
+  const { data: apiData, isLoading: requestsLoading, isError: requestsError } = useRequests({
     region: slug,
     ...(statusFilter !== 'Tous' ? { status: statusFilter } : {}),
     ...(search ? { search } : {}),
   });
   const reviewMutation = useReviewRequest();
 
-  const allRequests = apiData ?? MOCK_REQUESTS;
-  const requests = allRequests.filter((r) => {
+  const requests = (apiData ?? []).filter((r) => {
     if (r.region_id !== slug && r.region_name !== regionName) return false;
     if (statusFilter !== 'Tous' && r.status !== statusFilter) return false;
     if (search) {
@@ -327,7 +304,19 @@ export default function RegionRequestsPage({ params }: { params: { slug: string 
               </tr>
             </thead>
             <tbody>
-              {requests.length === 0 ? (
+              {requestsLoading ? (
+                <tr>
+                  <td colSpan={6} className="px-5 py-12 text-center text-slate-500">
+                    Chargement des demandes…
+                  </td>
+                </tr>
+              ) : requestsError ? (
+                <tr>
+                  <td colSpan={6} className="px-5 py-12 text-center text-red-400">
+                    Impossible de charger les demandes. Vérifiez vos droits d'accès ou réessayez.
+                  </td>
+                </tr>
+              ) : requests.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-5 py-12 text-center text-slate-500">
                     Aucune demande trouvée pour cette région.

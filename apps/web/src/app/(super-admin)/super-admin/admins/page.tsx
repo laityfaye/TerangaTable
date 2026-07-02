@@ -16,56 +16,6 @@ import {
 } from 'lucide-react';
 import { useAdmins, useToggleAdmin, useDeleteAdmin, useInviteAdmin, useRegions, type AdminUser } from '@/hooks/use-super-admin';
 
-// ── Mock data ──────────────────────────────────────────────────────────────────
-
-const MOCK_ADMINS: AdminUser[] = [
-  {
-    id: 'a1',
-    email: 'superadmin@terangatable.com',
-    first_name: 'Fatou',
-    last_name: 'Sow',
-    role: 'super_admin',
-    is_active: true,
-    created_at: '2026-01-01T00:00:00Z',
-    last_login_at: '2026-05-19T10:22:00Z',
-  },
-  {
-    id: 'a2',
-    email: 'admin.dakar@terangatable.com',
-    first_name: 'Ousmane',
-    last_name: 'Ndiaye',
-    role: 'regional_admin',
-    region_id: 'dakar',
-    region_name: 'Dakar',
-    is_active: true,
-    created_at: '2026-02-15T00:00:00Z',
-    last_login_at: '2026-05-18T08:45:00Z',
-  },
-  {
-    id: 'a3',
-    email: 'admin.abidjan@terangatable.com',
-    first_name: 'Aminata',
-    last_name: 'Koné',
-    role: 'regional_admin',
-    region_id: 'abidjan',
-    region_name: 'Abidjan',
-    is_active: true,
-    created_at: '2026-03-01T00:00:00Z',
-    last_login_at: '2026-05-17T14:10:00Z',
-  },
-  {
-    id: 'a4',
-    email: 'admin.casablanca@terangatable.com',
-    first_name: 'Rachida',
-    last_name: 'Bensouda',
-    role: 'regional_admin',
-    region_id: 'casablanca',
-    region_name: 'Casablanca',
-    is_active: false,
-    created_at: '2026-03-20T00:00:00Z',
-  },
-];
-
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 const ROLE_OPTS = [
@@ -446,7 +396,7 @@ export default function AdminsPage() {
   if (regionFilter !== 'Toutes') adminFilters.region = regionFilter.toLowerCase();
   if (search) adminFilters.search = search;
 
-  const { data: apiData } = useAdmins(adminFilters);
+  const { data: apiData, isLoading: adminsLoading, isError: adminsError } = useAdmins(adminFilters);
   const { data: regions } = useRegions();
   const toggleMutation = useToggleAdmin();
   const deleteMutation = useDeleteAdmin();
@@ -454,8 +404,7 @@ export default function AdminsPage() {
 
   const regionOptions = (regions ?? []).map((r) => ({ value: r.slug, label: r.name }));
 
-  const allAdmins = apiData ?? MOCK_ADMINS;
-  const admins = allAdmins.filter((a) => {
+  const admins = (apiData ?? []).filter((a) => {
     if (roleFilter !== 'Tous' && a.role !== roleFilter) return false;
     if (statusFilter === 'active' && !a.is_active) return false;
     if (statusFilter === 'inactive' && a.is_active) return false;
@@ -589,7 +538,19 @@ export default function AdminsPage() {
               </tr>
             </thead>
             <tbody>
-              {admins.length === 0 ? (
+              {adminsLoading ? (
+                <tr>
+                  <td colSpan={6} className="px-5 py-12 text-center text-slate-500">
+                    Chargement des administrateurs…
+                  </td>
+                </tr>
+              ) : adminsError ? (
+                <tr>
+                  <td colSpan={6} className="px-5 py-12 text-center text-red-400">
+                    Impossible de charger les administrateurs. Vérifiez vos droits d'accès ou réessayez.
+                  </td>
+                </tr>
+              ) : admins.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-5 py-12 text-center text-slate-500">
                     Aucun administrateur trouvé.

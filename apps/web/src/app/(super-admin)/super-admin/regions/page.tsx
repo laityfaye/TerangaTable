@@ -5,113 +5,6 @@ import { toast } from 'sonner';
 import { Plus, X, UserCheck, UserCog, UserMinus, ExternalLink } from 'lucide-react';
 import { useRegions, useToggleRegion, useCreateRegion, useAssignAdmin, useAdmins, type Region } from '@/hooks/use-super-admin';
 
-// ── Mock data (seed data from REGIONS.md) ─────────────────────────────────────
-
-const MOCK_REGIONS: Region[] = [
-  {
-    id: '1',
-    name: 'Dakar',
-    slug: 'dakar',
-    country_code: 'SN',
-    country_name: 'Sénégal',
-    platform_label: 'TérangaTable Dakar',
-    timezone: 'Africa/Dakar',
-    currency_code: 'XOF',
-    currency_symbol: 'F CFA',
-    locale: 'fr-SN',
-    phone_prefix: '+221',
-    is_active: true,
-    tenants_count: 34,
-    pending_requests_count: 4,
-    regional_admin: null,
-  },
-  {
-    id: '2',
-    name: 'Thiès',
-    slug: 'thies',
-    country_code: 'SN',
-    country_name: 'Sénégal',
-    platform_label: 'TérangaTable Thiès',
-    timezone: 'Africa/Dakar',
-    currency_code: 'XOF',
-    currency_symbol: 'F CFA',
-    locale: 'fr-SN',
-    phone_prefix: '+221',
-    is_active: true,
-    tenants_count: 12,
-    pending_requests_count: 1,
-    regional_admin: null,
-  },
-  {
-    id: '3',
-    name: 'Saint-Louis',
-    slug: 'saint-louis',
-    country_code: 'SN',
-    country_name: 'Sénégal',
-    platform_label: 'TérangaTable Saint-Louis',
-    timezone: 'Africa/Dakar',
-    currency_code: 'XOF',
-    currency_symbol: 'F CFA',
-    locale: 'fr-SN',
-    phone_prefix: '+221',
-    is_active: true,
-    tenants_count: 8,
-    pending_requests_count: 0,
-    regional_admin: null,
-  },
-  {
-    id: '4',
-    name: 'Abidjan',
-    slug: 'abidjan',
-    country_code: 'CI',
-    country_name: "Côte d'Ivoire",
-    platform_label: "TérangaTable Abidjan",
-    timezone: 'Africa/Abidjan',
-    currency_code: 'XOF',
-    currency_symbol: 'F CFA',
-    locale: 'fr-CI',
-    phone_prefix: '+225',
-    is_active: true,
-    tenants_count: 18,
-    pending_requests_count: 2,
-    regional_admin: null,
-  },
-  {
-    id: '5',
-    name: 'Casablanca',
-    slug: 'casablanca',
-    country_code: 'MA',
-    country_name: 'Maroc',
-    platform_label: 'TérangaTable Casablanca',
-    timezone: 'Africa/Casablanca',
-    currency_code: 'MAD',
-    currency_symbol: 'DH',
-    locale: 'fr-MA',
-    phone_prefix: '+212',
-    is_active: true,
-    tenants_count: 11,
-    pending_requests_count: 1,
-    regional_admin: null,
-  },
-  {
-    id: '6',
-    name: 'Paris',
-    slug: 'paris',
-    country_code: 'FR',
-    country_name: 'France',
-    platform_label: 'TérangaTable Paris',
-    timezone: 'Europe/Paris',
-    currency_code: 'EUR',
-    currency_symbol: '€',
-    locale: 'fr-FR',
-    phone_prefix: '+33',
-    is_active: false,
-    tenants_count: 0,
-    pending_requests_count: 0,
-    regional_admin: null,
-  },
-];
-
 const FLAG: Record<string, string> = {
   SN: '🇸🇳',
   CI: '🇨🇮',
@@ -464,12 +357,12 @@ export default function RegionsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [assignTarget, setAssignTarget] = useState<Region | null>(null);
 
-  const { data: apiData } = useRegions();
+  const { data: apiData, isLoading: regionsLoading, isError: regionsError } = useRegions();
   const toggleMutation = useToggleRegion();
   const createMutation = useCreateRegion();
   const assignMutation = useAssignAdmin();
 
-  const regions = apiData ?? MOCK_REGIONS;
+  const regions = apiData ?? [];
 
   async function handleToggle(region: Region) {
     try {
@@ -529,17 +422,25 @@ export default function RegionsPage() {
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-        {regions.map((region) => (
-          <RegionCard
-            key={region.id}
-            region={region}
-            onToggle={(r) => void handleToggle(r)}
-            onAssign={(r) => setAssignTarget(r)}
-            loading={toggleMutation.isPending}
-          />
-        ))}
-      </div>
+      {regionsLoading ? (
+        <p className="text-center text-slate-500 text-sm py-12">Chargement des régions…</p>
+      ) : regionsError ? (
+        <p className="text-center text-red-400 text-sm py-12">
+          Impossible de charger les régions. Vérifiez vos droits d'accès ou réessayez.
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          {regions.map((region) => (
+            <RegionCard
+              key={region.id}
+              region={region}
+              onToggle={(r) => void handleToggle(r)}
+              onAssign={(r) => setAssignTarget(r)}
+              loading={toggleMutation.isPending}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Create modal */}
       {showCreate && (
