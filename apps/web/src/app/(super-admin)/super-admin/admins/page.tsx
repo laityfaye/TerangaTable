@@ -498,8 +498,11 @@ export default function AdminsPage() {
       await inviteMutation.mutateAsync(payload);
       toast.success('Invitation envoyée avec succès.');
       setInviteOpen(false);
-    } catch {
-      toast.error("Erreur lors de l'envoi de l'invitation");
+    } catch (error) {
+      const msg =
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        "Erreur lors de l'envoi de l'invitation";
+      toast.error(msg);
     }
   }
 
