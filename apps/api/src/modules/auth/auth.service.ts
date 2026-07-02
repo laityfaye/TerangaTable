@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  ConflictException,
   Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -224,5 +225,72 @@ export class AuthService {
     });
 
     return { success: true };
+  }
+
+  private async findPendingInvitation(token: string) {
+    return this.prisma.invitation.findFirst({
+      where: {
+        token,
+        revokedAt: null,
+        acceptedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      include: { role: true, tenant: { select: { name: true } } },
+    });
+  }
+
+  async verifyInvitation(token: string) {
+    const invitation = await this.findPendingInvitation(token);
+    if (!invitation) throw new BadRequestException('Invitation invalide ou expirée');
+
+    return {
+      email: invitation.email,
+      roleName: invitation.role.name,
+      tenantName: invitation.tenant.name,
+    };
+  }
+
+  async acceptInvitation(
+    token: string,
+    firstName: string,
+    lastName: string,
+    password: string,
+  ): Promise<AuthResponse> {
+    const invitation = await this.findPendingInvitation(token);
+    if (!invitation) throw new BadRequestException('Invitation invalide ou expirée');
+
+    const existing = await this.prisma.user.findUnique({ where: { email: invitation.email } });
+    if (existing) throw new ConflictException('Un compte existe déjà avec cet email');
+
+    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+
+    const user = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.user.create({
+        data: {
+          tenantId: invitation.tenantId,
+          email: invitation.email,
+          firstName,
+          lastName,
+          passwordHash,
+          userRoles: {
+            create: {
+              roleId: invitation.roleId,
+              tenantId: invitation.tenantId,
+              grantedBy: invitation.createdBy,
+            },
+          },
+        },
+      });
+
+      await tx.invitation.update({
+        where: { id: invitation.id },
+        data: { acceptedAt: new Date() },
+      });
+
+      return created;
+    });
+
+    const fullUser = await this.findUserWithRoles(user.id);
+    return this.login(fullUser!);
   }
 }

@@ -37,9 +37,49 @@ interface AuthState {
 
   // Actions
   login: (credentials: LoginCredentials) => Promise<void>;
+  acceptInvitation: (payload: AcceptInvitationPayload) => Promise<void>;
   logout: () => Promise<void>;
   refreshTokens: () => Promise<void>;
   restoreSession: (skipSlowPath?: boolean) => Promise<void>;
+}
+
+export interface AcceptInvitationPayload {
+  token: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+}
+
+interface AuthResponsePayload {
+  access_token: string;
+  refresh_token: string;
+  user: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    tenantId: string | null;
+    tenantSlug: string | null;
+    roles: string[];
+    regionSlug?: string | null;
+    avatarUrl?: string | null;
+    activeModules?: string[];
+  };
+}
+
+function toAuthUser(raw: AuthResponsePayload['user']): AuthUser {
+  return {
+    id: raw.id,
+    email: raw.email,
+    firstName: raw.firstName,
+    lastName: raw.lastName,
+    tenantId: raw.tenantId,
+    tenantSlug: raw.tenantSlug ?? null,
+    roles: raw.roles,
+    regionSlug: raw.regionSlug ?? null,
+    avatarUrl: raw.avatarUrl ?? null,
+    activeModules: raw.activeModules ?? [],
+  };
 }
 
 const API_URL =
@@ -101,42 +141,33 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   async login({ email, password }) {
     set({ isLoading: true });
     try {
-      const { data } = await axios.post<{
-        data: {
-          access_token: string;
-          refresh_token: string;
-          user: {
-            id: string;
-            email: string;
-            firstName: string;
-            lastName: string;
-            tenantId: string | null;
-            tenantSlug: string | null;
-            roles: string[];
-            regionSlug?: string | null;
-            avatarUrl?: string | null;
-            activeModules?: string[];
-          };
-        };
-      }>(`${API_URL}/auth/login`, { email, password });
+      const { data } = await axios.post<{ data: AuthResponsePayload }>(
+        `${API_URL}/auth/login`,
+        { email, password },
+      );
 
       const { access_token: accessToken, refresh_token: refreshToken, user: raw } = data.data;
 
-      const user: AuthUser = {
-        id: raw.id,
-        email: raw.email,
-        firstName: raw.firstName,
-        lastName: raw.lastName,
-        tenantId: raw.tenantId,
-        tenantSlug: raw.tenantSlug ?? null,
-        roles: raw.roles,
-        regionSlug: raw.regionSlug ?? null,
-        avatarUrl: raw.avatarUrl ?? null,
-        activeModules: raw.activeModules ?? [],
-      };
+      get().setTokens(accessToken, refreshToken);
+      get().setUser(toAuthUser(raw));
+      await setRefreshCookie(refreshToken);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  async acceptInvitation({ token, firstName, lastName, password }) {
+    set({ isLoading: true });
+    try {
+      const { data } = await axios.post<{ data: AuthResponsePayload }>(
+        `${API_URL}/auth/invitations/accept`,
+        { token, firstName, lastName, password },
+      );
+
+      const { access_token: accessToken, refresh_token: refreshToken, user: raw } = data.data;
 
       get().setTokens(accessToken, refreshToken);
-      get().setUser(user);
+      get().setUser(toAuthUser(raw));
       await setRefreshCookie(refreshToken);
     } finally {
       set({ isLoading: false });

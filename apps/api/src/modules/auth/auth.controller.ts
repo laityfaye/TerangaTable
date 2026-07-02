@@ -3,6 +3,7 @@ import {
   Post,
   Get,
   Body,
+  Param,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -21,6 +22,7 @@ import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { AcceptInvitationDto } from './dto/accept-invitation.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @ApiTags('auth')
@@ -97,5 +99,26 @@ export class AuthController {
   @ApiResponse({ status: 400, description: 'Token invalide ou expiré' })
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto.token, dto.password);
+  }
+
+  @SkipThrottle()
+  @Get('invitations/:token')
+  @ApiOperation({ summary: "Vérifier la validité d'un token d'invitation" })
+  @ApiResponse({ status: 200, description: 'Invitation valide : email, rôle, restaurant' })
+  @ApiResponse({ status: 400, description: 'Invitation invalide ou expirée' })
+  verifyInvitation(@Param('token') token: string) {
+    return this.authService.verifyInvitation(token);
+  }
+
+  // 5 tentatives/min/IP
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
+  @Post('invitations/accept')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Accepter une invitation et créer le compte" })
+  @ApiResponse({ status: 200, description: 'Compte créé, tokens retournés' })
+  @ApiResponse({ status: 400, description: 'Invitation invalide ou expirée' })
+  @ApiResponse({ status: 409, description: 'Un compte existe déjà avec cet email' })
+  acceptInvitation(@Body() dto: AcceptInvitationDto) {
+    return this.authService.acceptInvitation(dto.token, dto.firstName, dto.lastName, dto.password);
   }
 }

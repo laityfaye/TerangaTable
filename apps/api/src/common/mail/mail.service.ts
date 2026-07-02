@@ -155,6 +155,26 @@ export class MailService implements OnModuleInit {
     });
   }
 
+  async sendTeamInvitation(
+    to: string,
+    tenantName: string,
+    roleName: string,
+    joinUrl: string,
+  ) {
+    await this.send({
+      to,
+      subject: `Invitation à rejoindre ${tenantName} sur TérangaTable`,
+      html: `
+        <p>Bonjour,</p>
+        <p>Vous avez été invité(e) à rejoindre <strong>${tenantName}</strong> en tant que <strong>${roleName}</strong> sur TérangaTable.</p>
+        <p><a href="${joinUrl}">Accepter l'invitation →</a></p>
+        <p>Ce lien est valable pendant 48 heures.</p>
+        <br/>
+        <p>L'équipe TérangaTable</p>
+      `,
+    });
+  }
+
   private async send(options: { to: string; subject: string; html: string }) {
     if (!this.transporter) {
       this.logger.warn(`[MAIL] Transporter non disponible — email non envoyé à ${options.to}`);

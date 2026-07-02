@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MailService } from '../../common/mail/mail.service';
 import { CreateInvitationDto } from './dto/create-invitation.dto';
 
 const INVITATION_TTL_HOURS = 48;
@@ -18,6 +19,7 @@ export class InvitationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly mail: MailService,
   ) {}
 
   async findPending(tenantId: string) {
@@ -72,8 +74,15 @@ export class InvitationsService {
       include: { role: true },
     });
 
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { name: true },
+    });
+
     const appUrl = this.config.get<string>('APP_URL', 'http://localhost:3000');
-    this.logger.log(`[INVITATION] Lien d'invitation : ${appUrl}/join?token=${token}`);
+    const joinUrl = `${appUrl}/join?token=${token}`;
+    this.logger.log(`[INVITATION] Lien d'invitation : ${joinUrl}`);
+    await this.mail.sendTeamInvitation(dto.email, tenant?.name ?? 'votre restaurant', role.name, joinUrl);
 
     return this.formatInvitation(invitation);
   }

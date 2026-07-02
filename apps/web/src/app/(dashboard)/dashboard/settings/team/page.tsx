@@ -133,7 +133,7 @@ function InviteMemberModal({ roles, onClose }: { roles: Role[]; onClose: () => v
         </div>
 
         <p className="text-xs text-slate-400 bg-slate-50 rounded-lg px-3 py-2">
-          En développement : le lien d&apos;invitation est affiché dans les logs serveur.
+          Un email d&apos;invitation sera envoyé à cette adresse avec un lien valable 48h.
         </p>
 
         {createInvitation.isError && (
