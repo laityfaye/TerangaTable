@@ -126,7 +126,7 @@ export default function MarketplaceNav({ currentCity, currentCitySlug, cities = 
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${navBg}`}>
-      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center gap-3">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 h-16 flex items-center gap-2 sm:gap-3">
 
         {/* ── Logo ── */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
@@ -145,13 +145,13 @@ export default function MarketplaceNav({ currentCity, currentCitySlug, cities = 
         <div className="relative shrink-0" ref={cityRef}>
           <button
             onClick={() => setShowCities(v => !v)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm font-medium transition-all duration-300 ${cityButtonColor}`}
+            className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-2 rounded-xl border text-sm font-medium transition-all duration-300 ${cityButtonColor}`}
           >
-            <MapPin className="w-3.5 h-3.5 text-[#C8553D]" />
-            <span className="max-w-[80px] sm:max-w-[120px] truncate">
+            <MapPin className="w-3.5 h-3.5 text-[#C8553D] shrink-0" />
+            <span className="hidden sm:block max-w-[120px] truncate">
               {currentCity ?? 'Toutes les villes'}
             </span>
-            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${cityChevronColor} ${showCities ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`hidden sm:block w-3.5 h-3.5 transition-transform duration-200 ${cityChevronColor} ${showCities ? 'rotate-180' : ''}`} />
           </button>
 
           {showCities && cities.length > 0 && (
@@ -189,7 +189,7 @@ export default function MarketplaceNav({ currentCity, currentCitySlug, cities = 
         </div>
 
         {/* ── Barre de recherche ── */}
-        <div className="flex-1 relative" ref={searchRef}>
+        <div className="flex-1 min-w-0 relative" ref={searchRef}>
           <div className="relative">
             <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors duration-300 ${scrolled ? 'text-[#57534E]' : 'text-white/70'}`} />
             <input
@@ -198,7 +198,7 @@ export default function MarketplaceNav({ currentCity, currentCitySlug, cities = 
               onChange={e => setQuery(e.target.value)}
               onFocus={() => query.length >= 2 && setShowResults(true)}
               onKeyDown={handleKeyDown}
-              placeholder={`Rechercher${currentCity ? ` à ${currentCity}` : ' un restaurant'}…`}
+              placeholder={`Rechercher${currentCity ? ` à ${currentCity}` : ''}…`}
               className={`w-full pl-9 pr-20 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#C8553D]/30 focus:border-[#C8553D] text-sm transition-all duration-300 ${searchBg} ${searchTextColor} ${searchPlaceholderColor}`}
             />
             {/* Bouton Rechercher (toujours visible) + ✕ si query */}
@@ -323,7 +323,7 @@ export default function MarketplaceNav({ currentCity, currentCitySlug, cities = 
         {/* ── Menu mobile ── */}
         <button
           onClick={() => setMobileMenu(v => !v)}
-          className={`md:hidden p-2 rounded-lg transition-colors duration-300 ${menuButtonColor}`}
+          className={`md:hidden shrink-0 p-2 rounded-lg transition-colors duration-300 ${menuButtonColor}`}
         >
           <Menu className="w-5 h-5" />
         </button>
@@ -331,21 +331,57 @@ export default function MarketplaceNav({ currentCity, currentCitySlug, cities = 
 
       {/* ── Menu mobile overlay ── */}
       {mobileMenu && (
-        <div className="md:hidden bg-white border-t border-[#E7E5E4] px-4 py-4 flex flex-col gap-2 shadow-lg">
-          <Link
-            href="/login"
-            className="text-sm text-[#57534E] py-2.5 hover:text-[#1C1917] transition-colors"
-            onClick={() => setMobileMenu(false)}
-          >
-            Connexion
-          </Link>
-          <Link
-            href="/register"
-            className="text-sm font-semibold py-2.5 text-[#C8553D] hover:text-[#A33D28] transition-colors"
-            onClick={() => setMobileMenu(false)}
-          >
-            Référencer votre restaurant →
-          </Link>
+        <div className="md:hidden bg-white border-t border-[#E7E5E4] shadow-lg">
+          {/* Sélecteur de ville (visible uniquement sur mobile) */}
+          {cities.length > 0 && (
+            <div className="px-4 pt-4 pb-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#A8A29E] mb-2">Ville</p>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  href="/decouvrir"
+                  onClick={() => setMobileMenu(false)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                    !currentCitySlug
+                      ? 'bg-[#C8553D] text-white border-[#C8553D]'
+                      : 'bg-[#FAFAF8] text-[#57534E] border-[#E7E5E4] hover:border-[#C8553D]/40'
+                  }`}
+                >
+                  🌍 Toutes
+                </Link>
+                {cities.map(city => (
+                  <Link
+                    key={city.slug}
+                    href={`/decouvrir/${city.slug}`}
+                    onClick={() => setMobileMenu(false)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                      city.slug === currentCitySlug
+                        ? 'bg-[#C8553D] text-white border-[#C8553D]'
+                        : 'bg-[#FAFAF8] text-[#57534E] border-[#E7E5E4] hover:border-[#C8553D]/40'
+                    }`}
+                  >
+                    {COUNTRY_FLAGS[city.country_code] ?? '🌍'} {city.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="px-4 py-3 flex flex-col gap-1 border-t border-[#F5F4F2] mt-2">
+            <Link
+              href="/login"
+              className="text-sm text-[#57534E] py-2.5 hover:text-[#1C1917] transition-colors"
+              onClick={() => setMobileMenu(false)}
+            >
+              Connexion
+            </Link>
+            <Link
+              href="/register"
+              className="text-sm font-semibold py-2.5 text-[#C8553D] hover:text-[#A33D28] transition-colors"
+              onClick={() => setMobileMenu(false)}
+            >
+              Référencer votre restaurant →
+            </Link>
+          </div>
         </div>
       )}
     </header>

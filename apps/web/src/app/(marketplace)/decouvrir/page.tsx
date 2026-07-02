@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, Search, Smartphone, Zap, MapPin, ChefHat, Users } from 'lucide-react';
+import { Suspense } from 'react';
 import AnimateIn from '@/components/ui/animate-in';
+import FloatingLocateButton from '@/components/marketplace/floating-locate-button';
 import { fetchMarketplaceCities, fetchMarketplaceStats, fetchMarketplaceMenusDuJour, fetchMarketplaceRestaurants, fetchMarketplaceSearch } from '@/lib/marketplace-api';
 import type { FloatingMenuData, FloatingRestaurantData } from '@/components/marketplace/hero-decouverte';
 import MarketplaceNav from '@/components/marketplace/marketplace-nav';
@@ -350,6 +352,15 @@ export default async function DiscoveryHomePage({
         {/* CTA Restaurant Owner */}
         <RestaurantOwnerSection />
       </main>
+
+      {/* Bouton flottant de géolocalisation */}
+      <Suspense fallback={null}>
+        <FloatingLocateButton
+          cities={cities
+            .filter((c) => c.lat != null && c.lng != null)
+            .map((c) => ({ slug: c.slug, lat: c.lat!, lng: c.lng! }))}
+        />
+      </Suspense>
 
       {/* ── Footer ── */}
       <MarketplaceFooter />

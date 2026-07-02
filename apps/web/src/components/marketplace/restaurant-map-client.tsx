@@ -68,7 +68,7 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
 
   const [selected, setSelected] = useState<MarketplaceRestaurant | null>(null);
   const [locating, setLocating] = useState(false);
-  const [geoError, setGeoError] = useState(false);
+  const [geoError, setGeoError] = useState<string | null>(null);
   // Sur mobile/tablette la carte est verrouillée au démarrage pour ne pas
   // bloquer le scroll de la page. L'utilisateur doit appuyer pour l'activer.
   const [mapLocked, setMapLocked] = useState(true);
@@ -86,7 +86,7 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
 
     const map = L.map(containerRef.current, {
       center: initialCenter,
-      zoom: 14,
+      zoom: 13,
       zoomControl: false,
       // Desktop : désactiver le scroll-wheel pour ne pas bloquer le scroll de page
       scrollWheelZoom: false,
@@ -142,6 +142,14 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
       });
       markersLayerRef.current!.addLayer(marker);
     });
+
+    // Ajuster la vue pour englober tous les restaurants visibles (sauf si on suit la position utilisateur)
+    if (restaurantsWithCoords.length > 0 && mapRef.current && !hasUserPos) {
+      const bounds = L.latLngBounds(
+        restaurantsWithCoords.map((r) => [r.lat!, r.lng!] as [number, number]),
+      );
+      mapRef.current.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 });
+    }
   }, [restaurants]);
 
   // ── Mettre à jour la position utilisateur + cercle de rayon ──────────────
@@ -172,9 +180,12 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
 
   // ── Géolocalisation depuis la carte ──────────────────────────────────────
   function handleLocate() {
-    if (!navigator.geolocation) { setGeoError(true); return; }
+    if (!navigator.geolocation) {
+      setGeoError('Non supporté par ce navigateur');
+      return;
+    }
     setLocating(true);
-    setGeoError(false);
+    setGeoError(null);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const params = new URLSearchParams(searchParams.toString());
@@ -185,8 +196,15 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
         router.push(`${pathname}?${params.toString()}`, { scroll: false });
         setLocating(false);
       },
-      () => { setGeoError(true); setLocating(false); },
-      { timeout: 8000 },
+      (err) => {
+        const msg =
+          err.code === 1 ? 'Permission refusée — autorisez la localisation dans votre navigateur'
+          : err.code === 2 ? 'Position indisponible — vérifiez votre GPS ou connexion'
+          : 'Délai dépassé — réessayez';
+        setGeoError(msg);
+        setLocating(false);
+      },
+      { timeout: 12000, enableHighAccuracy: true, maximumAge: 30000 },
     );
   }
 
@@ -209,22 +227,29 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
         </div>
 
         {/* Bouton Ma position */}
-        <button
-          onClick={handleLocate}
-          disabled={locating || hasUserPos}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm backdrop-blur-sm transition-all ${
-            hasUserPos
-              ? 'bg-[#3B82F6] text-white cursor-default'
-              : geoError
-              ? 'bg-red-50 text-red-600 border border-red-200'
-              : 'bg-white/95 text-[#57534E] hover:text-[#C8553D] hover:bg-white'
-          }`}
-        >
-          {locating
-            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            : <LocateFixed className="w-3.5 h-3.5" />}
-          {hasUserPos ? 'Localisé' : geoError ? 'Erreur GPS' : 'Ma position'}
-        </button>
+        <div className="flex flex-col items-end gap-1">
+          <button
+            onClick={handleLocate}
+            disabled={locating || hasUserPos}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm backdrop-blur-sm transition-all ${
+              hasUserPos
+                ? 'bg-[#3B82F6] text-white cursor-default'
+                : geoError
+                ? 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100'
+                : 'bg-white/95 text-[#57534E] hover:text-[#C8553D] hover:bg-white'
+            }`}
+          >
+            {locating
+              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              : <LocateFixed className="w-3.5 h-3.5" />}
+            {hasUserPos ? 'Localisé' : geoError ? 'Réessayer' : 'Ma position'}
+          </button>
+          {geoError && (
+            <div className="max-w-[200px] text-right bg-red-50/95 backdrop-blur-sm border border-red-200 rounded-lg px-2.5 py-1.5 shadow-sm">
+              <p className="text-[10px] text-red-600 leading-snug">{geoError}</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Conteneur carte Leaflet */}

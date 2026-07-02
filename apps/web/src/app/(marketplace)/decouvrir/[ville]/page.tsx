@@ -19,6 +19,8 @@ import StatsLive from '@/components/marketplace/stats-live';
 import type { MarketplaceFilters } from '@/types/marketplace';
 import { Map, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import { Suspense } from 'react';
+import FloatingLocateButton from '@/components/marketplace/floating-locate-button';
 
 export const revalidate = 30;
 
@@ -408,6 +410,11 @@ export default async function CityDiscoveryPage({ params, searchParams }: Props)
           />
         </div>
       </div>
+
+      {/* Bouton flottant de géolocalisation */}
+      <Suspense fallback={null}>
+        <FloatingLocateButton citySlug={ville} />
+      </Suspense>
 
       {/* Footer */}
       <footer className="bg-[#1A1A18] text-white/50 py-10 px-4 mt-16">
