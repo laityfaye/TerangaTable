@@ -19,11 +19,24 @@ export const metadata: Metadata = {
   title: 'Découvrez les restaurants près de vous — TérangaTable',
   description:
     "Tous les meilleurs restaurants d'Afrique en un seul endroit — menus du jour, livraison, réservations et avis clients.",
+  keywords: [
+    'découvrir restaurants', 'trouver un restaurant près de moi', 'restaurants africains',
+    'menus du jour', 'livraison de repas', 'réservation restaurant en ligne',
+    'restaurants Dakar', 'restaurants Thiès', 'restaurants Saint-Louis', 'restaurants Abidjan',
+    'restaurants Casablanca', 'restaurants Paris', 'cuisine sénégalaise', 'cuisine ivoirienne',
+    'cuisine marocaine', 'où manger', 'avis restaurants', 'TérangaTable',
+  ],
   alternates: { canonical: '/decouvrir' },
   openGraph: {
     title: 'TérangaTable — Découvrez les restaurants',
     description: 'Trouvez les meilleurs restaurants africains près de chez vous.',
     type: 'website',
+    url: '/decouvrir',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'TérangaTable — Découvrez les restaurants près de vous',
+    description: "Tous les meilleurs restaurants d'Afrique en un seul endroit.",
   },
 };
 
@@ -347,7 +360,7 @@ export default async function DiscoveryHomePage({
         <CitySelector cities={cities} />
 
         {/* Comment ça marche */}
-        <HowItWorksSection />
+        <HowItWorksSection topCitySlug={cities.find((c) => c.restaurant_count > 0)?.slug ?? 'dakar'} />
 
         {/* CTA Restaurant Owner */}
         <RestaurantOwnerSection />
@@ -363,14 +376,14 @@ export default async function DiscoveryHomePage({
       </Suspense>
 
       {/* ── Footer ── */}
-      <MarketplaceFooter />
+      <MarketplaceFooter cities={cities.filter((c) => c.restaurant_count > 0).slice(0, 6)} />
     </>
   );
 }
 
 // ── Section "Comment ça marche" ───────────────────────────────────────────────
 
-function HowItWorksSection() {
+function HowItWorksSection({ topCitySlug }: { topCitySlug: string }) {
   const steps = [
     {
       number: '01',
@@ -472,7 +485,7 @@ function HowItWorksSection() {
         <AnimateIn type="pop" delay={200} threshold={0.1}>
         <div className="flex justify-center mt-12">
           <Link
-            href="/decouvrir/dakar"
+            href={`/decouvrir/${topCitySlug}`}
             className="hover-pop inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-[#C8553D] text-white font-semibold text-sm hover:bg-[#A33D28] transition-colors shadow-md hover:shadow-lg"
           >
             Explorer les restaurants
@@ -638,13 +651,11 @@ function RestaurantOwnerSection() {
 
 // ── Footer ────────────────────────────────────────────────────────────────────
 
-function MarketplaceFooter() {
+function MarketplaceFooter({ cities }: { cities: MarketplaceCity[] }) {
   const links = {
     Explorer: [
       { label: 'Tous les restaurants', href: '/decouvrir' },
-      { label: 'Dakar', href: '/decouvrir/dakar' },
-      { label: 'Abidjan', href: '/decouvrir/abidjan' },
-      { label: 'Casablanca', href: '/decouvrir/casablanca' },
+      ...cities.map((c) => ({ label: c.name, href: `/decouvrir/${c.slug}` })),
     ],
     Plateforme: [
       { label: 'Fonctionnalités', href: '/#fonctionnalites' },

@@ -26,11 +26,30 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const data = await fetchVitrineData(slug);
     const ws = data.website_settings;
     const baseUrl = process.env['NEXT_PUBLIC_BASE_URL'] ?? 'https://terangatable.com';
+    const cityName = data.region.name;
+
+    // Mots-clés générés automatiquement quand le restaurateur n'a pas configuré
+    // ses propres seo_keywords depuis le dashboard.
+    const defaultKeywords = [
+      data.name,
+      `${data.name} ${cityName}`,
+      `restaurant ${cityName}`,
+      `restaurant ${data.region.countryName}`,
+      `menu ${data.name}`,
+      ...(data.modules?.includes('online_ordering')
+        ? [`livraison ${cityName}`, `commander en ligne ${data.name}`, `commande en ligne ${cityName}`]
+        : []),
+      ...(data.modules?.includes('reservations')
+        ? [`réserver une table ${data.name}`, `réservation restaurant ${cityName}`]
+        : []),
+      'TérangaTable',
+    ];
 
     return {
       title: ws?.seo_title ?? `${data.name} — TérangaTable`,
-      description: ws?.seo_description ?? `Découvrez ${data.name}, restaurant africain authentique.`,
-      keywords: ws?.seo_keywords ?? undefined,
+      description:
+        ws?.seo_description ?? `Découvrez ${data.name}, restaurant africain authentique à ${cityName}. Menu, réservation et commande en ligne.`,
+      keywords: ws?.seo_keywords ?? defaultKeywords,
       openGraph: {
         type: 'website',
         locale: data.region.locale,

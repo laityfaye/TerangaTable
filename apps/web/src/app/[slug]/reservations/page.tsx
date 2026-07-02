@@ -12,9 +12,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   try {
     const data = await fetchVitrineData(slug);
+    const baseUrl = process.env['NEXT_PUBLIC_BASE_URL'] ?? 'https://terangatable.com';
+    const cityName = data.region.name;
+    const title = `Réserver une table — ${data.name}`;
+    const description = `Réservez votre table chez ${data.name} à ${cityName}. Remplissez le formulaire en ligne et recevez une confirmation.`;
+
     return {
-      title: `Réserver une table — ${data.name}`,
-      description: `Réservez votre table chez ${data.name}. Remplissez le formulaire en ligne et recevez une confirmation.`,
+      title,
+      description,
+      keywords: [`réserver une table ${data.name}`, `réservation restaurant ${cityName}`, data.name, cityName],
+      alternates: { canonical: `${baseUrl}/${slug}/reservations` },
+      openGraph: { title, description, type: 'website', url: `${baseUrl}/${slug}/reservations` },
     };
   } catch {
     return { title: 'Réservation' };
