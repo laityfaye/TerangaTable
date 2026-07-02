@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const PLATFORM_DOMAIN = process.env['PLATFORM_DOMAIN'] ?? 'terangatable.com';
+const PLATFORM_DOMAIN = process.env['PLATFORM_DOMAIN'] ?? 'terangatable.cloud';
 const REFRESH_COOKIE = 'rt';
 
 const PUBLIC_PATHS = ['/_next', '/favicon.ico', '/api/'];
