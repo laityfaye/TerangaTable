@@ -23,7 +23,6 @@ import {
   UserCog,
   LayoutGrid,
   Loader2,
-  ChefHat,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth.store';
@@ -37,6 +36,9 @@ interface NavItem {
   href: string;
   icon: React.ReactNode;
   roles?: string[]; // undefined = tous les rôles autorisés
+  /** Libellé affiché à la place de `label` si l'utilisateur a un des rôles listés dans `altLabelRoles`. */
+  altLabel?: string;
+  altLabelRoles?: string[];
 }
 
 interface NavGroup {
@@ -73,6 +75,8 @@ const NAV: NavGroup[] = [
         href: '/dashboard/orders',
         icon: <ShoppingCart size={18} />,
         roles: ALL_TENANT_ROLES,
+        altLabel: 'Écran cuisine',
+        altLabelRoles: [UserRole.CUISINIER],
       },
       {
         label: 'Caisse (POS)',
@@ -87,19 +91,6 @@ const NAV: NavGroup[] = [
         roles: [...OWNER_MANAGER, UserRole.SERVEUR],
       },
     ],
-  },
-  {
-    title: 'CUISINE',
-    module: 'kds',
-    items: [
-      {
-        label: 'Écran cuisine',
-        href: '/dashboard/kds',
-        icon: <ChefHat size={18} />,
-        roles: [...OWNER_MANAGER, UserRole.CUISINIER],
-      },
-    ],
-    roles: [...OWNER_MANAGER, UserRole.CUISINIER],
   },
   {
     title: 'MENU',
@@ -305,7 +296,13 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
         {NAV.filter((group) => hasAccess(group.roles) && hasModule(group.module)).map((group) => {
-          const visibleItems = group.items.filter((item) => hasAccess(item.roles));
+          const visibleItems = group.items
+            .filter((item) => hasAccess(item.roles))
+            .map((item) =>
+              item.altLabel && item.altLabelRoles?.some((r) => userRoles.includes(r))
+                ? { ...item, label: item.altLabel }
+                : item
+            );
           if (visibleItems.length === 0) return null;
           return (
             <div key={group.title}>

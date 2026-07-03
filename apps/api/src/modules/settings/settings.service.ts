@@ -37,6 +37,19 @@ export class SettingsService {
       grouped[cat][s.key] = s.value;
     }
 
+    // Le nom du tenant est toujours renseigné à la création, contrairement au
+    // setting `restaurant_name` qui reste vide tant que le owner ne l'a pas
+    // sauvegardé manuellement dans Réglages.
+    if (!grouped.general?.['restaurant_name']) {
+      const tenant = await this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { name: true },
+      });
+      if (tenant?.name) {
+        grouped.general = { ...grouped.general, restaurant_name: tenant.name };
+      }
+    }
+
     return { data: settings, grouped };
   }
 
