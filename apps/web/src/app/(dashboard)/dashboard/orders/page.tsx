@@ -596,7 +596,7 @@ export default function OrdersPage() {
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
   );
 
-  const { connected } = useOrdersWs(soundEnabled);
+  const { connected, soundUnlocked, unlockSound } = useOrdersWs(soundEnabled);
 
   // Default order workflow
   const { data: workflows } = useWorkflows();
@@ -663,6 +663,18 @@ export default function OrdersPage() {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Sound unlock prompt — browsers block audio/TTS until a real tap/click
+          has happened on this page load (e.g. after a refresh with no interaction) */}
+      {soundEnabled && !soundUnlocked && (
+        <button
+          onClick={unlockSound}
+          className="mb-4 flex items-center justify-center gap-2 w-full rounded-lg border border-terracotta/30 bg-terracotta/5 px-4 py-2.5 text-sm font-medium text-terracotta hover:bg-terracotta/10 transition-colors flex-shrink-0"
+        >
+          <Volume2 size={16} />
+          Appuyez ici pour activer les alertes sonores de cet écran
+        </button>
+      )}
+
       {/* Page header */}
       <div className="flex items-center justify-between mb-5 flex-shrink-0">
         <div>

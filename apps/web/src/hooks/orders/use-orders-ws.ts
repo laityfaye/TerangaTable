@@ -9,9 +9,36 @@ import { ORDERS_QKEY, Order, OrdersResponse, WorkflowStateSnap } from './use-ord
 const SOCKET_URL =
   (process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001/v1').replace(/\/v1$/, '');
 
+// Chrome/Safari suspend (or reject) audio playback started without a prior user
+// gesture on the current page load — a kitchen/waiter screen left open and
+// refreshed never fires a click, so a fresh AudioContext per alert stays silent.
+// We keep one shared, explicitly-unlocked context/flag for the whole tab instead.
+let sharedAudioCtx: AudioContext | null = null;
+let audioUnlocked = false;
+
+function getAudioCtx(): AudioContext | null {
+  try {
+    if (!sharedAudioCtx) sharedAudioCtx = new AudioContext();
+    return sharedAudioCtx;
+  } catch {
+    return null;
+  }
+}
+
+/** Must run inside a real user gesture (click/tap/keydown) to take effect. */
+export function unlockOrdersAudio() {
+  const ctx = getAudioCtx();
+  if (ctx?.state === 'suspended') void ctx.resume();
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    window.speechSynthesis.speak(new SpeechSynthesisUtterance(''));
+  }
+  audioUnlocked = true;
+}
+
 function playPing() {
   try {
-    const ctx = new AudioContext();
+    const ctx = getAudioCtx();
+    if (!ctx) return;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
@@ -22,7 +49,6 @@ function playPing() {
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
     osc.start();
     osc.stop(ctx.currentTime + 0.15);
-    osc.onended = () => ctx.close();
   } catch {
     // Web Audio not available
   }
@@ -52,6 +78,7 @@ export function useOrdersWs(soundEnabled = true) {
   const qc = useQueryClient();
   const socketRef = useRef<Socket | null>(null);
   const [connected, setConnected] = useState(false);
+  const [soundUnlocked, setSoundUnlocked] = useState(audioUnlocked);
   const soundRef = useRef(soundEnabled);
   soundRef.current = soundEnabled;
   const accessToken = useAuthStore((s) => s.accessToken);
@@ -59,6 +86,24 @@ export function useOrdersWs(soundEnabled = true) {
   const userRole = useAuthStore((s) => s.user?.roles?.[0] ?? '');
   const roleRef = useRef(userRole);
   roleRef.current = userRole;
+
+  const unlockSound = () => {
+    unlockOrdersAudio();
+    setSoundUnlocked(true);
+  };
+
+  // Any real interaction with the page (not just a dedicated button) counts as
+  // a user gesture and is enough to unlock audio for the rest of this page load.
+  useEffect(() => {
+    if (audioUnlocked) return;
+    const onFirstInteraction = () => unlockSound();
+    document.addEventListener('pointerdown', onFirstInteraction, { once: true });
+    document.addEventListener('keydown', onFirstInteraction, { once: true });
+    return () => {
+      document.removeEventListener('pointerdown', onFirstInteraction);
+      document.removeEventListener('keydown', onFirstInteraction);
+    };
+  }, []);
 
   useEffect(() => {
     if (!tenantId || !accessToken) return;
@@ -149,5 +194,5 @@ export function useOrdersWs(soundEnabled = true) {
     };
   }, [tenantId, accessToken, qc]);
 
-  return { connected };
+  return { connected, soundUnlocked, unlockSound };
 }

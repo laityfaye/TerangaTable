@@ -14,7 +14,7 @@ import {
 } from 'recharts';
 import {
   ShoppingCart, TrendingUp, CreditCard, UserPlus, Plus, CalendarPlus,
-  Clock, ChefHat, CheckCircle2, Loader2,
+  Clock, ChefHat, CheckCircle2, Loader2, Volume2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth.store';
@@ -131,7 +131,7 @@ function OrderStatusBadge({ order }: { order: Order }) {
 
 function OperationalDashboard({ role }: { role: string }) {
   const user = useAuthStore((s) => s.user);
-  useOrdersWs();
+  const { soundUnlocked, unlockSound } = useOrdersWs();
 
   const { data: pendingRes, isLoading: loadingPending } = useOrders({ status: 'pending', limit: 20 });
   const { data: preparingRes, isLoading: loadingPreparing } = useOrders({ status: 'preparing', limit: 20 });
@@ -162,6 +162,18 @@ function OperationalDashboard({ role }: { role: string }) {
 
   return (
     <div className="space-y-6">
+      {/* Sound unlock prompt — browsers block audio/TTS until a real tap/click
+          has happened on this page load (e.g. after a refresh with no interaction) */}
+      {!soundUnlocked && (
+        <button
+          onClick={unlockSound}
+          className="flex items-center justify-center gap-2 w-full rounded-lg border border-terracotta/30 bg-terracotta/5 px-4 py-2.5 text-sm font-medium text-terracotta hover:bg-terracotta/10 transition-colors"
+        >
+          <Volume2 size={16} />
+          Appuyez ici pour activer les alertes sonores de cet écran
+        </button>
+      )}
+
       {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
