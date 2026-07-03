@@ -93,6 +93,28 @@ export class UsersService {
     return { success: true };
   }
 
+  async hardDelete(tenantId: string, userId: string, requesterId: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, tenantId },
+      include: { userRoles: { include: { role: true } } },
+    });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+    if (userId === requesterId) throw new ForbiddenException('Vous ne pouvez pas supprimer votre propre compte');
+
+    const isOwner = user.userRoles.some((ur) => ur.role.slug === 'restaurant_owner');
+    if (isOwner) {
+      const otherOwners = await this.prisma.userRole.count({
+        where: { tenantId, userId: { not: userId }, role: { slug: 'restaurant_owner' } },
+      });
+      if (otherOwners === 0) {
+        throw new ForbiddenException('Impossible de supprimer le dernier propriétaire du restaurant');
+      }
+    }
+
+    await this.prisma.user.delete({ where: { id: userId } });
+    return { success: true };
+  }
+
   private formatUser(user: {
     id: string;
     email: string;

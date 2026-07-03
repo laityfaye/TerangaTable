@@ -126,7 +126,7 @@ export function SessionCloseModal({ open, session, onClose }: Props) {
     const data = closedSession ?? session;
     const zPayload = {
       restaurantName:  'TÉRANGATABLE',
-      openedBy:        `${data.openedBy.firstName} ${data.openedBy.lastName}`,
+      openedBy:        data.openedBy ? `${data.openedBy.firstName} ${data.openedBy.lastName}` : 'Utilisateur supprimé',
       openedAt:        data.openedAt,
       closedAt:        data.closedAt ?? new Date().toISOString(),
       durationLabel:   duration,

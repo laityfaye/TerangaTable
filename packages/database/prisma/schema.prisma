@@ -358,14 +358,14 @@ model Invitation {
   roleId     String    @map("role_id") @db.Uuid
   token      String    @unique @db.VarChar(255)
   expiresAt  DateTime  @map("expires_at")
-  createdBy  String    @map("created_by") @db.Uuid
+  createdBy  String?   @map("created_by") @db.Uuid
   revokedAt  DateTime? @map("revoked_at")
   acceptedAt DateTime? @map("accepted_at")
   createdAt  DateTime  @default(now()) @map("created_at")
 
   tenant  Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   role    Role   @relation(fields: [roleId], references: [id])
-  creator User   @relation("InvitationCreator", fields: [createdBy], references: [id])
+  creator User?  @relation("InvitationCreator", fields: [createdBy], references: [id], onDelete: SetNull)
 
   @@index([tenantId, revokedAt, acceptedAt])
   @@index([token])
@@ -998,7 +998,7 @@ model LoyaltyTransaction {
 model PosSession {
   id             String    @id @default(uuid()) @db.Uuid
   tenantId       String    @map("tenant_id") @db.Uuid
-  openedById     String    @map("opened_by") @db.Uuid
+  openedById     String?   @map("opened_by") @db.Uuid
   closedById     String?   @map("closed_by") @db.Uuid
   openingAmount  Decimal   @default(0) @map("opening_amount") @db.Decimal(10, 2)
   closingAmount  Decimal?  @map("closing_amount") @db.Decimal(10, 2)
@@ -1011,8 +1011,8 @@ model PosSession {
   closedAt       DateTime? @map("closed_at")
 
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  openedBy User   @relation("PosSessions_opened", fields: [openedById], references: [id])
-  closedBy User?  @relation("PosSessions_closed", fields: [closedById], references: [id])
+  openedBy User?  @relation("PosSessions_opened", fields: [openedById], references: [id], onDelete: SetNull)
+  closedBy User?  @relation("PosSessions_closed", fields: [closedById], references: [id], onDelete: SetNull)
 
   @@index([tenantId, status])
   @@map("pos_sessions")

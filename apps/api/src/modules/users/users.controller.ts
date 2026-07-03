@@ -85,4 +85,17 @@ export class UsersController {
   ) {
     return this.usersService.deactivate(tenant.id, id, user.id);
   }
+
+  @Delete(':id/permanent')
+  @HttpCode(HttpStatus.OK)
+  @Roles('restaurant_owner', 'super_admin')
+  @ApiOperation({ summary: 'Supprimer définitivement un membre de l\'équipe (Propriétaire uniquement)' })
+  @ApiResponse({ status: 200, description: '{ success: true }' })
+  hardDelete(
+    @CurrentTenant() tenant: TenantContext,
+    @CurrentUser() user: JwtUser,
+    @Param('id') id: string,
+  ) {
+    return this.usersService.hardDelete(tenant.id, id, user.id);
+  }
 }

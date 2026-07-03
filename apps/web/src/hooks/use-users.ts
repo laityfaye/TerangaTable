@@ -81,3 +81,16 @@ export function useDeactivateUser() {
     },
   });
 }
+
+export function useDeleteUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await apiClient.delete<{ data: { success: boolean } }>(`/users/${id}/permanent`);
+      return data.data;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+}

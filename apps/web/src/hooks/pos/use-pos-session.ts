@@ -19,7 +19,7 @@ export interface PosSession {
   status:         'open' | 'closed';
   openedAt:       string;
   closedAt:       string | null;
-  openedBy:       { id: string; firstName: string; lastName: string };
+  openedBy:       { id: string; firstName: string; lastName: string } | null;
   closedBy:       { id: string; firstName: string; lastName: string } | null;
 }
 
@@ -52,7 +52,7 @@ export interface PosSessionSummary {
   status:         'open' | 'closed';
   openedAt:       string;
   closedAt:       string | null;
-  openedBy:       { id: string; firstName: string; lastName: string };
+  openedBy:       { id: string; firstName: string; lastName: string } | null;
   closedBy:       { id: string; firstName: string; lastName: string } | null;
 }
 

@@ -108,7 +108,7 @@ function SessionCard({
               {session.totalOrders} commande{session.totalOrders !== 1 ? 's' : ''}
             </span>
             <span className="flex items-center gap-1 text-xs text-slate-500">
-              par {session.openedBy.firstName} {session.openedBy.lastName}
+              par {session.openedBy ? `${session.openedBy.firstName} ${session.openedBy.lastName}` : 'Utilisateur supprimé'}
             </span>
           </div>
         </div>
@@ -246,7 +246,7 @@ export default function PosSessionsPage() {
 
     printZReport({
       restaurantName:  'TÉRANGATABLE',
-      openedBy:        `${session.openedBy.firstName} ${session.openedBy.lastName}`,
+      openedBy:        session.openedBy ? `${session.openedBy.firstName} ${session.openedBy.lastName}` : 'Utilisateur supprimé',
       closedBy:        session.closedBy
         ? `${session.closedBy.firstName} ${session.closedBy.lastName}`
         : undefined,

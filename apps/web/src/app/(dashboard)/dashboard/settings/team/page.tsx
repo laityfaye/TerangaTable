@@ -6,9 +6,10 @@ import {
   Loader2, ShieldCheck, Plus, Trash2, ChevronRight, Lock,
 } from 'lucide-react';
 import {
-  useUsers, useCreateUser, useUpdateUser, useDeactivateUser,
+  useUsers, useCreateUser, useUpdateUser, useDeactivateUser, useDeleteUser,
   type TeamUser, type CreateUserPayload,
 } from '@/hooks/use-users';
+import { useAuthStore } from '@/stores/auth.store';
 import {
   useRoles, usePermissions, useCreateRole, useSetRolePermissions, useDeleteRole,
   type Role, type CreateRolePayload,
@@ -187,9 +188,13 @@ function EditRoleModal({ user, roles, onClose }: { user: TeamUser; roles: Role[]
 function TeamTab({ roles }: { roles: Role[] }) {
   const { data: users, isLoading, isError } = useUsers();
   const deactivateUser = useDeactivateUser();
+  const deleteUser = useDeleteUser();
+  const currentUser = useAuthStore((s) => s.user);
+  const isOwner = currentUser?.roles.includes('restaurant_owner') ?? false;
   const [showInvite, setShowInvite] = useState(false);
   const [editUser, setEditUser] = useState<TeamUser | null>(null);
   const [confirmDeactivate, setConfirmDeactivate] = useState<TeamUser | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<TeamUser | null>(null);
 
   return (
     <div className="space-y-5">
@@ -248,6 +253,11 @@ function TeamTab({ roles }: { roles: Role[] }) {
                         <UserX size={14} />
                       </button>
                     )}
+                    {isOwner && u.id !== currentUser?.id && (
+                      <button onClick={() => setConfirmDelete(u)} className="p-1.5 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors" title="Supprimer définitivement">
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
                 </div>
               );
@@ -272,6 +282,30 @@ function TeamTab({ roles }: { roles: Role[] }) {
             >
               {deactivateUser.isPending ? <Loader2 size={14} className="animate-spin" /> : <UserX size={14} />}
               Désactiver
+            </button>
+          </div>
+        </Modal>
+      )}
+      {confirmDelete && (
+        <Modal title="Supprimer définitivement ce membre ?" onClose={() => setConfirmDelete(null)} size="sm">
+          <p className="text-sm text-slate-600 mb-2">
+            <span className="font-medium">{confirmDelete.firstName} {confirmDelete.lastName}</span> sera
+            supprimé(e) de façon permanente. Cette action est irréversible.
+          </p>
+          <p className="text-xs text-slate-400 bg-slate-50 rounded-lg px-3 py-2 mb-4">
+            L&apos;historique des commandes et sessions de caisse déjà associées à ce compte est conservé,
+            mais le compte lui-même ne pourra pas être restauré. Préférez « Désactiver » si vous n&apos;êtes pas sûr.
+          </p>
+          {deleteUser.isError && <ApiError error={deleteUser.error} />}
+          <div className="flex gap-3">
+            <button onClick={() => setConfirmDelete(null)} className="flex-1 h-9 rounded-lg border border-[#E7E5E4] text-sm text-slate-600 hover:bg-slate-50">Annuler</button>
+            <button
+              onClick={() => deleteUser.mutate(confirmDelete.id, { onSuccess: () => setConfirmDelete(null) })}
+              disabled={deleteUser.isPending}
+              className="flex-1 h-9 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700 flex items-center justify-center gap-2 disabled:opacity-60"
+            >
+              {deleteUser.isPending ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+              Supprimer définitivement
             </button>
           </div>
         </Modal>
