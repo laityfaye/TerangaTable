@@ -66,16 +66,7 @@ function JoinContent() {
     setServerError('');
     try {
       await acceptInvitation({ token, firstName, lastName, password });
-      const user = useAuthStore.getState().user;
-      const tenantSlug = user?.tenantSlug;
-      const isDev = process.env.NODE_ENV === 'development';
-
-      if (tenantSlug && !isDev) {
-        const domain = process.env.NEXT_PUBLIC_PLATFORM_DOMAIN ?? 'terangatable.com';
-        window.location.href = `https://${tenantSlug}.${domain}/dashboard`;
-      } else {
-        router.push('/dashboard');
-      }
+      router.push('/dashboard');
     } catch (err) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
