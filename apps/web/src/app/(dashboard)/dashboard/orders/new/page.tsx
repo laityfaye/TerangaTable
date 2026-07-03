@@ -359,7 +359,7 @@ export default function NewOrderPage() {
     queryKey: ['customers-search', customerSearch],
     queryFn: async () => {
       if (customerSearch.length < 2) return [];
-      const { data } = await apiClient.get('/crm/customers', {
+      const { data } = await apiClient.get('/customers', {
         params: { search: customerSearch, limit: 5 },
       });
       return (data as { data?: CustomerResult[] }).data ?? data ?? [];

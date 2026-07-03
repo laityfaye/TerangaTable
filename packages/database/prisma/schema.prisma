@@ -908,14 +908,17 @@ model DeliveryZone {
 }
 
 model DeliveryAgent {
-  id          String   @id @default(uuid()) @db.Uuid
-  tenantId    String   @map("tenant_id") @db.Uuid
-  userId      String   @map("user_id") @db.Uuid
-  name        String   @db.VarChar(255)
-  phone       String?  @db.VarChar(30)
-  isAvailable Boolean  @default(false) @map("is_available")
-  zoneId      String?  @map("zone_id") @db.Uuid
-  createdAt   DateTime @default(now()) @map("created_at")
+  id                String    @id @default(uuid()) @db.Uuid
+  tenantId          String    @map("tenant_id") @db.Uuid
+  userId            String    @map("user_id") @db.Uuid
+  name              String    @db.VarChar(255)
+  phone             String?   @db.VarChar(30)
+  isAvailable       Boolean   @default(false) @map("is_available")
+  zoneId            String?   @map("zone_id") @db.Uuid
+  currentLat        Float?    @map("current_lat")
+  currentLng        Float?    @map("current_lng")
+  locationUpdatedAt DateTime? @map("location_updated_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
 
   tenant     Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)

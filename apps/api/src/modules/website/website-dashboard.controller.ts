@@ -15,7 +15,9 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TenantGuard } from '../../common/guards/tenant.guard';
+import { ModuleGuard } from '../../common/guards/module.guard';
 import { CurrentTenant } from '../../common/decorators/current-tenant.decorator';
+import { RequireModule } from '../../common/decorators/require-permission.decorator';
 import { WebsiteService } from './website.service';
 import { StorageService } from '../storage/storage.service';
 import { UpdateWebsiteSettingsDto } from './dto/update-website-settings.dto';
@@ -24,7 +26,8 @@ interface TenantCtx { id: string; slug: string }
 
 @ApiTags('Website Dashboard')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, TenantGuard)
+@UseGuards(JwtAuthGuard, TenantGuard, ModuleGuard)
+@RequireModule('website')
 @Controller('website')
 export class WebsiteDashboardController {
   constructor(

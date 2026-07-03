@@ -6,6 +6,8 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisCacheService } from '../../common/services/redis-cache.service';
 import { PaymentPublisher } from '../../events/publishers/payment.publisher';
+import { CustomersService } from '../crm/customers.service';
+import { LoyaltyService } from '../crm/loyalty.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { ListPaymentsDto } from './dto/list-payments.dto';
 import { RefundPaymentDto } from './dto/refund-payment.dto';
@@ -16,6 +18,8 @@ export class PaymentsService {
     private readonly prisma: PrismaService,
     private readonly publisher: PaymentPublisher,
     private readonly cache: RedisCacheService,
+    private readonly customersService: CustomersService,
+    private readonly loyaltyService: LoyaltyService,
   ) {}
 
   // ── Create ────────────────────────────────────────────────────────────────
@@ -81,6 +85,15 @@ export class PaymentsService {
           ...(paidState && { workflowStateId: paidState.id }),
         },
       });
+
+      if (order.customerId) {
+        await this.customersService.updateStatsAfterPayment(tenantId, order.customerId, orderTotal);
+        await this.loyaltyService.earn(tenantId, {
+          customer_id: order.customerId,
+          order_id: dto.order_id,
+          amount: orderTotal,
+        });
+      }
     }
 
     await this.publisher.publish('payment.received', {

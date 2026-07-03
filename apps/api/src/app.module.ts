@@ -1,6 +1,7 @@
 import { Module, MiddlewareConsumer, NestModule, RequestMethod } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { PrismaModule } from './prisma/prisma.module';
 import { TenantResolutionMiddleware } from './common/middleware/tenant-resolution.middleware';
@@ -30,10 +31,15 @@ import { SettingsModule } from './modules/settings/settings.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { MailModule } from './common/mail/mail.module';
 import { MarketplaceModule } from './modules/marketplace/marketplace.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+
+    // Bus d'événements in-process (order.*, payment.*, reservation.*),
+    // consommé par le Rules Engine — voir events/events.module.ts
+    EventEmitterModule.forRoot(),
 
     // Rate limiting global: 100 req/min par IP
     // Les routes auth surclassent avec @Throttle()
@@ -66,6 +72,7 @@ import { MarketplaceModule } from './modules/marketplace/marketplace.module';
     StorageModule,
     MailModule,
     MarketplaceModule,
+    EventsModule,
   ],
   providers: [
     // Rate limiting guard global

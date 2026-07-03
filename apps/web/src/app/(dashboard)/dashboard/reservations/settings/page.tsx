@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Save, Clock, Calendar, AlertCircle, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useZones, useTables, useDeleteTable, useDeleteZone } from '@/hooks/reservations/use-tables';
+import { useSettings, useUpdateSettings } from '@/hooks/settings/use-settings';
 
 // ── Slider component ──────────────────────────────────────────────────────────
 
@@ -69,6 +70,9 @@ function formatDuration(min: number) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function ReservationsSettingsPage() {
+  const { data: settingsData, isLoading: loadingSettings } = useSettings();
+  const { mutate: saveSettings, isPending: saving } = useUpdateSettings();
+
   // Reservation rules state
   const [defaultDuration, setDefaultDuration] = useState(90);
   const [openHour, setOpenHour] = useState(11);
@@ -80,15 +84,43 @@ export default function ReservationsSettingsPage() {
   const [autoConfirm, setAutoConfirm] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  useEffect(() => {
+    const g = settingsData?.grouped['reservations'];
+    if (!g) return;
+    if (typeof g['default_duration_minutes'] === 'number') setDefaultDuration(g['default_duration_minutes']);
+    if (typeof g['open_hour'] === 'number') setOpenHour(g['open_hour']);
+    if (typeof g['close_hour'] === 'number') setCloseHour(g['close_hour']);
+    if (typeof g['slot_step_minutes'] === 'number') setSlotStep(g['slot_step_minutes']);
+    if (typeof g['min_advance_hours'] === 'number') setMinAdvanceHours(g['min_advance_hours']);
+    if (typeof g['free_cancel_hours'] === 'number') setFreeCancelHours(g['free_cancel_hours']);
+    if (typeof g['max_capacity_pct'] === 'number') setMaxCapacityPct(g['max_capacity_pct']);
+    if (typeof g['auto_confirm'] === 'boolean') setAutoConfirm(g['auto_confirm']);
+  }, [settingsData]);
+
   const { data: zones = [] } = useZones();
   const { data: tables = [] } = useTables();
   const { mutate: deleteTable } = useDeleteTable();
   const { mutate: deleteZone } = useDeleteZone();
 
   function handleSave() {
-    // Settings saved to /v1/settings (key/value store)
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    saveSettings(
+      [
+        { key: 'default_duration_minutes', value: defaultDuration, category: 'reservations' },
+        { key: 'open_hour', value: openHour, category: 'reservations' },
+        { key: 'close_hour', value: closeHour, category: 'reservations' },
+        { key: 'slot_step_minutes', value: slotStep, category: 'reservations' },
+        { key: 'min_advance_hours', value: minAdvanceHours, category: 'reservations' },
+        { key: 'free_cancel_hours', value: freeCancelHours, category: 'reservations' },
+        { key: 'max_capacity_pct', value: maxCapacityPct, category: 'reservations' },
+        { key: 'auto_confirm', value: autoConfirm, category: 'reservations' },
+      ],
+      {
+        onSuccess: () => {
+          setSaved(true);
+          setTimeout(() => setSaved(false), 2000);
+        },
+      },
+    );
   }
 
   return (
@@ -101,14 +133,15 @@ export default function ReservationsSettingsPage() {
         </div>
         <button
           onClick={handleSave}
-          className={`flex items-center gap-2 px-4 h-9 rounded-lg text-sm font-medium transition-colors ${
+          disabled={saving || loadingSettings}
+          className={`flex items-center gap-2 px-4 h-9 rounded-lg text-sm font-medium transition-colors disabled:opacity-60 ${
             saved
               ? 'bg-green-500 text-white'
               : 'bg-terracotta text-white hover:bg-terracotta-dark'
           }`}
         >
           <Save size={15} />
-          {saved ? 'Enregistré !' : 'Enregistrer'}
+          {saved ? 'Enregistré !' : saving ? 'Enregistrement…' : 'Enregistrer'}
         </button>
       </div>
 

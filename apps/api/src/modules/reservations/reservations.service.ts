@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  BadRequestException,
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -97,12 +98,21 @@ export class ReservationsService {
   // ── Create ────────────────────────────────────────────────────────────────
 
   async create(tenantId: string, dto: CreateReservationDto) {
+    const settings = await this.getReservationSettings(tenantId);
     const reservedAt = new Date(dto.reserved_at);
-    const durationMin = dto.duration_min ?? 90;
+    const durationMin = dto.duration_min ?? settings.defaultDurationMinutes;
+
+    const hoursUntil = (reservedAt.getTime() - Date.now()) / 3_600_000;
+    if (hoursUntil < settings.minAdvanceHours) {
+      throw new BadRequestException(
+        `Les réservations doivent être prises au moins ${settings.minAdvanceHours}h à l'avance.`,
+      );
+    }
 
     if (dto.table_id) {
       await this.assertNoConflict(tenantId, dto.table_id, reservedAt, durationMin, null);
     }
+    await this.assertCapacity(tenantId, reservedAt, durationMin, dto.party_size, settings.maxCapacityPct, null);
 
     const r = await this.prisma.reservation.create({
       data: {
@@ -115,7 +125,7 @@ export class ReservationsService {
         tableId: dto.table_id ?? null,
         reservedAt,
         durationMin,
-        status: 'pending',
+        status: settings.autoConfirm ? 'confirmed' : 'pending',
         source: dto.source,
         notes: dto.notes ?? null,
       },
@@ -149,6 +159,17 @@ export class ReservationsService {
     if (tableId && (dto.table_id !== undefined || dto.reserved_at || dto.duration_min)) {
       await this.assertNoConflict(tenantId, tableId, reservedAt, durationMin, id);
     }
+    if (dto.reserved_at || dto.duration_min || dto.party_size !== undefined) {
+      const settings = await this.getReservationSettings(tenantId);
+      await this.assertCapacity(
+        tenantId,
+        reservedAt,
+        durationMin,
+        dto.party_size ?? existing.partySize,
+        settings.maxCapacityPct,
+        id,
+      );
+    }
 
     const r = await this.prisma.reservation.update({
       where: { id },
@@ -178,7 +199,10 @@ export class ReservationsService {
   // ── Cancel ────────────────────────────────────────────────────────────────
 
   async cancel(tenantId: string, id: string) {
-    await this.ensureExists(tenantId, id);
+    const existing = await this.ensureExists(tenantId, id);
+    const settings = await this.getReservationSettings(tenantId);
+    const hoursUntil = (existing.reservedAt.getTime() - Date.now()) / 3_600_000;
+    const lateCancellation = hoursUntil < settings.freeCancelHours;
 
     const r = await this.prisma.reservation.update({
       where: { id },
@@ -189,8 +213,8 @@ export class ReservationsService {
       },
     });
 
-    await this.publisher.publish('reservation.cancelled', { tenantId, reservationId: id });
-    return this.mapReservation(r);
+    await this.publisher.publish('reservation.cancelled', { tenantId, reservationId: id, lateCancellation });
+    return { ...this.mapReservation(r), late_cancellation: lateCancellation };
   }
 
   // ── Conflict detection ────────────────────────────────────────────────────
@@ -223,6 +247,72 @@ export class ReservationsService {
         );
       }
     }
+  }
+
+  // ── Capacity check ────────────────────────────────────────────────────────
+
+  private async assertCapacity(
+    tenantId: string,
+    reservedAt: Date,
+    durationMin: number,
+    partySize: number,
+    maxCapacityPct: number,
+    excludeId: string | null,
+  ) {
+    if (maxCapacityPct >= 100) return;
+
+    const tables = await this.prisma.table.findMany({
+      where: { tenantId, isActive: true },
+      select: { capacity: true },
+    });
+    const totalCapacity = tables.reduce((sum, t) => sum + t.capacity, 0);
+    if (totalCapacity === 0) return;
+
+    const endAt = new Date(reservedAt.getTime() + durationMin * 60_000);
+    const overlapping = await this.prisma.reservation.findMany({
+      where: {
+        tenantId,
+        status: { notIn: ['cancelled', 'no_show'] },
+        ...(excludeId && { id: { not: excludeId } }),
+        reservedAt: { lt: endAt },
+      },
+      select: { reservedAt: true, durationMin: true, partySize: true },
+    });
+
+    let bookedCovers = 0;
+    for (const o of overlapping) {
+      const oEnd = new Date(o.reservedAt.getTime() + o.durationMin * 60_000);
+      if (oEnd > reservedAt) bookedCovers += o.partySize;
+    }
+
+    const limit = Math.floor(totalCapacity * (maxCapacityPct / 100));
+    if (bookedCovers + partySize > limit) {
+      throw new ConflictException(
+        `Capacité maximale atteinte pour ce créneau (${maxCapacityPct}% des ${totalCapacity} couverts).`,
+      );
+    }
+  }
+
+  // ── Settings ──────────────────────────────────────────────────────────────
+
+  private async getReservationSettings(tenantId: string) {
+    const rows = await this.prisma.setting.findMany({
+      where: { tenantId, category: 'reservations' },
+      select: { key: true, value: true },
+    });
+    const map: Record<string, unknown> = {};
+    for (const r of rows) map[r.key] = r.value;
+
+    const num = (key: string, fallback: number) =>
+      typeof map[key] === 'number' ? (map[key] as number) : fallback;
+
+    return {
+      defaultDurationMinutes: num('default_duration_minutes', 90),
+      minAdvanceHours: num('min_advance_hours', 0),
+      freeCancelHours: num('free_cancel_hours', 0),
+      maxCapacityPct: num('max_capacity_pct', 100),
+      autoConfirm: map['auto_confirm'] === true,
+    };
   }
 
   // ── Reminder scheduling ───────────────────────────────────────────────────

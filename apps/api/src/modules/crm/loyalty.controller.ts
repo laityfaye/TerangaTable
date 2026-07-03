@@ -2,7 +2,9 @@ import { Controller, Get, Post, Put, Body, Param, UseGuards } from '@nestjs/comm
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TenantGuard } from '../../common/guards/tenant.guard';
+import { ModuleGuard } from '../../common/guards/module.guard';
 import { CurrentTenant } from '../../common/decorators/current-tenant.decorator';
+import { RequireModule } from '../../common/decorators/require-permission.decorator';
 import { LoyaltyService } from './loyalty.service';
 import { EarnPointsDto, RedeemPointsDto, LoyaltySettingsDto } from './dto/loyalty.dto';
 
@@ -10,7 +12,8 @@ interface TenantCtx { id: string }
 
 @ApiTags('Loyalty')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, TenantGuard)
+@UseGuards(JwtAuthGuard, TenantGuard, ModuleGuard)
+@RequireModule('crm')
 @Controller('loyalty')
 export class LoyaltyController {
   constructor(private readonly loyaltyService: LoyaltyService) {}

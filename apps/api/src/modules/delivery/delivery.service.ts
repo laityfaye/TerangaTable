@@ -59,7 +59,16 @@ export class DeliveryService {
             },
           },
         },
-        agent: { select: { id: true, name: true, phone: true } },
+        agent: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            currentLat: true,
+            currentLng: true,
+            locationUpdatedAt: true,
+          },
+        },
       },
     });
     return deliveries.map(this.map);
@@ -89,7 +98,16 @@ export class DeliveryService {
         data: { agentId: dto.agent_id, status: 'assigned', assignedAt: new Date() },
         include: {
           order: { select: { id: true, orderNumber: true, deliveryAddress: true, customer: { select: { firstName: true, lastName: true, phone: true } } } },
-          agent: { select: { id: true, name: true, phone: true } },
+          agent: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            currentLat: true,
+            currentLng: true,
+            locationUpdatedAt: true,
+          },
+        },
         },
       });
       return this.map(updated);
@@ -106,7 +124,16 @@ export class DeliveryService {
       },
       include: {
         order: { select: { id: true, orderNumber: true, deliveryAddress: true, customer: { select: { firstName: true, lastName: true, phone: true } } } },
-        agent: { select: { id: true, name: true, phone: true } },
+        agent: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            currentLat: true,
+            currentLng: true,
+            locationUpdatedAt: true,
+          },
+        },
       },
     });
     return this.map(delivery);
@@ -168,7 +195,16 @@ export class DeliveryService {
       },
       include: {
         order: { select: { id: true, orderNumber: true, deliveryAddress: true, customer: { select: { firstName: true, lastName: true, phone: true } } } },
-        agent: { select: { id: true, name: true, phone: true } },
+        agent: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            currentLat: true,
+            currentLng: true,
+            locationUpdatedAt: true,
+          },
+        },
       },
     });
     return this.map(updated);
@@ -194,7 +230,16 @@ export class DeliveryService {
             customer: d.order.customer ?? null,
           }
         : null,
-      agent: d.agent ?? null,
+      agent: d.agent
+        ? {
+            id: d.agent.id,
+            name: d.agent.name,
+            phone: d.agent.phone,
+            current_lat: d.agent.currentLat ?? null,
+            current_lng: d.agent.currentLng ?? null,
+            location_updated_at: d.agent.locationUpdatedAt ?? null,
+          }
+        : null,
     };
   }
 }

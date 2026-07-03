@@ -14,7 +14,9 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TenantGuard } from '../../common/guards/tenant.guard';
+import { ModuleGuard } from '../../common/guards/module.guard';
 import { CurrentTenant } from '../../common/decorators/current-tenant.decorator';
+import { RequireModule } from '../../common/decorators/require-permission.decorator';
 import { CustomFieldsService } from './custom-fields.service';
 import { CreateCustomFieldDto } from './dto/create-custom-field.dto';
 import { UpdateCustomFieldDto } from './dto/update-custom-field.dto';
@@ -26,7 +28,8 @@ interface TenantCtx { id: string }
 
 @ApiTags('Custom Fields')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, TenantGuard)
+@UseGuards(JwtAuthGuard, TenantGuard, ModuleGuard)
+@RequireModule('custom_fields')
 @Controller('custom-fields')
 export class CustomFieldsController {
   constructor(private readonly customFieldsService: CustomFieldsService) {}

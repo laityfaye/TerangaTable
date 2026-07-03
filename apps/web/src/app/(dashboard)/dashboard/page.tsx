@@ -109,9 +109,12 @@ function SkeletonCard() {
 // ── Operational Dashboard (terrain : serveur, caissier, cuisinier, livreur) ──
 
 const ORDER_STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  pending:   { label: 'En attente',    color: '#F59E0B', icon: <Clock size={16} /> },
-  preparing: { label: 'En préparation', color: '#3B82F6', icon: <ChefHat size={16} /> },
-  ready:     { label: 'Prêt',          color: '#10B981', icon: <CheckCircle2 size={16} /> },
+  new:            { label: 'Nouvelle',       color: '#F59E0B', icon: <Clock size={16} /> },
+  confirmed:      { label: 'Confirmée',      color: '#8B5CF6', icon: <Clock size={16} /> },
+  in_kitchen:     { label: 'En cuisine',     color: '#3B82F6', icon: <ChefHat size={16} /> },
+  in_preparation: { label: 'En préparation', color: '#3B82F6', icon: <ChefHat size={16} /> },
+  ready:          { label: 'Prête',          color: '#10B981', icon: <CheckCircle2 size={16} /> },
+  in_delivery:    { label: 'En livraison',   color: '#F97316', icon: <CheckCircle2 size={16} /> },
 };
 
 function OrderStatusBadge({ order }: { order: Order }) {
@@ -133,9 +136,12 @@ function OperationalDashboard({ role }: { role: string }) {
   const user = useAuthStore((s) => s.user);
   const { soundUnlocked, unlockSound } = useOrdersWs();
 
-  const { data: pendingRes, isLoading: loadingPending } = useOrders({ status: 'pending', limit: 20 });
-  const { data: preparingRes, isLoading: loadingPreparing } = useOrders({ status: 'preparing', limit: 20 });
-  const { data: readyRes } = useOrders({ status: 'ready', limit: 20 });
+  // Les tenants onboardés avant l'alignement du workflow par défaut sur
+  // docs/MODULES.md utilisent encore les anciens slugs (pending/preparing) —
+  // on matche les deux jeux de slugs pour rester compatible avec l'historique.
+  const { data: pendingRes, isLoading: loadingPending } = useOrders({ status: 'new,confirmed,pending', limit: 20 });
+  const { data: preparingRes, isLoading: loadingPreparing } = useOrders({ status: 'in_kitchen,in_preparation,preparing', limit: 20 });
+  const { data: readyRes } = useOrders({ status: 'ready,in_delivery', limit: 20 });
 
   const pending   = pendingRes?.data ?? [];
   const preparing = preparingRes?.data ?? [];

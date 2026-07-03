@@ -26,7 +26,10 @@ export class OrdersService {
     const skip = (page - 1) * limit;
 
     const where: Record<string, unknown> = { tenantId };
-    if (status) where['workflowState'] = { slug: status };
+    if (status) {
+      const slugs = status.split(',').map((s) => s.trim()).filter(Boolean);
+      where['workflowState'] = slugs.length > 1 ? { slug: { in: slugs } } : { slug: slugs[0] };
+    }
     if (type) where['type'] = type;
     if (date_from || date_to) {
       where['createdAt'] = {

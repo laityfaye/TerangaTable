@@ -100,7 +100,7 @@ async function main() {
       priceYearly: 150000,
       maxUsers: 3,
       maxProducts: 50,
-      features: { pos: true, reservations: false, delivery: false, crm: false },
+      features: { pos: true, analytics: true, website: true, kds: true },
     },
     {
       id: '00000000-0000-0000-0001-000000000002',
@@ -109,7 +109,17 @@ async function main() {
       priceYearly: 350000,
       maxUsers: 10,
       maxProducts: 200,
-      features: { pos: true, reservations: true, delivery: true, crm: true },
+      features: {
+        pos: true,
+        analytics: true,
+        website: true,
+        kds: true,
+        reservations: true,
+        delivery: true,
+        crm: true,
+        custom_fields: true,
+        workflows: true,
+      },
     },
     {
       id: '00000000-0000-0000-0001-000000000003',
@@ -120,15 +130,15 @@ async function main() {
       maxProducts: -1,
       features: {
         pos: true,
+        analytics: true,
+        website: true,
+        kds: true,
         reservations: true,
         delivery: true,
         crm: true,
-        analytics: true,
-        website: true,
-        rules_engine: true,
         custom_fields: true,
         workflows: true,
-        kds: true,
+        rules_engine: true,
       },
     },
   ];
@@ -147,15 +157,15 @@ async function main() {
   // ── Modules ───────────────────────────────────────────────────────────────
   const modules = [
     { name: 'Point de vente', slug: 'pos', icon: 'ShoppingCart', requiredPlan: 'starter', description: 'Gestion des commandes et encaissements' },
+    { name: 'Analytics Avancés', slug: 'analytics', icon: 'BarChart2', requiredPlan: 'starter', description: 'Tableaux de bord revenus, produits, heures de pointe, performance staff' },
+    { name: 'Site Vitrine', slug: 'website', icon: 'Globe', requiredPlan: 'starter', description: 'Site public du restaurant avec menu en ligne, SEO, thèmes personnalisables' },
+    { name: 'Écran cuisine', slug: 'kds', icon: 'Monitor', requiredPlan: 'starter', description: 'Kitchen Display System' },
     { name: 'Réservations', slug: 'reservations', icon: 'Calendar', requiredPlan: 'growth', description: 'Gestion des réservations de tables' },
     { name: 'Livraison', slug: 'delivery', icon: 'Truck', requiredPlan: 'growth', description: 'Gestion des livraisons et livreurs' },
     { name: 'CRM', slug: 'crm', icon: 'Users', requiredPlan: 'growth', description: 'Gestion des clients et fidélité' },
-    { name: 'Analytics', slug: 'analytics', icon: 'BarChart', requiredPlan: 'enterprise', description: 'Tableaux de bord et rapports avancés' },
-    { name: 'Site vitrine', slug: 'website', icon: 'Globe', requiredPlan: 'enterprise', description: 'Site web public personnalisable' },
+    { name: 'Champs personnalisés', slug: 'custom_fields', icon: 'Sliders', requiredPlan: 'growth', description: 'Extension des formulaires et données' },
+    { name: 'Workflows', slug: 'workflows', icon: 'GitBranch', requiredPlan: 'growth', description: 'Cycles de vie personnalisés' },
     { name: 'Moteur de règles', slug: 'rules_engine', icon: 'Zap', requiredPlan: 'enterprise', description: 'Automatisation des processus métier' },
-    { name: 'Champs personnalisés', slug: 'custom_fields', icon: 'Settings', requiredPlan: 'enterprise', description: 'Extension des formulaires et données' },
-    { name: 'Workflows', slug: 'workflows', icon: 'GitBranch', requiredPlan: 'enterprise', description: 'Cycles de vie personnalisés' },
-    { name: 'Écran cuisine', slug: 'kds', icon: 'Monitor', requiredPlan: 'enterprise', description: 'Kitchen Display System' },
   ];
 
   for (const mod of modules) {

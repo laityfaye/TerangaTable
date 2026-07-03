@@ -208,18 +208,36 @@ function DeliveryRow({
   );
 }
 
-// ── Mock map ───────────────────────────────────────────────────────────────────
+// ── Map (positions GPS réelles des livreurs) ────────────────────────────────────
 
-function MockMap({ deliveries }: { deliveries: DeliveryRecord[] }) {
-  const seeded = deliveries.slice(0, 8).map((d, i) => ({
-    ...d,
-    x: 15 + ((i * 31 + 7) % 70),
-    y: 10 + ((i * 17 + 13) % 70),
+/** Projette un ensemble de lat/lng dans un cadre [0,100]% en conservant les proportions. */
+function projectPositions(points: { lat: number; lng: number }[]): { x: number; y: number }[] {
+  if (points.length === 0) return [];
+  const lats = points.map((p) => p.lat);
+  const lngs = points.map((p) => p.lng);
+  const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+  const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+  const latSpan = maxLat - minLat || 1;
+  const lngSpan = maxLng - minLng || 1;
+  const pad = 15;
+  return points.map((p) => ({
+    x: pad + ((p.lng - minLng) / lngSpan) * (100 - 2 * pad),
+    y: pad + (1 - (p.lat - minLat) / latSpan) * (100 - 2 * pad),
   }));
+}
+
+function DeliveryMap({ deliveries }: { deliveries: DeliveryRecord[] }) {
+  const located = deliveries.filter(
+    (d) => d.agent?.current_lat != null && d.agent?.current_lng != null,
+  );
+  const unlocated = deliveries.filter((d) => !located.includes(d));
+
+  const positions = projectPositions(
+    located.map((d) => ({ lat: d.agent!.current_lat!, lng: d.agent!.current_lng! })),
+  );
 
   return (
     <div className="relative w-full h-full bg-slate-100 rounded-xl overflow-hidden border border-gray-200">
-      {/* Faux fond carte */}
       <div className="absolute inset-0 opacity-20">
         {[20, 40, 60, 80].map((v) => (
           <div key={v} className="absolute w-full border-t border-gray-400" style={{ top: `${v}%` }} />
@@ -228,20 +246,25 @@ function MockMap({ deliveries }: { deliveries: DeliveryRecord[] }) {
           <div key={v} className="absolute h-full border-l border-gray-400" style={{ left: `${v}%` }} />
         ))}
       </div>
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <span className="text-gray-300 text-xs font-medium tracking-widest uppercase">
-          Carte mock MVP
-        </span>
-      </div>
-      {seeded.map((d) => (
+
+      {located.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-6 text-center">
+          <span className="text-gray-400 text-xs font-medium">
+            Aucune position GPS reçue pour le moment. Les livreurs apparaîtront ici dès qu&apos;ils partagent leur position.
+          </span>
+        </div>
+      )}
+
+      {located.map((d, i) => (
         <MapDot
           key={d.id}
           status={d.status}
-          label={d.order?.order_number ?? d.id.slice(0, 6)}
-          x={d.x}
-          y={d.y}
+          label={d.agent?.name ?? d.order?.order_number ?? d.id.slice(0, 6)}
+          x={positions[i]?.x ?? 50}
+          y={positions[i]?.y ?? 50}
         />
       ))}
+
       {/* Légende */}
       <div className="absolute bottom-3 right-3 bg-white/90 rounded-lg px-3 py-2 text-[10px] space-y-1 shadow">
         {[
@@ -256,6 +279,12 @@ function MockMap({ deliveries }: { deliveries: DeliveryRecord[] }) {
           </div>
         ))}
       </div>
+
+      {unlocated.length > 0 && (
+        <div className="absolute top-3 left-3 bg-white/90 rounded-lg px-3 py-2 text-[10px] shadow max-w-[180px]">
+          <p className="font-medium text-gray-600">{unlocated.length} livraison(s) sans position GPS</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -327,7 +356,7 @@ export default function DeliveryPage() {
       <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
         {/* Carte */}
         <div className="xl:col-span-2 h-72 xl:h-auto min-h-[280px]">
-          <MockMap deliveries={deliveries} />
+          <DeliveryMap deliveries={deliveries} />
         </div>
 
         {/* Table */}

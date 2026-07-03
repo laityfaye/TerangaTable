@@ -437,17 +437,23 @@ export class TenantsService {
   }
 
   private async createDefaultWorkflows(tenantId: string, tx: Prisma.TransactionClient) {
-    // Workflow commandes
+    // Workflow commandes — couvre à la fois le cycle "sur place" et "livraison"
+    // (cf. docs/MODULES.md), dans un seul workflow pour ne pas avoir à distinguer
+    // dynamiquement le workflow d'une commande selon son type à la création.
     const orderWorkflow = await tx.workflowDefinition.create({
       data: { tenantId, entityType: 'order', name: 'Cycle de vie commande', isDefault: true },
     });
 
     const orderStates = [
-      { name: 'En attente', slug: 'pending', color: '#F59E0B', isInitial: true, sortOrder: 0 },
-      { name: 'En préparation', slug: 'preparing', color: '#3B82F6', sortOrder: 1 },
-      { name: 'Prêt', slug: 'ready', color: '#10B981', triggersAlert: true, sortOrder: 2 },
-      { name: 'Livré', slug: 'delivered', color: '#6B7280', isTerminal: true, sortOrder: 3 },
-      { name: 'Annulé', slug: 'cancelled', color: '#EF4444', isTerminal: true, sortOrder: 4 },
+      { name: 'Nouvelle', slug: 'new', color: '#F59E0B', isInitial: true, sortOrder: 0 },
+      { name: 'Confirmée', slug: 'confirmed', color: '#8B5CF6', sortOrder: 1 },
+      { name: 'En cuisine', slug: 'in_kitchen', color: '#3B82F6', sortOrder: 2 },
+      { name: 'En préparation', slug: 'in_preparation', color: '#3B82F6', sortOrder: 3 },
+      { name: 'Prête', slug: 'ready', color: '#10B981', triggersAlert: true, sortOrder: 4 },
+      { name: 'En livraison', slug: 'in_delivery', color: '#F97316', triggersAlert: true, sortOrder: 5 },
+      { name: 'Servie', slug: 'served', color: '#6B7280', isTerminal: true, sortOrder: 6 },
+      { name: 'Livrée', slug: 'delivered', color: '#10B981', isTerminal: true, sortOrder: 7 },
+      { name: 'Annulée', slug: 'cancelled', color: '#EF4444', isTerminal: true, sortOrder: 8 },
     ];
 
     const createdOrderStates: Record<string, string> = {};
@@ -459,10 +465,17 @@ export class TenantsService {
     }
 
     const orderTransitions = [
-      { from: 'pending', to: 'preparing', name: 'Démarrer préparation' },
-      { from: 'preparing', to: 'ready', name: 'Marquer prêt' },
-      { from: 'ready', to: 'delivered', name: 'Livrer' },
-      { from: null, to: 'cancelled', name: 'Annuler' },
+      // Sur place
+      { from: 'new', to: 'in_kitchen', name: 'Envoyer en cuisine', roles: ['serveur', 'caissier'] },
+      { from: 'in_kitchen', to: 'ready', name: 'Marquer prête', roles: ['cuisinier'] },
+      { from: 'ready', to: 'served', name: 'Marquer servie', roles: ['serveur'] },
+      // Livraison
+      { from: 'new', to: 'confirmed', name: 'Confirmer', roles: ['caissier', 'manager'] },
+      { from: 'confirmed', to: 'in_preparation', name: 'Préparer', roles: ['cuisinier'] },
+      { from: 'in_preparation', to: 'in_delivery', name: 'Partir en livraison', roles: ['livreur'] },
+      { from: 'in_delivery', to: 'delivered', name: 'Marquer livrée', roles: ['livreur'] },
+      // Commun
+      { from: null, to: 'cancelled', name: 'Annuler', roles: ['manager', 'restaurant_owner'] },
     ];
 
     for (const t of orderTransitions) {
@@ -472,6 +485,7 @@ export class TenantsService {
           fromStateId: t.from ? (createdOrderStates[t.from] ?? null) : null,
           toStateId: createdOrderStates[t.to] ?? '',
           name: t.name,
+          allowedRoles: t.roles,
         },
       });
     }

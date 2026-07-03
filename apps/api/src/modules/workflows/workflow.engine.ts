@@ -22,6 +22,8 @@ export class WorkflowEngine {
     });
     if (!order) throw new NotFoundException('Commande introuvable');
 
+    const workflowId = await this.resolveWorkflowId(order.workflowStateId);
+
     const userRoles = await this.prisma.userRole.findMany({
       where: { userId, tenantId },
       include: { role: { select: { slug: true } } },
@@ -30,6 +32,7 @@ export class WorkflowEngine {
 
     const transitions = await this.prisma.workflowTransition.findMany({
       where: {
+        ...(workflowId && { workflowId }),
         OR: [
           { fromStateId: order.workflowStateId },
           { fromStateId: null },
@@ -65,9 +68,12 @@ export class WorkflowEngine {
     });
     if (!order) throw new NotFoundException('Commande introuvable');
 
+    const workflowId = await this.resolveWorkflowId(order.workflowStateId);
+
     const transition = await this.prisma.workflowTransition.findFirst({
       where: {
         id: transitionId,
+        ...(workflowId && { workflowId }),
         OR: [
           { fromStateId: order.workflowStateId },
           { fromStateId: null },
@@ -100,5 +106,20 @@ export class WorkflowEngine {
       newStateId: transition.toStateId,
       newStateName: transition.toState.name,
     };
+  }
+
+  /**
+   * Un tenant peut avoir plusieurs workflows (order, reservation, ...) qui
+   * partagent la convention "fromStateId: null = depuis n'importe quel état"
+   * (ex: transition "Annuler"). Sans ce scoping, une transition wildcard du
+   * workflow réservation apparaîtrait aussi comme disponible sur une commande.
+   */
+  private async resolveWorkflowId(workflowStateId: string | null): Promise<string | null> {
+    if (!workflowStateId) return null;
+    const state = await this.prisma.workflowState.findUnique({
+      where: { id: workflowStateId },
+      select: { workflowId: true },
+    });
+    return state?.workflowId ?? null;
   }
 }

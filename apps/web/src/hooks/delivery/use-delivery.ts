@@ -24,6 +24,9 @@ export interface DeliveryDriver {
   phone: string | null;
   is_available: boolean;
   zone: { id: string; name: string } | null;
+  current_lat: number | null;
+  current_lng: number | null;
+  location_updated_at: string | null;
   deliveries_today: number;
   created_at: string;
 }
@@ -42,7 +45,14 @@ export interface DeliveryRecord {
     delivery_address: Record<string, unknown> | null;
     customer: { firstName: string; lastName: string; phone: string | null } | null;
   } | null;
-  agent: { id: string; name: string; phone: string | null } | null;
+  agent: {
+    id: string;
+    name: string;
+    phone: string | null;
+    current_lat: number | null;
+    current_lng: number | null;
+    location_updated_at: string | null;
+  } | null;
 }
 
 export interface DeliveryKpis {
@@ -196,6 +206,18 @@ export function useToggleDriverAvailability() {
     mutationFn: (id: string) =>
       apiClient.patch<{ data: DeliveryDriver }>(`/delivery/drivers/${id}/availability`).then((r) => r.data.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: DELIVERY_QKEY.drivers() }),
+  });
+}
+
+export function useUpdateDriverLocation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, lat, lng }: { id: string; lat: number; lng: number }) =>
+      apiClient.patch<{ data: DeliveryDriver }>(`/delivery/drivers/${id}/location`, { lat, lng }).then((r) => r.data.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: DELIVERY_QKEY.drivers() });
+      qc.invalidateQueries({ queryKey: DELIVERY_QKEY.active() });
+    },
   });
 }
 

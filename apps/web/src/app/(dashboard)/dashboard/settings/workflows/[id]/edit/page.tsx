@@ -61,11 +61,12 @@ const PRESET_COLORS = [
 ];
 
 const ALLOWED_ROLES = [
-  { value: 'owner', label: 'Propriétaire' },
+  { value: 'restaurant_owner', label: 'Propriétaire' },
   { value: 'manager', label: 'Manager' },
-  { value: 'server', label: 'Serveur' },
-  { value: 'cashier', label: 'Caissier' },
-  { value: 'kitchen_staff', label: 'Cuisine' },
+  { value: 'serveur', label: 'Serveur' },
+  { value: 'caissier', label: 'Caissier' },
+  { value: 'cuisinier', label: 'Cuisinier' },
+  { value: 'livreur', label: 'Livreur' },
 ];
 
 function toSlug(name: string) {

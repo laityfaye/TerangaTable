@@ -15,12 +15,15 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TenantGuard } from '../../common/guards/tenant.guard';
 import { ModuleGuard } from '../../common/guards/module.guard';
 import { CurrentTenant } from '../../common/decorators/current-tenant.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequireModule } from '../../common/decorators/require-permission.decorator';
 import { DriversService } from './drivers.service';
 import { CreateDriverDto } from './dto/create-driver.dto';
 import { UpdateDriverDto } from './dto/update-driver.dto';
+import { UpdateDriverLocationDto } from './dto/update-driver-location.dto';
 
 interface TenantCtx { id: string }
+interface UserCtx { id: string; roles: string[] }
 
 @ApiTags('Delivery - Drivers')
 @ApiBearerAuth()
@@ -62,6 +65,17 @@ export class DriversController {
   @ApiOperation({ summary: 'Basculer la disponibilité d\'un livreur' })
   toggleAvailability(@CurrentTenant() tenant: TenantCtx, @Param('id') id: string) {
     return this.driversService.toggleAvailability(tenant.id, id);
+  }
+
+  @Patch(':id/location')
+  @ApiOperation({ summary: 'Mettre à jour la position GPS courante du livreur' })
+  updateLocation(
+    @CurrentTenant() tenant: TenantCtx,
+    @CurrentUser() user: UserCtx,
+    @Param('id') id: string,
+    @Body() dto: UpdateDriverLocationDto,
+  ) {
+    return this.driversService.updateLocation(tenant.id, id, dto, user);
   }
 
   @Delete(':id')

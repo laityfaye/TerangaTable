@@ -23,6 +23,7 @@ import {
   UserCog,
   LayoutGrid,
   Loader2,
+  ChefHat,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth.store';
@@ -86,6 +87,19 @@ const NAV: NavGroup[] = [
         roles: [...OWNER_MANAGER, UserRole.SERVEUR],
       },
     ],
+  },
+  {
+    title: 'CUISINE',
+    module: 'kds',
+    items: [
+      {
+        label: 'Écran cuisine',
+        href: '/dashboard/kds',
+        icon: <ChefHat size={18} />,
+        roles: [...OWNER_MANAGER, UserRole.CUISINIER],
+      },
+    ],
+    roles: [...OWNER_MANAGER, UserRole.CUISINIER],
   },
   {
     title: 'MENU',

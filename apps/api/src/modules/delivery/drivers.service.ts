@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateDriverDto } from './dto/create-driver.dto';
 import { UpdateDriverDto } from './dto/update-driver.dto';
+import { UpdateDriverLocationDto } from './dto/update-driver-location.dto';
 
 @Injectable()
 export class DriversService {
@@ -86,6 +87,26 @@ export class DriversService {
     return this.map(updated);
   }
 
+  async updateLocation(
+    tenantId: string,
+    id: string,
+    dto: UpdateDriverLocationDto,
+    callingUser: { id: string; roles: string[] },
+  ) {
+    const driver = await this.ensureExists(tenantId, id);
+    const isManager = callingUser.roles.some((r) => ['restaurant_owner', 'manager'].includes(r));
+    if (!isManager && driver.userId !== callingUser.id) {
+      throw new ForbiddenException('Vous ne pouvez mettre à jour que votre propre position');
+    }
+
+    const updated = await this.prisma.deliveryAgent.update({
+      where: { id },
+      data: { currentLat: dto.lat, currentLng: dto.lng, locationUpdatedAt: new Date() },
+      include: { zone: { select: { id: true, name: true } } },
+    });
+    return this.map(updated);
+  }
+
   private async ensureExists(tenantId: string, id: string) {
     const driver = await this.prisma.deliveryAgent.findFirst({ where: { id, tenantId } });
     if (!driver) throw new NotFoundException('Livreur introuvable');
@@ -101,6 +122,9 @@ export class DriversService {
       phone: d.phone ?? null,
       is_available: d.isAvailable,
       zone: d.zone ?? null,
+      current_lat: d.currentLat ?? null,
+      current_lng: d.currentLng ?? null,
+      location_updated_at: d.locationUpdatedAt ?? null,
       deliveries_today: d._count?.deliveries ?? 0,
       created_at: d.createdAt,
     };
