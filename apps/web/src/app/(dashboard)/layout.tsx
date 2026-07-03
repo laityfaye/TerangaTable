@@ -29,6 +29,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import { UserRole } from '@terangatable/shared';
 import { NotificationsBell } from '@/components/notifications/notifications-bell';
 import { prefetchRoute } from '@/lib/prefetch';
+import { useSettings } from '@/hooks/settings/use-settings';
 
 interface NavItem {
   label: string;
@@ -230,6 +231,8 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const { data: settingsData } = useSettings();
+  const restaurantName = String(settingsData?.grouped['general']?.['restaurant_name'] ?? '') || null;
 
   const userRoles = user?.roles ?? [];
   const activeModules = user?.activeModules;
@@ -277,7 +280,9 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
 
       {/* Restaurant info */}
       <div className="px-5 py-3 border-b border-white/10">
-        <p className="text-white text-sm font-medium truncate">{fullName}</p>
+        <p className="text-white text-sm font-medium truncate">
+          {restaurantName ?? 'Mon restaurant'}
+        </p>
         <p className="text-white/40 text-xs mt-0.5 capitalize">
           {ROLE_LABELS[primaryRole] ?? primaryRole}
         </p>
