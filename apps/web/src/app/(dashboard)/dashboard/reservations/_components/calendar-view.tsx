@@ -125,49 +125,53 @@ function WeekView({
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      {/* Day headers */}
-      <div className="grid grid-cols-7 border-b border-slate-100">
-        {days.map((d) => (
-          <div key={d.toISOString()} className="py-2 text-center">
-            <p className="text-xs text-slate-400">
-              {d.toLocaleDateString('fr-FR', { weekday: 'short' })}
-            </p>
-            <span className={`inline-flex w-7 h-7 items-center justify-center rounded-full text-sm font-medium mt-0.5 ${
-              isSameDay(d, today) ? 'bg-terracotta text-white' : 'text-slate-700'
-            }`}>
-              {d.getDate()}
-            </span>
+      <div className="flex-1 overflow-auto">
+        <div className="min-w-[700px]">
+          {/* Day headers */}
+          <div className="grid grid-cols-7 border-b border-slate-100 sticky top-0 bg-white z-10">
+            {days.map((d) => (
+              <div key={d.toISOString()} className="py-2 text-center">
+                <p className="text-xs text-slate-400">
+                  {d.toLocaleDateString('fr-FR', { weekday: 'short' })}
+                </p>
+                <span className={`inline-flex w-7 h-7 items-center justify-center rounded-full text-sm font-medium mt-0.5 ${
+                  isSameDay(d, today) ? 'bg-terracotta text-white' : 'text-slate-700'
+                }`}>
+                  {d.getDate()}
+                </span>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      {/* Day columns */}
-      <div className="grid grid-cols-7 flex-1 overflow-y-auto">
-        {days.map((d) => {
-          const dayRes = reservations.filter((r) => isSameDay(new Date(r.reserved_at), d));
-          return (
-            <div
-              key={d.toISOString()}
-              className="border-r border-slate-100 p-2 space-y-1 min-h-[200px] cursor-pointer hover:bg-slate-50/40"
-              onClick={() => {
-                const dt = new Date(d);
-                dt.setHours(12, 0, 0, 0);
-                onClickSlot(dt.toISOString());
-              }}
-            >
-              {dayRes.map((r) => (
-                <button
-                  key={r.id}
-                  onClick={(e) => { e.stopPropagation(); onClickReservation(r.id); }}
-                  className="w-full text-left text-xs px-2 py-1.5 rounded-lg font-medium truncate"
-                  style={{ backgroundColor: STATUS_COLORS[r.status] + '20', color: STATUS_COLORS[r.status], borderLeft: `3px solid ${STATUS_COLORS[r.status]}` }}
+          {/* Day columns */}
+          <div className="grid grid-cols-7">
+            {days.map((d) => {
+              const dayRes = reservations.filter((r) => isSameDay(new Date(r.reserved_at), d));
+              return (
+                <div
+                  key={d.toISOString()}
+                  className="border-r border-slate-100 p-2 space-y-1 min-h-[200px] cursor-pointer hover:bg-slate-50/40"
+                  onClick={() => {
+                    const dt = new Date(d);
+                    dt.setHours(12, 0, 0, 0);
+                    onClickSlot(dt.toISOString());
+                  }}
                 >
-                  {formatTime(r.reserved_at)}<br />
-                  <span className="font-normal opacity-80">{r.customer_name} · {r.party_size}p</span>
-                </button>
-              ))}
-            </div>
-          );
-        })}
+                  {dayRes.map((r) => (
+                    <button
+                      key={r.id}
+                      onClick={(e) => { e.stopPropagation(); onClickReservation(r.id); }}
+                      className="w-full text-left text-xs px-2 py-1.5 rounded-lg font-medium truncate"
+                      style={{ backgroundColor: STATUS_COLORS[r.status] + '20', color: STATUS_COLORS[r.status], borderLeft: `3px solid ${STATUS_COLORS[r.status]}` }}
+                    >
+                      {formatTime(r.reserved_at)}<br />
+                      <span className="font-normal opacity-80">{r.customer_name} · {r.party_size}p</span>
+                    </button>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -319,25 +323,27 @@ export function CalendarView({ reservations, onClickReservation, onClickSlot }: 
       {/* Month view */}
       {view === 'month' && (
         <div className="flex flex-col flex-1 overflow-auto">
-          <div className="grid grid-cols-7 border-b border-slate-100">
-            {DAY_NAMES.map((d) => (
-              <div key={d} className="py-2 text-center text-xs font-semibold text-slate-400 uppercase tracking-wide">
-                {d}
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-7 flex-1">
-            {monthGrid.map((d) => (
-              <MonthDayCell
-                key={d.toISOString()}
-                date={d}
-                reservations={reservationsForDay(d)}
-                isToday={isSameDay(d, today)}
-                isCurrentMonth={d.getMonth() === currentDate.getMonth()}
-                onClickReservation={onClickReservation}
-                onClickSlot={onClickSlot}
-              />
-            ))}
+          <div className="min-w-[700px]">
+            <div className="grid grid-cols-7 border-b border-slate-100 sticky top-0 bg-white z-10">
+              {DAY_NAMES.map((d) => (
+                <div key={d} className="py-2 text-center text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                  {d}
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-7">
+              {monthGrid.map((d) => (
+                <MonthDayCell
+                  key={d.toISOString()}
+                  date={d}
+                  reservations={reservationsForDay(d)}
+                  isToday={isSameDay(d, today)}
+                  isCurrentMonth={d.getMonth() === currentDate.getMonth()}
+                  onClickReservation={onClickReservation}
+                  onClickSlot={onClickSlot}
+                />
+              ))}
+            </div>
           </div>
         </div>
       )}

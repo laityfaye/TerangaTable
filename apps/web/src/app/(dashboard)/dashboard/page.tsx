@@ -202,20 +202,20 @@ function OperationalDashboard({ role }: { role: string }) {
       </div>
 
       {/* Status counters */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         {[
           { label: 'En attente', count: pending.length, color: '#F59E0B', icon: <Clock size={20} /> },
           { label: 'En préparation', count: preparing.length, color: '#3B82F6', icon: <ChefHat size={20} /> },
           { label: 'Prêtes', count: ready.length, color: '#10B981', icon: <CheckCircle2 size={20} /> },
         ].map(({ label, count, color, icon }) => (
-          <div key={label} className="bg-white rounded-xl border border-[#E7E5E4] p-5 shadow-sm">
+          <div key={label} className="bg-white rounded-xl border border-[#E7E5E4] p-3 sm:p-5 shadow-sm min-w-0">
             <div className="flex items-start justify-between">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: color + '18', color }}>
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: color + '18', color }}>
                 {icon}
               </div>
             </div>
-            <p className="mt-4 text-sm text-slate-500">{label}</p>
-            <p className="mt-1 text-2xl font-heading font-bold text-[#1C1917]">{count}</p>
+            <p className="mt-2 sm:mt-4 text-xs sm:text-sm text-slate-500 truncate">{label}</p>
+            <p className="mt-0.5 sm:mt-1 text-xl sm:text-2xl font-heading font-bold text-[#1C1917]">{count}</p>
           </div>
         ))}
       </div>
@@ -327,14 +327,20 @@ function AnalyticsDashboard() {
           </p>
         </div>
         <div className="flex gap-2">
-          <button className="flex items-center gap-2 px-4 h-10 rounded-md border border-[#E7E5E4] text-sm font-body text-[#1C1917] hover:bg-[#F5F4F2] transition-colors">
+          <Link
+            href="/dashboard/reservations"
+            className="flex items-center gap-2 px-4 h-10 rounded-md border border-[#E7E5E4] text-sm font-body text-[#1C1917] hover:bg-[#F5F4F2] transition-colors"
+          >
             <CalendarPlus size={15} />
             Réservation
-          </button>
-          <button className="flex items-center gap-2 px-4 h-10 rounded-md bg-terracotta text-white text-sm font-body hover:bg-terracotta-dark transition-colors">
+          </Link>
+          <Link
+            href="/dashboard/orders/new"
+            className="flex items-center gap-2 px-4 h-10 rounded-md bg-terracotta text-white text-sm font-body hover:bg-terracotta-dark transition-colors"
+          >
             <Plus size={15} />
             Commande
-          </button>
+          </Link>
         </div>
       </div>
 

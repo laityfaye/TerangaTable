@@ -284,7 +284,7 @@ export default function DeliveryZonesPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <Link
             href="/dashboard/delivery"
@@ -327,28 +327,30 @@ export default function DeliveryZonesPage() {
             </button>
           </div>
         ) : (
-          <table className="w-full text-left">
-            <thead>
-              <tr className="text-xs text-gray-400 uppercase tracking-wider bg-gray-50">
-                <th className="px-4 py-2.5">Nom</th>
-                <th className="px-4 py-2.5">Type</th>
-                <th className="px-4 py-2.5">Frais</th>
-                <th className="px-4 py-2.5">Minimum</th>
-                <th className="px-4 py-2.5">Livreurs</th>
-                <th className="px-4 py-2.5">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {zones.map((z) => (
-                <ZoneRow
-                  key={z.id}
-                  zone={z}
-                  onEdit={openEdit}
-                  onDelete={handleDelete}
-                />
-              ))}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="text-xs text-gray-400 uppercase tracking-wider bg-gray-50">
+                  <th className="px-4 py-2.5">Nom</th>
+                  <th className="px-4 py-2.5">Type</th>
+                  <th className="px-4 py-2.5">Frais</th>
+                  <th className="px-4 py-2.5">Minimum</th>
+                  <th className="px-4 py-2.5">Livreurs</th>
+                  <th className="px-4 py-2.5">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {zones.map((z) => (
+                  <ZoneRow
+                    key={z.id}
+                    zone={z}
+                    onEdit={openEdit}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

@@ -13,6 +13,7 @@ import {
   Receipt,
   RefreshCw,
   History,
+  ArrowLeft,
 } from 'lucide-react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api';
@@ -406,6 +407,9 @@ export default function POSPage() {
   const [activeTab, setActiveTab]             = useState<'cart' | 'checkout'>('cart');
   const [orderTypeFilter, setOrderTypeFilter] = useState<string | null>(null);
 
+  // ── Mobile/tablette : un seul panneau visible à la fois sous `lg` ──
+  const [mobilePanel, setMobilePanel] = useState<'catalog' | 'order'>('catalog');
+
   // ── Catalog state ──
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery]       = useState('');
@@ -720,11 +724,11 @@ export default function POSPage() {
       <div className="fixed inset-0 z-30 bg-slate-100 flex overflow-hidden">
 
         {/* ────── LEFT PANEL — Catalog ────── */}
-        <div className="flex-1 flex flex-col bg-white min-w-0">
+        <div className={`relative flex-1 flex-col bg-white min-w-0 ${mobilePanel === 'catalog' ? 'flex' : 'hidden'} lg:flex`}>
 
           {/* POS Header */}
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-200 flex-shrink-0">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 border-b border-slate-200 flex-shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
               <span className="text-lg">🍽️</span>
               <span className="font-heading font-bold text-slate-900 text-sm truncate">
                 TÉRANGATABLE
@@ -744,7 +748,7 @@ export default function POSPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Rechercher…"
-              className="w-32 sm:w-44 rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta/30"
+              className="flex-1 min-w-[120px] sm:flex-none sm:w-44 rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:border-terracotta focus:outline-none focus:ring-1 focus:ring-terracotta/30"
             />
 
             <Link
@@ -761,7 +765,7 @@ export default function POSPage() {
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-200 bg-red-50 text-xs font-semibold text-red-600 hover:bg-red-100 hover:border-red-300 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
             >
               <LogOut size={14} />
-              <span>Fermer caisse</span>
+              <span className="hidden sm:inline">Fermer caisse</span>
             </button>
           </div>
 
@@ -793,7 +797,7 @@ export default function POSPage() {
           </div>
 
           {/* Product grid */}
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className={`flex-1 overflow-y-auto p-4 ${cart.length > 0 ? 'pb-20 lg:pb-4' : ''}`}>
             {filteredProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-48 text-slate-400">
                 <span className="text-4xl mb-3">🍽️</span>
@@ -811,13 +815,34 @@ export default function POSPage() {
               </div>
             )}
           </div>
+
+          {/* Bouton flottant panier — mobile/tablette uniquement */}
+          {cart.length > 0 && (
+            <button
+              onClick={() => setMobilePanel('order')}
+              className="lg:hidden absolute bottom-4 left-4 right-4 h-14 rounded-xl bg-terracotta text-white font-heading font-bold flex items-center justify-between px-5 shadow-lg z-10"
+            >
+              <span className="flex items-center gap-2">
+                <ShoppingCart size={18} />
+                {cart.reduce((s, i) => s + i.quantity, 0)} article{cart.reduce((s, i) => s + i.quantity, 0) > 1 ? 's' : ''}
+              </span>
+              <span className="font-mono">{fmtPrice(total)}</span>
+            </button>
+          )}
         </div>
 
         {/* ────── RIGHT PANEL — Commande / Encaisser ────── */}
-        <div className="w-[380px] flex-shrink-0 bg-white border-l border-slate-200 flex flex-col">
+        <div className={`w-full lg:w-[380px] flex-shrink-0 bg-white border-l border-slate-200 flex-col ${mobilePanel === 'order' ? 'flex' : 'hidden'} lg:flex`}>
 
           {/* Tab bar */}
-          <div className="flex border-b border-slate-200 flex-shrink-0">
+          <div className="flex items-center border-b border-slate-200 flex-shrink-0">
+            <button
+              onClick={() => setMobilePanel('catalog')}
+              className="lg:hidden flex items-center justify-center w-11 h-11 flex-shrink-0 text-slate-500 hover:text-slate-700"
+              aria-label="Retour au catalogue"
+            >
+              <ArrowLeft size={18} />
+            </button>
             <button
               onClick={() => setActiveTab('cart')}
               className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-1.5 border-b-2 transition-colors ${

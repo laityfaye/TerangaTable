@@ -642,7 +642,7 @@ function AllProductsTab() {
 
   return (
     <>
-    <div className="bg-white rounded-lg border border-[#E7E5E4] shadow-sm overflow-hidden">
+    <div className="bg-white rounded-lg border border-[#E7E5E4] shadow-sm overflow-x-auto">
       <table className="w-full text-sm font-body">
         <thead>
           <tr className="border-b border-[#E7E5E4] text-xs text-slate-400 uppercase tracking-wide">

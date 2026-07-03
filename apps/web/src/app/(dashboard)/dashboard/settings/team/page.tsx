@@ -539,9 +539,9 @@ function RolesTab() {
   const customRoles = roles?.filter((r) => !r.isSystem) ?? [];
 
   return (
-    <div className="flex gap-5" style={{ minHeight: '28rem' }}>
+    <div className="flex flex-col md:flex-row gap-5" style={{ minHeight: '28rem' }}>
       {/* Left list */}
-      <div className="w-56 flex-shrink-0 space-y-3">
+      <div className="w-full md:w-56 flex-shrink-0 space-y-3">
         <button
           onClick={() => setShowCreate(true)}
           className="w-full flex items-center justify-center gap-2 h-9 rounded-lg border-2 border-dashed border-[#E7E5E4] text-slate-500 text-sm hover:border-terracotta hover:text-terracotta transition-colors"

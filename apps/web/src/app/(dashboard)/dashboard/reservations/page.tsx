@@ -53,7 +53,7 @@ export default function ReservationsPage() {
   return (
     <div className="flex flex-col h-full gap-4">
       {/* Header */}
-      <div className="flex items-center justify-between flex-shrink-0">
+      <div className="flex items-center justify-between flex-wrap gap-3 flex-shrink-0">
         <div>
           <h1 className="font-heading text-2xl font-bold text-[#1C1917]">Réservations</h1>
           <p className="text-sm text-slate-500 font-body mt-0.5">
@@ -61,7 +61,7 @@ export default function ReservationsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* WS indicator */}
           <span
             className={`flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full font-medium ${
@@ -69,7 +69,7 @@ export default function ReservationsPage() {
             }`}
           >
             {connected ? <Wifi size={13} /> : <WifiOff size={13} />}
-            {connected ? 'En direct' : 'Hors ligne'}
+            <span className="hidden sm:inline">{connected ? 'En direct' : 'Hors ligne'}</span>
           </span>
 
           {/* Floor plan */}
@@ -78,7 +78,7 @@ export default function ReservationsPage() {
             className="px-3 h-9 flex items-center gap-1.5 rounded-lg border border-slate-200 text-slate-600 text-sm hover:bg-slate-50 transition-colors"
           >
             <LayoutGrid size={15} />
-            Plan de salle
+            <span className="hidden sm:inline">Plan de salle</span>
           </Link>
 
           {/* View toggle */}
@@ -109,7 +109,7 @@ export default function ReservationsPage() {
             className="flex items-center gap-2 px-4 h-9 rounded-lg bg-terracotta text-white text-sm font-medium hover:bg-terracotta-dark transition-colors"
           >
             <Plus size={16} />
-            Nouvelle réservation
+            <span className="hidden sm:inline">Nouvelle réservation</span>
           </button>
         </div>
       </div>

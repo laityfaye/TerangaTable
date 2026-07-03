@@ -8,6 +8,7 @@ import {
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { Prisma } from '@prisma/client';
+import { SettingType } from '@terangatable/database';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisCacheService } from '../../common/services/redis-cache.service';
 import { MailService } from '../../common/mail/mail.service';
@@ -101,6 +102,16 @@ export class TenantsService {
         name: dto.name,
         planId: dto.planId,
         status: 'active',
+      },
+    });
+
+    await this.prisma.setting.create({
+      data: {
+        tenantId: tenant.id,
+        key: 'restaurant_name',
+        value: tenant.name,
+        type: SettingType.string,
+        category: 'general',
       },
     });
 
@@ -404,6 +415,17 @@ export class TenantsService {
       // 6. Créer les website_settings par défaut
       await tx.websiteSettings.create({
         data: { tenantId: tenant.id },
+      });
+
+      // 6bis. Seed le nom du restaurant dans les settings (lu par le dashboard)
+      await tx.setting.create({
+        data: {
+          tenantId: tenant.id,
+          key: 'restaurant_name',
+          value: tenant.name,
+          type: SettingType.string,
+          category: 'general',
+        },
       });
 
       // 7. Créer les workflows par défaut

@@ -676,7 +676,7 @@ export default function OrdersPage() {
       )}
 
       {/* Page header */}
-      <div className="flex items-center justify-between mb-5 flex-shrink-0">
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-5 flex-shrink-0">
         <div>
           <h1 className="font-heading text-2xl font-bold text-[#1C1917]">Commandes</h1>
           <p className="text-sm text-slate-500 font-body mt-0.5">
@@ -685,7 +685,7 @@ export default function OrdersPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* WS status */}
           <span
             title={connected ? 'Connecté en temps réel' : 'Déconnecté'}
@@ -696,7 +696,7 @@ export default function OrdersPage() {
             }`}
           >
             {connected ? <Wifi size={13} /> : <WifiOff size={13} />}
-            {connected ? 'En direct' : 'Hors ligne'}
+            <span className="hidden sm:inline">{connected ? 'En direct' : 'Hors ligne'}</span>
           </span>
 
           {/* Sound toggle */}
@@ -715,7 +715,7 @@ export default function OrdersPage() {
               className="flex items-center gap-2 px-4 h-10 rounded-lg bg-terracotta text-white text-sm font-medium hover:bg-terracotta-dark transition-colors"
             >
               <Plus size={16} />
-              Nouvelle commande
+              <span className="hidden sm:inline">Nouvelle commande</span>
             </Link>
           )}
         </div>

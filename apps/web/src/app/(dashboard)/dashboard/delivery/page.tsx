@@ -309,7 +309,7 @@ export default function DeliveryPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-orange-100">
             <Truck size={22} className="text-orange-600" />
@@ -319,27 +319,27 @@ export default function DeliveryPage() {
             <p className="text-sm text-gray-500">Tableau de bord temps réel</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Link
             href="/dashboard/delivery/zones"
             className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
           >
             <Settings size={15} />
-            Zones
+            <span className="hidden sm:inline">Zones</span>
           </Link>
           <Link
             href="/dashboard/delivery/drivers"
             className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
           >
             <Users size={15} />
-            Livreurs
+            <span className="hidden sm:inline">Livreurs</span>
           </Link>
           <button
             onClick={() => refetch()}
             className="flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
           >
             <RefreshCw size={14} />
-            Actualiser
+            <span className="hidden sm:inline">Actualiser</span>
           </button>
         </div>
       </div>

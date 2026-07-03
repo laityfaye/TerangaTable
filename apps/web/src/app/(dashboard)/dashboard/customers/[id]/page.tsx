@@ -326,7 +326,7 @@ export default function CustomerDetailPage() {
       <div className="space-y-4">
         <div className="h-8 bg-slate-100 rounded-xl w-48 animate-pulse" />
         <div className="bg-white rounded-2xl border border-slate-100 h-40 animate-pulse" />
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="h-20 bg-slate-100 rounded-xl animate-pulse" />
           ))}

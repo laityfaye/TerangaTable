@@ -167,7 +167,7 @@ function AddTableModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white rounded-xl shadow-2xl w-80 p-6 space-y-4">
+      <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-xs mx-4 p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-slate-900">Ajouter une table</h3>
           <button onClick={onClose}><X size={16} className="text-slate-400" /></button>
@@ -315,12 +315,12 @@ export default function FloorPlanPage() {
   return (
     <div className="flex flex-col h-full gap-4">
       {/* Header */}
-      <div className="flex items-center justify-between flex-shrink-0">
+      <div className="flex items-center justify-between flex-wrap gap-3 flex-shrink-0">
         <div>
           <h1 className="font-heading text-2xl font-bold text-[#1C1917]">Plan de salle</h1>
           <p className="text-sm text-slate-500 mt-0.5">Vue en temps réel · {tables.length} tables</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {editMode ? (
             <>
               <button
@@ -353,9 +353,9 @@ export default function FloorPlanPage() {
         </div>
       </div>
 
-      <div className="flex gap-4 flex-1 min-h-0">
+      <div className="flex flex-col md:flex-row gap-4 flex-1 min-h-0">
         {/* Zone selector sidebar */}
-        <div className="w-44 flex-shrink-0 flex flex-col gap-2">
+        <div className="md:w-44 flex-shrink-0 flex flex-col gap-2 max-h-40 md:max-h-none overflow-y-auto">
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide px-1">Zones</p>
           <button
             onClick={() => setSelectedZoneId(null)}
@@ -420,7 +420,7 @@ export default function FloorPlanPage() {
         </div>
 
         {/* Canvas */}
-        <div className="flex-1 bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden relative">
+        <div className="flex-1 bg-white rounded-xl border border-slate-100 shadow-sm overflow-auto relative">
           {/* Grid background */}
           <div
             className="absolute inset-0"

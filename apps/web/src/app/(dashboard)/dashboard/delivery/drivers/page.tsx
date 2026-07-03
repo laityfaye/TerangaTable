@@ -294,7 +294,7 @@ export default function DeliveryDriversPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <Link
             href="/dashboard/delivery"
@@ -336,28 +336,30 @@ export default function DeliveryDriversPage() {
             </button>
           </div>
         ) : (
-          <table className="w-full text-left">
-            <thead>
-              <tr className="text-xs text-gray-400 uppercase tracking-wider bg-gray-50">
-                <th className="px-4 py-2.5">Livreur</th>
-                <th className="px-4 py-2.5">Téléphone</th>
-                <th className="px-4 py-2.5">Zone assignée</th>
-                <th className="px-4 py-2.5">Disponible</th>
-                <th className="px-4 py-2.5">Livraisons</th>
-                <th className="px-4 py-2.5">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {drivers.map((d) => (
-                <DriverRow
-                  key={d.id}
-                  driver={d}
-                  onEdit={openEdit}
-                  onDelete={handleDelete}
-                />
-              ))}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="text-xs text-gray-400 uppercase tracking-wider bg-gray-50">
+                  <th className="px-4 py-2.5">Livreur</th>
+                  <th className="px-4 py-2.5">Téléphone</th>
+                  <th className="px-4 py-2.5">Zone assignée</th>
+                  <th className="px-4 py-2.5">Disponible</th>
+                  <th className="px-4 py-2.5">Livraisons</th>
+                  <th className="px-4 py-2.5">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {drivers.map((d) => (
+                  <DriverRow
+                    key={d.id}
+                    driver={d}
+                    onEdit={openEdit}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
