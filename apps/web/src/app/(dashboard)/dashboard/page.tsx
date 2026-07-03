@@ -24,6 +24,7 @@ import {
   useAnalyticsPeakHours,
 } from '@/hooks/analytics/use-analytics';
 import { useOrders, type Order } from '@/hooks/orders/use-orders';
+import { useOrdersWs } from '@/hooks/orders/use-orders-ws';
 
 const OPERATIONAL_ROLES = ['serveur', 'caissier', 'cuisinier', 'livreur'];
 
@@ -130,6 +131,7 @@ function OrderStatusBadge({ order }: { order: Order }) {
 
 function OperationalDashboard({ role }: { role: string }) {
   const user = useAuthStore((s) => s.user);
+  useOrdersWs();
 
   const { data: pendingRes, isLoading: loadingPending } = useOrders({ status: 'pending', limit: 20 });
   const { data: preparingRes, isLoading: loadingPreparing } = useOrders({ status: 'preparing', limit: 20 });

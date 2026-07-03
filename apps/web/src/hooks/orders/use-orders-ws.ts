@@ -28,6 +28,26 @@ function playPing() {
   }
 }
 
+function speak(text: string) {
+  try {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'fr-FR';
+    window.speechSynthesis.speak(utterance);
+  } catch {
+    // Speech synthesis not available
+  }
+}
+
+function describeItems(items: Order['items']): string {
+  return items.map((i) => `${i.quantity} ${i.productName}`).join(', ');
+}
+
+function describeOrderLocation(order: Pick<Order, 'table' | 'order_number'> | undefined): string {
+  if (!order) return '';
+  return order.table ? `table ${order.table.number}` : `numéro ${order.order_number}`;
+}
+
 export function useOrdersWs(soundEnabled = true) {
   const qc = useQueryClient();
   const socketRef = useRef<Socket | null>(null);
@@ -36,6 +56,9 @@ export function useOrdersWs(soundEnabled = true) {
   soundRef.current = soundEnabled;
   const accessToken = useAuthStore((s) => s.accessToken);
   const tenantId = useAuthStore((s) => s.tenantId);
+  const userRole = useAuthStore((s) => s.user?.roles?.[0] ?? '');
+  const roleRef = useRef(userRole);
+  roleRef.current = userRole;
 
   useEffect(() => {
     if (!tenantId || !accessToken) return;
@@ -65,16 +88,25 @@ export function useOrdersWs(soundEnabled = true) {
           meta: { ...cached.meta, total: cached.meta.total + 1 },
         });
       }
-      if (soundRef.current) playPing();
+      if (soundRef.current) {
+        if (roleRef.current === 'cuisinier') {
+          const location = describeOrderLocation(order);
+          speak(`Nouvelle commande${location ? ', ' + location : ''}. ${describeItems(order.items)}.`);
+        } else {
+          playPing();
+        }
+      }
     });
 
     socket.on(
       'order:state_changed',
       (data: { orderId: string; workflowState: WorkflowStateSnap | null; updatedAt: string }) => {
-        // Update workflow_state in all list caches
+        // Update workflow_state in all list caches, capturing the order snapshot for the voice alert
+        let matchedOrder: Order | undefined;
         const queries = qc.getQueriesData<OrdersResponse>({ queryKey: ['orders'] });
         for (const [key, cached] of queries) {
           if (!cached || !Array.isArray(cached.data)) continue;
+          if (!matchedOrder) matchedOrder = cached.data.find((o) => o.id === data.orderId);
           qc.setQueryData(key, {
             ...cached,
             data: cached.data.map((o) =>
@@ -87,6 +119,11 @@ export function useOrdersWs(soundEnabled = true) {
         // Invalidate detail and transitions
         qc.invalidateQueries({ queryKey: ORDERS_QKEY.detail(data.orderId) });
         qc.invalidateQueries({ queryKey: ORDERS_QKEY.transitions(data.orderId) });
+
+        if (soundRef.current && roleRef.current === 'serveur' && data.workflowState?.slug === 'ready') {
+          const location = describeOrderLocation(matchedOrder);
+          speak(`Commande prête${location ? ', ' + location : ''}. Merci de venir la chercher.`);
+        }
       },
     );
 
