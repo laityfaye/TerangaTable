@@ -71,7 +71,7 @@ function JoinContent() {
       const isDev = process.env.NODE_ENV === 'development';
 
       if (tenantSlug && !isDev) {
-        const domain = process.env.NEXT_PUBLIC_PLATFORM_DOMAIN ?? 'terangatable.cloud';
+        const domain = process.env.NEXT_PUBLIC_PLATFORM_DOMAIN ?? 'terangatable.com';
         window.location.href = `https://${tenantSlug}.${domain}/dashboard`;
       } else {
         router.push('/dashboard');
