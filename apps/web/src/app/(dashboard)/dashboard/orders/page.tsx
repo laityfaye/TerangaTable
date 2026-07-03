@@ -39,6 +39,7 @@ import {
 } from '@/hooks/orders/use-orders';
 import { useOrdersWs } from '@/hooks/orders/use-orders-ws';
 import { DynamicForm } from '@/components/custom-fields/dynamic-form';
+import { useAuthStore } from '@/stores/auth.store';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -581,6 +582,9 @@ function OrderDrawer({
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function OrdersPage() {
+  const userRole = useAuthStore((s) => s.user?.roles?.[0] ?? '');
+  const canCreateOrder = userRole !== 'cuisinier';
+
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [drawerOrderId, setDrawerOrderId] = useState<string | null>(null);
   const [activeOrder, setActiveOrder] = useState<Order | null>(null);
@@ -693,13 +697,15 @@ export default function OrdersPage() {
           </button>
 
           {/* New order */}
-          <Link
-            href="/dashboard/orders/new"
-            className="flex items-center gap-2 px-4 h-10 rounded-lg bg-terracotta text-white text-sm font-medium hover:bg-terracotta-dark transition-colors"
-          >
-            <Plus size={16} />
-            Nouvelle commande
-          </Link>
+          {canCreateOrder && (
+            <Link
+              href="/dashboard/orders/new"
+              className="flex items-center gap-2 px-4 h-10 rounded-lg bg-terracotta text-white text-sm font-medium hover:bg-terracotta-dark transition-colors"
+            >
+              <Plus size={16} />
+              Nouvelle commande
+            </Link>
+          )}
         </div>
       </div>
 
