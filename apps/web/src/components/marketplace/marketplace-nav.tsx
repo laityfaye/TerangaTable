@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Search, MapPin, ChevronDown, X, Menu, Utensils } from 'lucide-react';
@@ -130,9 +131,7 @@ export default function MarketplaceNav({ currentCity, currentCitySlug, cities = 
 
         {/* ── Logo ── */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-[#C8553D] flex items-center justify-center shadow-sm">
-            <Utensils className="w-4 h-4 text-white" />
-          </div>
+          <Image src="/logo-icon.png" alt="TérangaTable" width={32} height={32} className="w-8 h-8 object-contain" priority />
           <span
             className={`font-bold text-lg hidden sm:block transition-colors duration-300 ${logoTextColor}`}
             style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}

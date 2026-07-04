@@ -1,6 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRef, useState, useEffect, useCallback } from 'react';
 import {
@@ -351,9 +352,7 @@ function LandingNav() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-[#C8553D] flex items-center justify-center shadow-lg shadow-[#C8553D]/30 group-hover:shadow-[#C8553D]/50 transition-shadow duration-300">
-              <span className="text-white font-bold text-sm" style={{ fontFamily: 'var(--font-heading)' }}>T</span>
-            </div>
+            <Image src="/logo-icon.png" alt="TérangaTable" width={32} height={32} className="w-8 h-8 object-contain" priority />
             <span className="text-white font-bold text-lg tracking-tight" style={{ fontFamily: 'var(--font-heading)' }}>
               TérangaTable
             </span>
@@ -1319,9 +1318,7 @@ function LandingFooter() {
         {/* Brand — centré sur mobile */}
         <div className="flex flex-col items-center text-center md:items-start md:text-left mb-10">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-7 h-7 rounded-lg bg-[#C8553D] flex items-center justify-center">
-              <span className="text-white font-bold text-xs">T</span>
-            </div>
+            <Image src="/logo-icon.png" alt="TérangaTable" width={28} height={28} className="w-7 h-7 object-contain" />
             <span className="text-white font-bold" style={{ fontFamily: 'var(--font-heading)' }}>TérangaTable</span>
           </div>
           <p className="text-white/45 text-sm leading-relaxed mb-4 max-w-[240px]">
