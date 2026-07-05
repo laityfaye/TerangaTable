@@ -278,6 +278,30 @@ export class CustomersService {
     });
   }
 
+  /**
+   * Utilisé par l'assistant WhatsApp (identification uniquement par numéro).
+   * `idx_customers_tenant_phone` (index partiel unique sur tenant_id+phone,
+   * posé en migration 001) protège contre la course concurrente : si deux
+   * messages du même numéro arrivent en parallèle, la seconde création échoue
+   * avec P2002 — on relit alors la ligne créée par l'autre requête.
+   */
+  async findOrCreateByPhone(tenantId: string, phone: string, firstName = 'Client') {
+    const existing = await this.prisma.customer.findFirst({ where: { tenantId, phone } });
+    if (existing) return existing;
+
+    try {
+      return await this.prisma.customer.create({
+        data: { tenantId, firstName, lastName: '', phone },
+      });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        const created = await this.prisma.customer.findFirst({ where: { tenantId, phone } });
+        if (created) return created;
+      }
+      throw err;
+    }
+  }
+
   // ── Update stats after payment (called async after each payment) ──────────
 
   async updateStatsAfterPayment(tenantId: string, customerId: string, amount: number) {

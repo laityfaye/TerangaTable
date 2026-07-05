@@ -1,5 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma, TenantStatus } from '@prisma/client';
+import Anthropic from '@anthropic-ai/sdk';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisCacheService } from '../../common/services/redis-cache.service';
 import { MarketplaceQueryDto } from './dto/marketplace-query.dto';
@@ -11,6 +13,53 @@ const FEATURED_TTL   = 120;
 const MENUS_TTL      = 60;
 const CUISINES_TTL   = 600;
 const RESTAURANT_TTL = 60;
+const AI_RECOMMENDATIONS_TTL = 900; // 15 min — partagé par tous les visiteurs d'une même ville
+
+// ── Recommandations IA ───────────────────────────────────────────────────────
+
+export interface AiSuggestionGroup {
+  id: string;
+  title: string;
+  subtitle: string;
+  restaurant_ids: string[];
+}
+
+interface RawAiSuggestion {
+  id: string;
+  title: string;
+  subtitle: string;
+  restaurant_ids: string[];
+}
+
+const AI_SUGGESTIONS_SCHEMA = {
+  type: 'object',
+  properties: {
+    suggestions: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          title: { type: 'string' },
+          subtitle: { type: 'string' },
+          restaurant_ids: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['id', 'title', 'subtitle', 'restaurant_ids'],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ['suggestions'],
+  additionalProperties: false,
+} as const;
+
+function getTimeLabel(hour: number): string {
+  if (hour >= 5 && hour < 11) return 'le matin (petit-déjeuner)';
+  if (hour >= 11 && hour < 15) return 'le midi (déjeuner)';
+  if (hour >= 15 && hour < 19) return "l'après-midi (goûter)";
+  if (hour >= 19 && hour < 22) return 'le soir (dîner)';
+  return 'la nuit';
+}
 
 // ── Types internes ────────────────────────────────────────────────────────────
 
@@ -120,10 +169,17 @@ const RESTAURANT_LIST_SELECT = {
 
 @Injectable()
 export class MarketplaceService {
+  private readonly logger = new Logger(MarketplaceService.name);
+  private readonly anthropic: Anthropic | null;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly redis: RedisCacheService,
-  ) {}
+    private readonly config: ConfigService,
+  ) {
+    const apiKey = this.config.get<string>('ANTHROPIC_API_KEY');
+    this.anthropic = apiKey ? new Anthropic({ apiKey }) : null;
+  }
 
   /**
    * Toutes les villes/régions actives avec le nombre de restaurants
@@ -843,5 +899,93 @@ export class MarketplaceService {
     const cuisineList = Array.from(cuisines).sort();
     await this.redis.client.set(cacheKey, JSON.stringify(cuisineList), 'EX', CUISINES_TTL).catch(() => null);
     return cuisineList;
+  }
+
+  /**
+   * Recommandations personnalisées générées par Claude à partir des restaurants
+   * réels d'une ville (popularité, note, ouverture, livraison) et de l'heure du jour.
+   *
+   * Mise en cache Redis par ville (15 min) : le contexte (heure, restaurants) ne
+   * varie pas assez vite pour justifier un appel par visiteur. Si la clé API est
+   * absente ou l'appel échoue, retourne [] — le frontend retombe alors sur son
+   * tri statique (voir ai-recommendations.tsx), la page marketplace ne dépend
+   * donc jamais de la disponibilité de Claude pour fonctionner.
+   */
+  async getAiRecommendations(citySlug: string): Promise<AiSuggestionGroup[]> {
+    const cacheKey = `marketplace:ai-recommendations:${citySlug}`;
+    const cached = await this.redis.client.get(cacheKey).catch(() => null);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    if (cached) return JSON.parse(cached);
+
+    if (!this.anthropic) return [];
+
+    const { data: restaurants } = await this.getRestaurants({
+      city_slug: citySlug,
+      sort: 'popular',
+      per_page: 30,
+    });
+    if (restaurants.length === 0) return [];
+
+    const restaurantSummaries = restaurants.map((r) => ({
+      id: r.id,
+      name: r.name,
+      cuisine_types: r.cuisine_types,
+      rating: r.rating,
+      order_count: r.order_count,
+      is_open_now: r.is_open_now,
+      delivery_available: r.delivery_available,
+      price_range: r.price_range,
+    }));
+
+    let result: AiSuggestionGroup[] = [];
+    try {
+      const response = await this.anthropic.messages.create({
+        model: 'claude-sonnet-5',
+        max_tokens: 1024,
+        thinking: { type: 'disabled' },
+        system:
+          "Tu es le moteur de recommandation de restaurants de TérangaTable, une marketplace de restauration en Afrique de l'Ouest et en Europe. " +
+          "À partir de la liste de restaurants fournie (JSON), propose entre 2 et 3 groupes de recommandations pertinents et variés " +
+          '(par exemple : adapté au moment de la journée, tendance/populaire, livraison rapide, ou une cuisine bien représentée). ' +
+          "N'utilise que des ids présents dans la liste fournie, jamais d'ids inventés. Chaque groupe : 2 à 4 restaurants. " +
+          'Titres et sous-titres courts, en français, concrets et chaleureux, sans superlatifs vides.',
+        output_config: {
+          effort: 'low',
+          format: { type: 'json_schema', schema: AI_SUGGESTIONS_SCHEMA },
+        },
+        messages: [
+          {
+            role: 'user',
+            content:
+              `Ville : ${citySlug}. Il est actuellement ${getTimeLabel(new Date().getHours())} sur place. ` +
+              `Restaurants disponibles :\n${JSON.stringify(restaurantSummaries)}`,
+          },
+        ],
+      });
+
+      const textBlock = response.content.find(
+        (b): b is Anthropic.TextBlock => b.type === 'text',
+      );
+      if (textBlock) {
+        const parsed = JSON.parse(textBlock.text) as { suggestions: RawAiSuggestion[] };
+        const validIds = new Set(restaurants.map((r) => r.id));
+
+        result = parsed.suggestions
+          .map((s) => ({
+            id: s.id,
+            title: s.title,
+            subtitle: s.subtitle,
+            restaurant_ids: s.restaurant_ids.filter((id) => validIds.has(id)),
+          }))
+          .filter((s) => s.restaurant_ids.length > 0)
+          .slice(0, 3);
+      }
+    } catch (err) {
+      this.logger.warn(`AI recommendations failed for city "${citySlug}": ${(err as Error).message}`);
+      return []; // pas de cache sur un échec — on retentera au prochain appel
+    }
+
+    await this.redis.client.set(cacheKey, JSON.stringify(result), 'EX', AI_RECOMMENDATIONS_TTL).catch(() => null);
+    return result;
   }
 }

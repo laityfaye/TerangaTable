@@ -3,12 +3,23 @@
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { Sparkles, Flame, Clock, Sun, CloudRain, Star, TrendingUp, Moon } from 'lucide-react';
-import type { MarketplaceRestaurant } from '@/types/marketplace';
+import type { MarketplaceRestaurant, AiSuggestionGroup } from '@/types/marketplace';
 
 interface Props {
   restaurants: MarketplaceRestaurant[];
   cityName: string;
+  /** Groupes générés par Claude côté backend (voir /marketplace/recommendations).
+   * Si absent ou vide, on retombe sur le tri statique ci-dessous. */
+  aiSuggestions?: AiSuggestionGroup[];
 }
+
+// Icône/couleur assignées en rotation aux groupes renvoyés par Claude
+// (le backend ne renvoie que titre/sous-titre/ids, pas de présentation).
+const GROUP_STYLES: { icon: React.ReactNode; color: string }[] = [
+  { icon: <Sparkles className="w-5 h-5" />, color: '#D4A843' },
+  { icon: <Star className="w-5 h-5 fill-current" />, color: '#C8553D' },
+  { icon: <TrendingUp className="w-5 h-5" />, color: '#2D6A4F' },
+];
 
 function getTimeOfDay(): { label: string; icon: React.ReactNode; emoji: string; hour: number } {
   const hour = new Date().getHours();
@@ -52,12 +63,32 @@ interface AISuggestion {
   restaurants: MarketplaceRestaurant[];
 }
 
-export default function AIRecommendations({ restaurants, cityName }: Props) {
+export default function AIRecommendations({ restaurants, cityName, aiSuggestions }: Props) {
   const timeOfDay = getTimeOfDay();
   const mealSugg = getMealSuggestion(timeOfDay.hour);
 
   const suggestions = useMemo<AISuggestion[]>(() => {
     if (restaurants.length === 0) return [];
+
+    // Priorité aux recommandations générées par Claude — le tri ci-dessous
+    // n'est qu'un repli si le backend n'a rien retourné (clé API absente,
+    // erreur réseau, etc.), pour que la section ne disparaisse jamais.
+    if (aiSuggestions && aiSuggestions.length > 0) {
+      const byId = new Map(restaurants.map((r) => [r.id, r]));
+      const fromAi = aiSuggestions
+        .map((group, i) => ({
+          id: group.id,
+          title: group.title,
+          subtitle: group.subtitle,
+          icon: GROUP_STYLES[i % GROUP_STYLES.length]!.icon,
+          color: GROUP_STYLES[i % GROUP_STYLES.length]!.color,
+          restaurants: group.restaurant_ids
+            .map((id) => byId.get(id))
+            .filter((r): r is MarketplaceRestaurant => r !== undefined),
+        }))
+        .filter((group) => group.restaurants.length > 0);
+      if (fromAi.length > 0) return fromAi.slice(0, 3);
+    }
 
     const openNow = restaurants.filter((r) => r.is_open_now);
     const topRated = [...restaurants].sort((a, b) => b.rating - a.rating).slice(0, 4);
@@ -121,7 +152,7 @@ export default function AIRecommendations({ restaurants, cityName }: Props) {
     }
 
     return result.slice(0, 3);
-  }, [restaurants, cityName, mealSugg, timeOfDay.emoji]);
+  }, [restaurants, cityName, mealSugg, timeOfDay.emoji, aiSuggestions]);
 
   if (suggestions.length === 0) return null;
 

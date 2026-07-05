@@ -111,4 +111,17 @@ export class MarketplaceController {
   getMenusDuJour(@Query('city_slug') citySlug: string) {
     return this.marketplaceService.getMenusDuJour(citySlug ?? 'dakar');
   }
+
+  /**
+   * GET /v1/marketplace/recommendations?city_slug=dakar
+   * Recommandations générées par IA (Claude), à partir des restaurants réels
+   * d'une ville. Retourne [] si la clé Anthropic est absente ou l'appel échoue —
+   * le frontend retombe alors sur son tri statique.
+   */
+  @Get('recommendations')
+  @ApiOperation({ summary: 'Recommandations de restaurants générées par IA' })
+  @ApiQuery({ name: 'city_slug', required: true })
+  getAiRecommendations(@Query('city_slug') citySlug: string) {
+    return this.marketplaceService.getAiRecommendations(citySlug ?? 'dakar');
+  }
 }

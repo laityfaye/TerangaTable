@@ -7,6 +7,7 @@ import type {
   MarketplaceStats,
   MarketplaceFilters,
   RestaurantMenuDuJour,
+  AiSuggestionGroup,
 } from '@/types/marketplace';
 
 // SSR: use internal Docker network URL to bypass nginx/HTTPS
@@ -130,6 +131,15 @@ export async function fetchCuisineTypes(citySlug: string): Promise<string[]> {
 /** Menus du jour : produits actifs des restaurants ouverts d'une ville */
 export async function fetchMarketplaceMenusDuJour(citySlug: string): Promise<RestaurantMenuDuJour[]> {
   return marketplaceFetch<RestaurantMenuDuJour[]>('/menus-du-jour', { city_slug: citySlug }, 60);
+}
+
+/**
+ * Recommandations générées par IA pour une ville. Revalidation alignée sur le
+ * TTL Redis backend (15 min) — l'appelant doit `.catch(() => [])`, l'API renvoie
+ * déjà [] si Claude est indisponible mais un 5xx réseau reste possible.
+ */
+export async function fetchMarketplaceRecommendations(citySlug: string): Promise<AiSuggestionGroup[]> {
+  return marketplaceFetch<AiSuggestionGroup[]>('/recommendations', { city_slug: citySlug }, 900);
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

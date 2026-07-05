@@ -69,6 +69,14 @@ export interface MarketplaceRestaurant {
   created_at: string;
 }
 
+/** Groupe de recommandations généré par IA (Claude) — voir /marketplace/recommendations */
+export interface AiSuggestionGroup {
+  id: string;
+  title: string;
+  subtitle: string;
+  restaurant_ids: string[];
+}
+
 export interface MarketplacePaginatedResponse {
   data: MarketplaceRestaurant[];
   meta: {

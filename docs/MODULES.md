@@ -58,6 +58,7 @@ const plans = [
 | `custom_fields` | Champs Dynamiques | growth | Extension des entités (produits, commandes, clients) avec champs personnalisés |
 | `workflows` | Workflows Configurables | growth | Personnalisation des cycles de vie des commandes et réservations |
 | `rules_engine` | Moteur de Règles | enterprise | Automatisations événementielles (triggers, conditions, actions) |
+| `whatsapp` | Assistant WhatsApp | growth | Prise de commande conversationnelle via WhatsApp (Twilio + Claude) — numéro partagé plateforme, restaurant identifié en conversation |
 
 ```ts
 const modules = [
@@ -71,6 +72,7 @@ const modules = [
   { name: "Champs Dynamiques",       slug: "custom_fields", required_plan: "growth",     icon: "Sliders",       version: "1.0.0" },
   { name: "Workflows Configurables", slug: "workflows",     required_plan: "growth",     icon: "GitBranch",     version: "1.0.0" },
   { name: "Moteur de Règles",        slug: "rules_engine",  required_plan: "enterprise", icon: "Zap",           version: "1.0.0" },
+  { name: "Assistant WhatsApp",      slug: "whatsapp",      required_plan: "growth",     icon: "MessageCircle", version: "1.0.0" },
 ];
 ```
 
@@ -204,3 +206,4 @@ Un tenant peut activer un module si :
 | custom_fields | — | ✓ | ✓ |
 | workflows | — | ✓ | ✓ |
 | rules_engine | — | — | ✓ |
+| whatsapp | — | ✓ | ✓ |

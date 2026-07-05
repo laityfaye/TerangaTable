@@ -6,6 +6,7 @@ import {
   fetchMarketplaceStats,
   fetchMarketplaceFeatured,
   fetchMarketplaceMenusDuJour,
+  fetchMarketplaceRecommendations,
 } from '@/lib/marketplace-api';
 import MarketplaceNav from '@/components/marketplace/marketplace-nav';
 import HeroDecouverte, { type FloatingMenuData, type FloatingRestaurantData } from '@/components/marketplace/hero-decouverte';
@@ -184,11 +185,12 @@ export default async function CityDiscoveryPage({ params, searchParams }: Props)
   };
 
   // Charger les données en parallèle
-  const [restaurantsResponse, stats, featured, menusDuJour] = await Promise.all([
+  const [restaurantsResponse, stats, featured, menusDuJour, aiSuggestions] = await Promise.all([
     fetchMarketplaceRestaurants(filters).catch(() => ({ data: [], meta: { total: 0, page: 1, per_page: 20, total_pages: 0, has_next: false } })),
     fetchMarketplaceStats(ville).catch(() => ({ restaurant_count: 0, region_count: 0, cuisine_count: 12, avg_delivery_time: 28 })),
     fetchMarketplaceFeatured(ville).catch(() => []),
     fetchMarketplaceMenusDuJour(ville).catch(() => []),
+    fetchMarketplaceRecommendations(ville).catch(() => []),
   ]);
 
   const { data: restaurants, meta } = restaurantsResponse;
@@ -288,7 +290,7 @@ export default async function CityDiscoveryPage({ params, searchParams }: Props)
 
         {/* Recommandations IA (page 1 seulement, sans filtre actif) */}
         {filters.page === 1 && !filters.cuisine && !filters.q && restaurants.length > 0 && (
-          <AIRecommendations restaurants={restaurants} cityName={city.name} />
+          <AIRecommendations restaurants={restaurants} cityName={city.name} aiSuggestions={aiSuggestions} />
         )}
 
         {/* Menu du jour */}

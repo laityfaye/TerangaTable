@@ -184,10 +184,11 @@ model Tenant {
   deliveryZones       DeliveryZone[]
   deliveryAgents      DeliveryAgent[]
   deliveries          Delivery[]
-  notifications       Notification[]
-  loyaltyTransactions LoyaltyTransaction[]
-  posSessions         PosSession[]
-  tenantRequests      TenantRequest[]
+  notifications         Notification[]
+  loyaltyTransactions   LoyaltyTransaction[]
+  posSessions           PosSession[]
+  tenantRequests        TenantRequest[]
+  whatsappConversations WhatsappConversation[]
 
   @@index([regionId, status])
   @@index([status])
@@ -874,16 +875,48 @@ model Customer {
   notes         String?
   createdAt     DateTime        @default(now()) @map("created_at")
 
-  tenant              Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  orders              Order[]
-  reservations        Reservation[]
-  loyaltyTransactions LoyaltyTransaction[]
+  tenant                Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orders                Order[]
+  reservations          Reservation[]
+  loyaltyTransactions   LoyaltyTransaction[]
+  whatsappConversations WhatsappConversation[]
 
   @@index([tenantId, id])
   @@index([tenantId, createdAt])
   @@index([tenantId, segment])
   @@index([tenantId, lastVisitAt])
+  @@index([tenantId, phone])
   @@map("customers")
+}
+
+enum WhatsappConversationStage {
+  discovery  // restaurant pas encore identifié
+  ordering   // restaurant confirmé, panier en cours
+  completed  // dernière commande passée ; en attente d'une nouvelle demande
+}
+
+// Une ligne par numéro de téléphone : un seul numéro WhatsApp partagé pour
+// toute la plateforme (cf. docs/MODULES.md), donc une session active par
+// numéro. tenantId/customerId restent null pendant la phase de découverte.
+model WhatsappConversation {
+  id             String                    @id @default(uuid()) @db.Uuid
+  customerPhone  String                    @unique @map("customer_phone") @db.VarChar(30)
+  tenantId       String?                   @map("tenant_id") @db.Uuid
+  customerId     String?                   @map("customer_id") @db.Uuid
+  stage          WhatsappConversationStage @default(discovery)
+  draftCart      Json                      @default("[]") @map("draft_cart")
+  history        Json                      @default("[]")
+  lastMessageSid String?                   @map("last_message_sid") @db.VarChar(64)
+  lastMessageAt  DateTime                  @default(now()) @map("last_message_at")
+  createdAt      DateTime                  @default(now()) @map("created_at")
+  updatedAt      DateTime                  @updatedAt @map("updated_at")
+
+  tenant   Tenant?   @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([lastMessageAt])
+  @@map("whatsapp_conversations")
 }
 
 // ──────────────── DOMAINE LIVRAISON ────────────────

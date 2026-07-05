@@ -119,6 +119,7 @@ async function main() {
         crm: true,
         custom_fields: true,
         workflows: true,
+        whatsapp: true,
       },
     },
     {
@@ -139,6 +140,7 @@ async function main() {
         custom_fields: true,
         workflows: true,
         rules_engine: true,
+        whatsapp: true,
       },
     },
   ];
@@ -166,6 +168,7 @@ async function main() {
     { name: 'Champs personnalisés', slug: 'custom_fields', icon: 'Sliders', requiredPlan: 'growth', description: 'Extension des formulaires et données' },
     { name: 'Workflows', slug: 'workflows', icon: 'GitBranch', requiredPlan: 'growth', description: 'Cycles de vie personnalisés' },
     { name: 'Moteur de règles', slug: 'rules_engine', icon: 'Zap', requiredPlan: 'enterprise', description: 'Automatisation des processus métier' },
+    { name: 'Assistant WhatsApp', slug: 'whatsapp', icon: 'MessageCircle', requiredPlan: 'growth', description: 'Prise de commande automatisée via WhatsApp, propulsée par IA' },
   ];
 
   for (const mod of modules) {
