@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import LandingPageClient from '@/components/home/landing-page-client';
 
 export const metadata: Metadata = {
-  title: 'TérangaTable — Caisse, menu digital & marketplace pour restaurants africains',
+  title: { absolute: 'TérangaTable — Caisse, menu digital & marketplace Afrique' },
   description:
-    "TérangaTable digitalise les restaurants d'Afrique : caisse POS, menu digital, commandes en ligne, réservations, livraison, CRM et marketplace pour trouver les meilleurs restaurants à Dakar, Thiès, Saint-Louis, Abidjan, Casablanca et Paris.",
+    "TérangaTable digitalise les restaurants d'Afrique : caisse POS, menu digital, réservations, livraison et marketplace pour trouver les meilleures tables.",
   keywords: [
     // Marque
     'TérangaTable', 'Teranga Table',
@@ -27,6 +27,7 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: '/' },
   openGraph: {
+    siteName: 'TérangaTable',
     title: 'TérangaTable — Shopify + Odoo de la restauration en Afrique',
     description:
       "Caisse POS, menu digital, commandes et réservations pour digitaliser les restaurants africains à Dakar, Abidjan, Casablanca.",

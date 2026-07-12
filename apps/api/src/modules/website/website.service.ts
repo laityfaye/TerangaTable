@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@terangatable/database';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisCacheService } from '../../common/services/redis-cache.service';
@@ -51,10 +52,13 @@ type WsRecord = {
 
 @Injectable()
 export class WebsiteService {
+  private readonly logger = new Logger(WebsiteService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly redis: RedisCacheService,
     private readonly ordersGateway: OrdersGateway,
+    private readonly config: ConfigService,
   ) {}
 
   // ── Public endpoints ───────────────────────────────────────────────────────
@@ -462,7 +466,34 @@ export class WebsiteService {
       .del(`vitrine:data:${tenantSlug}`, `vitrine:featured:${tenantSlug}`)
       .catch(() => null);
 
+    // Vider aussi le Data Cache / ISR de Next.js (apps/web) — sans ça, le site
+    // public et l'iframe de preview du dashboard continuent de servir
+    // l'ancienne apparence jusqu'à expiration du TTL de 300s.
+    await this.revalidatePublicSite(tenantSlug);
+
     return this.formatSettings(settings as WsRecord, tenantSlug);
+  }
+
+  private async revalidatePublicSite(tenantSlug: string): Promise<void> {
+    // WEB_INTERNAL_URL (docker network, ex: http://web:3000) évite de repasser
+    // par nginx/HTTPS depuis le container API — voir API_INTERNAL_URL, même
+    // logique en sens inverse. APP_URL sert de repli (dev local sans docker).
+    const webUrl = this.config.get<string>('WEB_INTERNAL_URL') ?? this.config.get<string>('APP_URL');
+    const secret = this.config.get<string>('REVALIDATE_SECRET');
+    if (!webUrl || !secret) return;
+
+    try {
+      await fetch(`${webUrl}/api/revalidate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-revalidate-secret': secret,
+        },
+        body: JSON.stringify({ slug: tenantSlug }),
+      });
+    } catch (err) {
+      this.logger.warn(`Échec de la revalidation du site public pour "${tenantSlug}": ${err}`);
+    }
   }
 
   async getThemes() {

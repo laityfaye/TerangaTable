@@ -88,6 +88,8 @@ services:
       dockerfile: apps/api/Dockerfile
     restart: always
     env_file: ../.env.production
+    environment:
+      WEB_INTERNAL_URL: "http://web:3000"
     ports:
       - "127.0.0.1:3021:3001"
     depends_on:

@@ -3,7 +3,7 @@ import { ImageResponse } from 'next/og';
 export const ogImageSize = { width: 1200, height: 630 };
 export const ogImageContentType = 'image/png';
 
-export function renderOgImage(subtitle: string) {
+export function renderOgImage(subtitle: string, cta = 'Essai gratuit → terangatable.cloud') {
   return new ImageResponse(
     (
       <div
@@ -57,6 +57,21 @@ export function renderOgImage(subtitle: string) {
           }}
         >
           {subtitle}
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            marginTop: 44,
+            padding: '14px 28px',
+            borderRadius: 999,
+            background: '#C8553D',
+            color: '#FFFFFF',
+            fontSize: 26,
+            fontWeight: 600,
+          }}
+        >
+          {cta}
         </div>
       </div>
     ),
