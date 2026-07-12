@@ -45,7 +45,7 @@ export class PosController {
   }
 
   @Get('current')
-  @ApiOperation({ summary: 'Session de caisse en cours (404 si aucune)' })
+  @ApiOperation({ summary: 'Session de caisse en cours (data: null si aucune)' })
   getCurrent(@CurrentTenant() tenant: TenantCtx) {
     return this.posService.getCurrent(tenant.id);
   }

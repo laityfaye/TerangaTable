@@ -30,15 +30,13 @@ export class PosService {
   }
 
   async getCurrent(tenantId: string) {
-    const session = await this.prisma.posSession.findFirst({
+    return this.prisma.posSession.findFirst({
       where: { tenantId, status: 'open' },
       include: {
         openedBy: { select: { id: true, firstName: true, lastName: true } },
       },
       orderBy: { openedAt: 'desc' },
     });
-    if (!session) throw new NotFoundException('Aucune session de caisse ouverte');
-    return session;
   }
 
   async open(tenantId: string, userId: string, dto: OpenSessionDto) {

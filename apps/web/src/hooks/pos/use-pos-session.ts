@@ -80,10 +80,9 @@ export function usePosCurrentSession() {
   return useQuery({
     queryKey: POS_SESSION_QKEY.current,
     queryFn: async () => {
-      const { data } = await apiClient.get<{ data: PosSession }>('/pos/sessions/current');
+      const { data } = await apiClient.get<{ data: PosSession | null }>('/pos/sessions/current');
       return data.data;
     },
-    retry: false,
     staleTime: 30_000,
   });
 }
