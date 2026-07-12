@@ -112,7 +112,7 @@ async function main() {
       priceYearly: 150000,
       maxUsers: 3,
       maxProducts: 50,
-      features: { pos: true, reservations: false, delivery: false, crm: false },
+      features: { pos: true, reservations: false, delivery: false, crm: false, reviews: true },
     },
     {
       id: '00000000-0000-0000-0001-000000000002',
@@ -121,7 +121,7 @@ async function main() {
       priceYearly: 350000,
       maxUsers: 10,
       maxProducts: 200,
-      features: { pos: true, reservations: true, delivery: true, crm: true, whatsapp: true },
+      features: { pos: true, reservations: true, delivery: true, crm: true, whatsapp: true, reviews: true },
     },
     {
       id: '00000000-0000-0000-0001-000000000003',
@@ -142,6 +142,7 @@ async function main() {
         workflows: true,
         kds: true,
         whatsapp: true,
+        reviews: true,
       },
     },
   ];
@@ -170,6 +171,7 @@ async function main() {
     { name: 'Workflows', slug: 'workflows', icon: 'GitBranch', requiredPlan: 'enterprise', description: 'Cycles de vie personnalisés' },
     { name: 'Écran cuisine', slug: 'kds', icon: 'Monitor', requiredPlan: 'enterprise', description: 'Kitchen Display System' },
     { name: 'Assistant WhatsApp', slug: 'whatsapp', icon: 'MessageCircle', requiredPlan: 'growth', description: 'Prise de commande automatisée via WhatsApp, propulsée par IA' },
+    { name: 'Avis clients', slug: 'reviews', icon: 'Star', requiredPlan: 'starter', description: 'Collecte et modération des avis clients liés aux commandes' },
   ];
 
   for (const mod of modules) {

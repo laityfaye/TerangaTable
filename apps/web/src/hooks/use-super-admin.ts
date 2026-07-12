@@ -295,6 +295,43 @@ export function useRegionTenantsHistory(slug: string) {
   });
 }
 
+export interface ModerationReview {
+  id: string;
+  order_id: string;
+  order_number: string | null;
+  customer: { first_name: string; last_name: string | null } | null;
+  rating: number;
+  comment: string | null;
+  status: 'published' | 'flagged' | 'hidden';
+  response: string | null;
+  report_count: number;
+  created_at: string;
+  tenant: { name: string; slug: string };
+}
+
+export function useReviewModerationQueue() {
+  return useQuery({
+    queryKey: ['super-admin', 'reviews', 'moderation'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: ModerationReview[] }>('/reviews/moderation');
+      return data.data;
+    },
+  });
+}
+
+export function useModerateReview() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: 'published' | 'hidden' }) => {
+      const { data } = await apiClient.patch(`/reviews/${id}/status`, { status });
+      return data;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['super-admin', 'reviews', 'moderation'] });
+    },
+  });
+}
+
 export function useToggleModule() {
   const queryClient = useQueryClient();
   return useMutation({

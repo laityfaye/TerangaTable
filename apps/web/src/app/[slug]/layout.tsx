@@ -112,6 +112,7 @@ export default async function VitrineLayout({ children, params }: Props) {
           slug={slug}
           hasReservations={data.modules?.includes('reservations') ?? false}
           hasOrdering={data.modules?.includes('online_ordering') ?? true}
+          hasReviews={data.modules?.includes('reviews') ?? false}
           primaryColor={primaryColor}
         />
         {children}

@@ -10,6 +10,7 @@ import {
   Map,
   Puzzle,
   UserCog,
+  Star,
   LogOut,
   Shield,
   ChevronRight,
@@ -42,6 +43,7 @@ const SUPER_ADMIN_NAV = [
   { label: 'Demandes', href: '/super-admin/requests', icon: ClipboardList, exact: false },
   { label: 'Tenants', href: '/super-admin/tenants', icon: Store, exact: false },
   { label: 'Modules', href: '/super-admin/modules', icon: Puzzle, exact: false },
+  { label: 'Avis signalés', href: '/super-admin/reviews', icon: Star, exact: false },
   { label: 'Admins', href: '/super-admin/admins', icon: UserCog, exact: false },
 ] as const;
 

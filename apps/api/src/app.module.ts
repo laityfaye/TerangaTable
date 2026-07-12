@@ -32,6 +32,7 @@ import { StorageModule } from './modules/storage/storage.module';
 import { MailModule } from './common/mail/mail.module';
 import { MarketplaceModule } from './modules/marketplace/marketplace.module';
 import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
 import { EventsModule } from './events/events.module';
 
 @Module({
@@ -74,6 +75,7 @@ import { EventsModule } from './events/events.module';
     MailModule,
     MarketplaceModule,
     WhatsappModule,
+    ReviewsModule,
     EventsModule,
   ],
   providers: [

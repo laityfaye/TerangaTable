@@ -81,8 +81,6 @@ export interface TenantSettingsJson {
   delivery_fee?: number;
   min_order?: number;
   estimated_delivery_time?: number;
-  rating?: number;
-  review_count?: number;
   tags?: string[];
   gallery_images?: string[];
   about_text?: string;
@@ -134,6 +132,8 @@ const RESTAURANT_LIST_SELECT = {
   slug: true,
   name: true,
   settings: true,
+  avgRating: true,
+  reviewCount: true,
   createdAt: true,
   region: {
     select: {
@@ -332,8 +332,8 @@ export class MarketplaceService {
           lng: s.lng ?? null,
           opening_hours: s.opening_hours ?? null,
           is_open_now: openNow,
-          rating: s.rating ?? 4.2,
-          review_count: s.review_count ?? 0,
+          rating: Number(tenant.avgRating),
+          review_count: tenant.reviewCount,
           delivery_available: hasDelivery,
           reservations_available: hasReservations,
           min_order: s.min_order ?? null,
@@ -436,6 +436,8 @@ export class MarketplaceService {
         slug: true,
         name: true,
         settings: true,
+        avgRating: true,
+        reviewCount: true,
         createdAt: true,
         region: {
           select: { name: true, slug: true, currencyCode: true, currencySymbol: true },
@@ -497,8 +499,8 @@ export class MarketplaceService {
       lng: s.lng ?? null,
       opening_hours: s.opening_hours ?? null,
       is_open_now: isOpenNow(s.opening_hours),
-      rating: s.rating ?? 4.2,
-      review_count: s.review_count ?? 0,
+      rating: Number(tenant.avgRating),
+      review_count: tenant.reviewCount,
       price_range: s.price_range ?? 2,
       delivery_available: modules.includes('delivery'),
       reservations_available: modules.includes('reservations'),
@@ -705,6 +707,8 @@ export class MarketplaceService {
         slug: true,
         name: true,
         settings: true,
+        avgRating: true,
+        reviewCount: true,
         region: { select: { name: true, currencySymbol: true } },
         websiteSettings: {
           select: { logoUrl: true, heroImageUrl: true, primaryColor: true },
@@ -728,8 +732,8 @@ export class MarketplaceService {
           hero_image_url: t.websiteSettings?.heroImageUrl ?? null,
           primary_color: t.websiteSettings?.primaryColor ?? '#C8553D',
           address: s.address ?? null,
-          rating: s.rating ?? 4.5,
-          review_count: s.review_count ?? 0,
+          rating: Number(t.avgRating),
+          review_count: t.reviewCount,
           price_range: s.price_range ?? 2,
           is_open_now: isOpenNow(s.opening_hours),
           delivery_available: false,

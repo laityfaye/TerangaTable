@@ -32,6 +32,33 @@ export const fetchFeaturedProducts = cache(async (slug: string): Promise<Vitrine
   return apiFetch<VitrineProduct[]>(`/public/${slug}/featured`, 300, [`vitrine:${slug}`]);
 });
 
+export interface VitrineReview {
+  id: string;
+  rating: number;
+  comment: string | null;
+  response: string | null;
+  responded_at: string | null;
+  created_at: string;
+  customer_first_name: string | null;
+}
+
+export interface VitrineReviewsPage {
+  data: VitrineReview[];
+  meta: { total: number; page: number; limit: number; totalPages: number };
+}
+
+// Endpoint dédié : la réponse est déjà `{ data, meta }` (ResponseTransformInterceptor
+// ne rajoute pas de couche puisque l'objet a déjà une clé `data`) — pas de
+// désenveloppement supplémentaire ici, contrairement à `apiFetch`.
+export const fetchVitrineReviews = cache(async (slug: string): Promise<VitrineReviewsPage> => {
+  const res = await fetch(`${API_URL}/public/${slug}/reviews`, {
+    next: { revalidate: 60, tags: [`vitrine:${slug}`] },
+    headers: { 'Content-Type': 'application/json' },
+  });
+  if (!res.ok) throw new Error(`API ${res.status}: /public/${slug}/reviews`);
+  return res.json() as Promise<VitrineReviewsPage>;
+});
+
 export async function fetchAllSlugs(): Promise<string[]> {
   return apiFetch<string[]>('/public/slugs', 300, ['vitrine:slugs']);
 }

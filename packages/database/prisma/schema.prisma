@@ -150,6 +150,8 @@ model Tenant {
   status      TenantStatus @default(trial)
   planId      String       @map("plan_id") @db.Uuid
   settings    Json         @default("{}")
+  avgRating   Decimal      @default(0) @map("avg_rating") @db.Decimal(2, 1)
+  reviewCount Int          @default(0) @map("review_count")
   trialEndsAt DateTime?    @map("trial_ends_at")
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
@@ -189,6 +191,7 @@ model Tenant {
   posSessions           PosSession[]
   tenantRequests        TenantRequest[]
   whatsappConversations WhatsappConversation[]
+  reviews               Review[]
 
   @@index([regionId, status])
   @@index([status])
@@ -493,6 +496,7 @@ model Order {
   items         OrderItem[]
   payments      Payment[]
   delivery      Delivery?
+  review        Review?
 
   @@unique([tenantId, orderNumber])
   @@index([tenantId, id])
@@ -880,6 +884,7 @@ model Customer {
   reservations          Reservation[]
   loyaltyTransactions   LoyaltyTransaction[]
   whatsappConversations WhatsappConversation[]
+  reviews               Review[]
 
   @@index([tenantId, id])
   @@index([tenantId, createdAt])
@@ -887,6 +892,38 @@ model Customer {
   @@index([tenantId, lastVisitAt])
   @@index([tenantId, phone])
   @@map("customers")
+}
+
+enum ReviewStatus {
+  published
+  flagged
+  hidden
+}
+
+// Un avis par commande terminale (served/delivered) : la commande fait office
+// de preuve d'achat et empêche les faux avis. Le restaurateur ne peut jamais
+// masquer/supprimer un avis reçu (cf. docs) — seul le super-admin peut le
+// faire passer en `hidden`, et uniquement pour du contenu abusif.
+model Review {
+  id          String       @id @default(uuid()) @db.Uuid
+  tenantId    String       @map("tenant_id") @db.Uuid
+  orderId     String       @unique @map("order_id") @db.Uuid
+  customerId  String?      @map("customer_id") @db.Uuid
+  rating      Int          @db.SmallInt
+  comment     String?
+  status      ReviewStatus @default(published)
+  response    String?
+  respondedAt DateTime?    @map("responded_at")
+  reportCount Int          @default(0) @map("report_count")
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  order    Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, status, createdAt])
+  @@index([tenantId, rating])
+  @@map("reviews")
 }
 
 enum WhatsappConversationStage {

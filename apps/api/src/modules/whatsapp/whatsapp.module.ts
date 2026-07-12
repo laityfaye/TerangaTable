@@ -27,5 +27,6 @@ import { TwilioSignatureGuard } from './guards/twilio-signature.guard';
     // EventEmitter2, lui-même global) — on le redéclare ici plutôt que d'y toucher.
     OrderPublisher,
   ],
+  exports: [TwilioClientService],
 })
 export class WhatsappModule {}

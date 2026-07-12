@@ -22,6 +22,7 @@ import { InviteAdminDto } from './dto/invite-admin.dto';
 import { ToggleAdminDto } from './dto/toggle-admin.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SuperAdminGuard } from '../../common/guards/super-admin.guard';
+import { ReviewsService } from '../reviews/reviews.service';
 
 interface AuthenticatedRequest {
   user: { id: string; tenantId: string | null; roles: string[]; regionSlug?: string | null };
@@ -30,7 +31,10 @@ interface AuthenticatedRequest {
 @ApiTags('Tenants')
 @Controller()
 export class TenantsController {
-  constructor(private readonly tenantsService: TenantsService) {}
+  constructor(
+    private readonly tenantsService: TenantsService,
+    private readonly reviewsService: ReviewsService,
+  ) {}
 
   // ── Tenants ───────────────────────────────────────────────────────────────
 
@@ -148,6 +152,30 @@ export class TenantsController {
   @ApiOperation({ summary: 'Activer / désactiver un module plateforme (SuperAdmin)' })
   toggleModule(@Param('id') id: string, @Body() body: { is_active: boolean }) {
     return this.tenantsService.toggleModule(id, body.is_active);
+  }
+
+  // ── Modération des avis (cross-tenant) ────────────────────────────────────
+  // Le restaurateur ne peut jamais masquer/supprimer un avis reçu (cf.
+  // ReviewsController) — seul le super-admin peut le faire, via cette file
+  // d'attente alimentée par les signalements clients.
+
+  @Get('reviews/moderation')
+  @UseGuards(JwtAuthGuard, SuperAdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'File de modération des avis signalés (SuperAdmin)' })
+  findReviewModerationQueue(@Query('page') page?: string, @Query('limit') limit?: string) {
+    return this.reviewsService.findModerationQueue(
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20,
+    );
+  }
+
+  @Patch('reviews/:id/status')
+  @UseGuards(JwtAuthGuard, SuperAdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Masquer un avis abusif ou lever un signalement (SuperAdmin)' })
+  moderateReview(@Param('id') id: string, @Body() body: { status: 'published' | 'hidden' }) {
+    return this.reviewsService.moderate(id, body.status);
   }
 
   // ── Admins plateforme ─────────────────────────────────────────────────────

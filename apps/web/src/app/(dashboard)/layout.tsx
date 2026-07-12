@@ -14,6 +14,7 @@ import {
   BarChart3,
   Globe,
   Truck,
+  Star,
   Settings,
   Search,
   ChevronRight,
@@ -145,6 +146,19 @@ const NAV: NavGroup[] = [
         label: 'Mon Site',
         href: '/dashboard/website',
         icon: <Globe size={18} />,
+        roles: OWNER_MANAGER,
+      },
+    ],
+    roles: OWNER_MANAGER,
+  },
+  {
+    title: 'AVIS',
+    module: 'reviews',
+    items: [
+      {
+        label: 'Avis clients',
+        href: '/dashboard/reviews',
+        icon: <Star size={18} />,
         roles: OWNER_MANAGER,
       },
     ],
