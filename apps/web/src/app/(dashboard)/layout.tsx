@@ -39,6 +39,8 @@ interface NavItem {
   /** Libellé affiché à la place de `label` si l'utilisateur a un des rôles listés dans `altLabelRoles`. */
   altLabel?: string;
   altLabelRoles?: string[];
+  /** Slug du module plateforme requis (ex: 'reservations'). Absent = toujours visible. */
+  module?: string;
 }
 
 interface NavGroup {
@@ -89,6 +91,7 @@ const NAV: NavGroup[] = [
         href: '/dashboard/reservations',
         icon: <CalendarDays size={18} />,
         roles: [...OWNER_MANAGER, UserRole.SERVEUR],
+        module: 'reservations',
       },
     ],
   },
@@ -106,6 +109,7 @@ const NAV: NavGroup[] = [
   },
   {
     title: 'CLIENTS',
+    module: 'crm',
     items: [
       {
         label: 'Clients',
@@ -297,7 +301,7 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
         {NAV.filter((group) => hasAccess(group.roles) && hasModule(group.module)).map((group) => {
           const visibleItems = group.items
-            .filter((item) => hasAccess(item.roles))
+            .filter((item) => hasAccess(item.roles) && hasModule(item.module))
             .map((item) =>
               item.altLabel && item.altLabelRoles?.some((r) => userRoles.includes(r))
                 ? { ...item, label: item.altLabel }

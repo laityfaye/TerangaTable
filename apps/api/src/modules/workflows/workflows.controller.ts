@@ -27,12 +27,13 @@ interface TenantCtx { id: string }
 @ApiTags('Workflows')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, TenantGuard, ModuleGuard)
-@RequireModule('workflows')
 @Controller('workflows')
 export class WorkflowsController {
   constructor(private readonly workflowsService: WorkflowsService) {}
 
   // ── Workflows ─────────────────────────────────────────────────────────────
+  // Lecture libre (tous plans) : toute commande a besoin de son workflow par
+  // défaut pour fonctionner. Seule la personnalisation est réservée à Growth+.
 
   @Get()
   @ApiOperation({ summary: 'Liste les workflows du tenant (avec aperçu des états)' })
@@ -41,6 +42,7 @@ export class WorkflowsController {
   }
 
   @Post()
+  @RequireModule('workflows')
   @ApiOperation({ summary: 'Créer un workflow' })
   create(@CurrentTenant() tenant: TenantCtx, @Body() dto: CreateWorkflowDto) {
     return this.workflowsService.create(tenant.id, dto);
@@ -48,12 +50,14 @@ export class WorkflowsController {
 
   // /set-default must come before /:id to avoid route collision
   @Patch(':id/set-default')
+  @RequireModule('workflows')
   @ApiOperation({ summary: 'Définir comme workflow par défaut pour son entity_type' })
   setDefault(@CurrentTenant() tenant: TenantCtx, @Param('id') id: string) {
     return this.workflowsService.setDefault(tenant.id, id);
   }
 
   @Post(':id/duplicate')
+  @RequireModule('workflows')
   @ApiOperation({ summary: 'Dupliquer un workflow (états + transitions)' })
   duplicate(@CurrentTenant() tenant: TenantCtx, @Param('id') id: string) {
     return this.workflowsService.duplicate(tenant.id, id);
@@ -66,6 +70,7 @@ export class WorkflowsController {
   }
 
   @Patch(':id')
+  @RequireModule('workflows')
   @ApiOperation({ summary: 'Modifier le nom ou entity_type du workflow' })
   update(
     @CurrentTenant() tenant: TenantCtx,
@@ -76,6 +81,7 @@ export class WorkflowsController {
   }
 
   @Delete(':id')
+  @RequireModule('workflows')
   @ApiOperation({ summary: 'Supprimer un workflow (refusé si workflow par défaut)' })
   remove(@CurrentTenant() tenant: TenantCtx, @Param('id') id: string) {
     return this.workflowsService.remove(tenant.id, id);
@@ -90,6 +96,7 @@ export class WorkflowsController {
   }
 
   @Post(':id/states')
+  @RequireModule('workflows')
   @ApiOperation({ summary: 'Ajouter un état' })
   createState(
     @CurrentTenant() tenant: TenantCtx,
@@ -100,6 +107,7 @@ export class WorkflowsController {
   }
 
   @Patch(':id/states/:stateId')
+  @RequireModule('workflows')
   @ApiOperation({ summary: 'Modifier un état (nom, couleur, flags, sort_order)' })
   updateState(
     @CurrentTenant() tenant: TenantCtx,
@@ -111,6 +119,7 @@ export class WorkflowsController {
   }
 
   @Delete(':id/states/:stateId')
+  @RequireModule('workflows')
   @ApiOperation({ summary: 'Supprimer un état (refusé si des commandes y sont)' })
   removeState(
     @CurrentTenant() tenant: TenantCtx,
@@ -129,6 +138,7 @@ export class WorkflowsController {
   }
 
   @Post(':id/transitions')
+  @RequireModule('workflows')
   @ApiOperation({ summary: 'Ajouter une transition' })
   createTransition(
     @CurrentTenant() tenant: TenantCtx,
@@ -139,6 +149,7 @@ export class WorkflowsController {
   }
 
   @Patch(':id/transitions/:tid')
+  @RequireModule('workflows')
   @ApiOperation({ summary: 'Modifier une transition' })
   updateTransition(
     @CurrentTenant() tenant: TenantCtx,
@@ -150,6 +161,7 @@ export class WorkflowsController {
   }
 
   @Delete(':id/transitions/:tid')
+  @RequireModule('workflows')
   @ApiOperation({ summary: 'Supprimer une transition' })
   removeTransition(
     @CurrentTenant() tenant: TenantCtx,
