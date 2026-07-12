@@ -317,6 +317,8 @@ export class TenantsService {
       ownerEmail: string;
       ownerName: string;
       regionId: string;
+      phone?: string | null;
+      city?: string | null;
     },
     planId?: string,
   ) {
@@ -326,6 +328,11 @@ export class TenantsService {
       : await this.prisma.plan.findFirst({ where: { name: 'Starter', isActive: true } });
 
     if (!plan) throw new BadRequestException('Plan introuvable');
+
+    const region = await this.prisma.region.findUnique({
+      where: { id: request.regionId },
+      select: { countryName: true },
+    });
 
     // Vérifier l'email avant toute création en base
     const existingUser = await this.prisma.user.findUnique({ where: { email: request.ownerEmail } });
@@ -417,15 +424,25 @@ export class TenantsService {
         data: { tenantId: tenant.id },
       });
 
-      // 6bis. Seed le nom du restaurant dans les settings (lu par le dashboard)
-      await tx.setting.create({
-        data: {
-          tenantId: tenant.id,
-          key: 'restaurant_name',
-          value: tenant.name,
-          type: SettingType.string,
-          category: 'general',
-        },
+      // 6bis. Seed les infos du restaurant dans les settings (lues par le dashboard),
+      // à partir des données déjà renseignées lors de la demande d'ouverture.
+      const generalSeeds: Record<string, string | null | undefined> = {
+        restaurant_name: tenant.name,
+        restaurant_phone: request.phone,
+        restaurant_city: request.city,
+        restaurant_country: region?.countryName,
+      };
+
+      await tx.setting.createMany({
+        data: Object.entries(generalSeeds)
+          .filter(([, value]) => !!value)
+          .map(([key, value]) => ({
+            tenantId: tenant.id,
+            key,
+            value: value as string,
+            type: SettingType.string,
+            category: 'general',
+          })),
       });
 
       // 7. Créer les workflows par défaut

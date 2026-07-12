@@ -114,4 +114,15 @@ export const WHATSAPP_TOOLS: Anthropic.Tool[] = [
     description: 'Réinitialise la conversation pour permettre au client de choisir un autre restaurant (abandonne le panier en cours).',
     input_schema: { type: 'object', properties: {} },
   },
+  {
+    name: 'send_menu_photos',
+    description:
+      "Envoie au client des photos des plats du restaurant confirmé (menu du jour / plats vedettes), chacune avec son nom et son prix en légende. À utiliser quand le client demande à voir le menu en photos, des images, ou \"le menu du jour\". Nécessite un restaurant déjà confirmé.",
+    input_schema: {
+      type: 'object',
+      properties: {
+        count: { type: 'integer', minimum: 1, maximum: 5, description: 'Nombre de plats à montrer (défaut 3)' },
+      },
+    },
+  },
 ];

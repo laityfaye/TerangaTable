@@ -40,6 +40,7 @@ export class StorageService {
   private readonly s3: S3Client;
   private readonly bucket: string;
   private readonly publicUrl: string;
+  private readonly apiPublicUrl: string;
 
   constructor(private readonly config: ConfigService) {
     const endpoint = this.config.get<string>('S3_ENDPOINT', 'http://localhost:9000');
@@ -47,6 +48,13 @@ export class StorageService {
 
     this.bucket = this.config.get<string>('S3_BUCKET', 'terangatable');
     this.publicUrl = this.config.get<string>('S3_PUBLIC_URL', endpoint);
+    // URL publiquement joignable pour le fallback filesystem local (dev) — distincte
+    // de S3_PUBLIC_URL qui vise le bucket MinIO. Doit pointer vers un tunnel public
+    // (ex: ngrok) pour que Twilio puisse récupérer les images envoyées sur WhatsApp.
+    this.apiPublicUrl = this.config.get<string>(
+      'API_PUBLIC_URL',
+      `http://localhost:${this.config.get<string>('PORT', '3001')}`,
+    );
 
     this.s3 = new S3Client({
       endpoint,
@@ -191,8 +199,7 @@ export class StorageService {
     const filePath    = path.join(uploadsRoot, key);
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, body);
-    const port = process.env['PORT'] ?? '3001';
-    return `http://localhost:${port}/uploads/${key}`;
+    return `${this.apiPublicUrl}/uploads/${key}`;
   }
 
   private validateFile(file: Express.Multer.File): void {

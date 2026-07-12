@@ -29,6 +29,9 @@ export class WhatsappWebhookController {
     const from = body['From'];
     const messageSid = body['MessageSid'];
     const text = body['Body'] ?? '';
+    const numMedia = parseInt(body['NumMedia'] ?? '0', 10);
+    const mediaUrl = numMedia > 0 ? body['MediaUrl0'] : undefined;
+    const mediaContentType = numMedia > 0 ? body['MediaContentType0'] : undefined;
 
     if (!from || !messageSid) return;
 
@@ -39,6 +42,6 @@ export class WhatsappWebhookController {
 
     if (!acquired) return; // livraison dupliquée — déjà traitée
 
-    await this.whatsappService.handleInboundMessage(from, text, messageSid);
+    await this.whatsappService.handleInboundMessage(from, text, messageSid, mediaUrl, mediaContentType);
   }
 }

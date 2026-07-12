@@ -5,6 +5,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { MarketplaceService } from '../marketplace/marketplace.service';
 import { MenuContextService } from './services/menu-context.service';
 import { TwilioClientService } from './services/twilio-client.service';
+import { VoiceTranscriptionService } from './services/voice-transcription.service';
 import { WhatsappOrdersService, DraftCartItem } from './whatsapp-orders.service';
 import { WHATSAPP_TOOLS } from './tools/tool-definitions';
 import { WHATSAPP_PERSONA_PROMPT } from './prompts/system-prompt';
@@ -39,17 +40,38 @@ export class WhatsappService {
     private readonly menuContext: MenuContextService,
     private readonly twilio: TwilioClientService,
     private readonly whatsappOrders: WhatsappOrdersService,
+    private readonly voiceTranscription: VoiceTranscriptionService,
   ) {
     const apiKey = this.config.get<string>('ANTHROPIC_API_KEY');
     this.anthropic = apiKey ? new Anthropic({ apiKey }) : null;
   }
 
-  async handleInboundMessage(fromRaw: string, body: string, messageSid: string): Promise<void> {
+  async handleInboundMessage(
+    fromRaw: string,
+    body: string,
+    messageSid: string,
+    mediaUrl?: string,
+    mediaContentType?: string,
+  ): Promise<void> {
     const phone = fromRaw.replace(/^whatsapp:/, '');
 
     if (!this.anthropic) {
       this.logger.warn('ANTHROPIC_API_KEY absent — message ignoré');
       await this.twilio.sendMessage(phone, FALLBACK_MESSAGE);
+      return;
+    }
+
+    let effectiveBody = body;
+    if (!effectiveBody.trim() && mediaUrl && mediaContentType?.startsWith('audio/')) {
+      const transcript = await this.voiceTranscription.transcribeFromTwilioMedia(mediaUrl, mediaContentType);
+      if (transcript) {
+        effectiveBody = transcript;
+      }
+    }
+
+    if (!effectiveBody.trim()) {
+      // Message sans texte (photo, audio non transcrit, autocollant…) — Claude refuse tout contenu vide.
+      await this.twilio.sendMessage(phone, "Je ne peux lire que du texte pour l'instant — pouvez-vous reformuler votre demande par écrit ?");
       return;
     }
 
@@ -63,13 +85,13 @@ export class WhatsappService {
 
     let replyText: string;
     try {
-      replyText = await this.runConversationTurn(state, body, phone);
+      replyText = await this.runConversationTurn(state, effectiveBody, phone);
     } catch (err) {
       this.logger.error(`Erreur conversation WhatsApp (${phone}): ${(err as Error).message}`);
       replyText = FALLBACK_MESSAGE;
     }
 
-    state.history.push({ role: 'user', content: body });
+    state.history.push({ role: 'user', content: effectiveBody });
     state.history.push({ role: 'assistant', content: replyText });
     if (state.history.length > MAX_HISTORY_TURNS * 2) {
       state.history = state.history.slice(-MAX_HISTORY_TURNS * 2);
@@ -99,7 +121,7 @@ export class WhatsappService {
       customerId: existing.customerId,
       stage: existing.stage,
       draftCart: (existing.draftCart as unknown as DraftCartItem[]) ?? [],
-      history: (existing.history as unknown as HistoryTurn[]) ?? [],
+      history: ((existing.history as unknown as HistoryTurn[]) ?? []).filter((h) => h.content.trim()),
     };
   }
 
@@ -217,6 +239,8 @@ export class WhatsappService {
           return await this.toolCheckOrderStatus(input, state, phone);
         case 'switch_restaurant':
           return this.toolSwitchRestaurant(state);
+        case 'send_menu_photos':
+          return await this.toolSendMenuPhotos(input, state, phone);
         default:
           return { text: `Outil inconnu: ${name}`, isError: true };
       }
@@ -375,6 +399,41 @@ export class WhatsappService {
       return { text: 'Aucune commande trouvée.', isError: false };
     }
     return { text: `Commande ${order.orderNumber} : ${order.status}, total ${order.total}.`, isError: false };
+  }
+
+  private async toolSendMenuPhotos(input: Record<string, unknown>, state: ConversationState, phone: string) {
+    if (!state.tenantId) {
+      return { text: 'Aucun restaurant confirmé — utilise confirm_restaurant avant send_menu_photos.', isError: true };
+    }
+    const count = Math.min(5, Math.max(1, Number(input['count'] ?? 3)));
+
+    const products = await this.prisma.product.findMany({
+      where: { tenantId: state.tenantId, isAvailable: true, imageUrl: { not: null } },
+      select: { name: true, basePrice: true, imageUrl: true },
+      orderBy: [{ isFeatured: 'desc' }, { sortOrder: 'asc' }],
+      take: count,
+    });
+
+    if (products.length === 0) {
+      return { text: 'Aucune photo disponible pour ce menu actuellement.', isError: false };
+    }
+
+    const tenant = await this.menuContext.getTenantInfo(state.tenantId);
+    const apiPublicUrl = this.config.get<string>('API_PUBLIC_URL', 'http://localhost:3001');
+    // Envois en parallèle — chaque appel Twilio est un aller-retour réseau (~1-2s),
+    // les envoyer séquentiellement multiplie la latence perçue par le nombre de photos.
+    await Promise.all(
+      products.map((product) => {
+        const price = Number(product.basePrice).toFixed(0);
+        const caption = `${product.name} — ${price} ${tenant?.currencySymbol ?? ''}`;
+        // WhatsApp (Twilio) n'accepte pas le WebP produit par le pipeline de stockage —
+        // reconversion à la volée en JPEG via le proxy dédié (voir whatsapp-media.controller.ts).
+        const jpegUrl = `${apiPublicUrl}/v1/whatsapp/media-proxy?src=${encodeURIComponent(product.imageUrl!)}`;
+        return this.twilio.sendMessage(phone, caption, [jpegUrl]);
+      }),
+    );
+
+    return { text: `${products.length} photo(s) envoyée(s) au client — ne les redécris pas dans ta réponse texte.`, isError: false };
   }
 
   private toolSwitchRestaurant(state: ConversationState) {

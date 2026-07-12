@@ -38,27 +38,47 @@ export class SettingsService {
     }
 
     // Auto-réparation pour les tenants onboardés avant l'ajout du seed
-    // automatique (voir TenantsService.onboardTenant/create) : `restaurant_name`
-    // n'existe pas encore en base alors que `tenant.name` est toujours renseigné.
-    if (!grouped.general?.['restaurant_name']) {
+    // automatique (voir TenantsService.onboardTenant/create) : `restaurant_name`,
+    // `restaurant_phone`, `restaurant_city` et `restaurant_country` n'existent pas
+    // encore en base alors que ces infos ont déjà été renseignées lors de la
+    // demande d'ouverture (TenantRequest) et via la région du tenant.
+    const missingKeys = (['restaurant_name', 'restaurant_phone', 'restaurant_city', 'restaurant_country'] as const)
+      .filter((key) => !grouped.general?.[key]);
+
+    if (missingKeys.length > 0) {
       const tenant = await this.prisma.tenant.findUnique({
         where: { id: tenantId },
-        select: { name: true },
-      });
-      if (tenant?.name) {
-        const seeded = await this.prisma.setting.upsert({
-          where: { tenantId_key: { tenantId, key: 'restaurant_name' } },
-          create: {
-            tenantId,
-            key: 'restaurant_name',
-            value: tenant.name,
-            type: SettingType.string,
-            category: 'general',
+        select: {
+          name: true,
+          region: { select: { countryName: true } },
+          tenantRequests: {
+            where: { status: 'approved' },
+            orderBy: { reviewedAt: 'desc' },
+            select: { phone: true, city: true },
+            take: 1,
           },
-          update: {},
-        });
-        settings.push(seeded);
-        grouped.general = { ...grouped.general, restaurant_name: seeded.value };
+        },
+      });
+      if (tenant) {
+        const request = tenant.tenantRequests[0];
+        const values: Record<string, string | undefined> = {
+          restaurant_name: tenant.name,
+          restaurant_phone: request?.phone ?? undefined,
+          restaurant_city: request?.city ?? undefined,
+          restaurant_country: tenant.region?.countryName,
+        };
+
+        for (const key of missingKeys) {
+          const value = values[key];
+          if (!value) continue;
+          const seeded = await this.prisma.setting.upsert({
+            where: { tenantId_key: { tenantId, key } },
+            create: { tenantId, key, value, type: SettingType.string, category: 'general' },
+            update: {},
+          });
+          settings.push(seeded);
+          grouped.general = { ...grouped.general, [key]: seeded.value };
+        }
       }
     }
 

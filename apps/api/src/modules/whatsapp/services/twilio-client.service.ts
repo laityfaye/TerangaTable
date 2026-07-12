@@ -15,8 +15,12 @@ export class TwilioClientService {
     this.client = accountSid && authToken ? Twilio(accountSid, authToken) : null;
   }
 
-  /** `to` est un numéro E.164 sans préfixe (ex: "+221771234567") — le préfixe whatsapp: est ajouté ici. */
-  async sendMessage(to: string, body: string): Promise<void> {
+  /**
+   * `to` est un numéro E.164 sans préfixe (ex: "+221771234567") — le préfixe whatsapp: est ajouté ici.
+   * `mediaUrls` doit pointer vers des URLs publiquement accessibles (Twilio les récupère
+   * lui-même) — inutilisable avec des URLs localhost/tunnel privé.
+   */
+  async sendMessage(to: string, body: string, mediaUrls?: string[]): Promise<void> {
     if (!this.client || !this.fromNumber) {
       this.logger.warn('Twilio non configuré — message non envoyé');
       return;
@@ -26,6 +30,7 @@ export class TwilioClientService {
         from: `whatsapp:${this.fromNumber}`,
         to: to.startsWith('whatsapp:') ? to : `whatsapp:${to}`,
         body,
+        ...(mediaUrls && mediaUrls.length > 0 ? { mediaUrl: mediaUrls } : {}),
       });
     } catch (err) {
       this.logger.error(`Échec envoi WhatsApp vers ${to}: ${(err as Error).message}`);

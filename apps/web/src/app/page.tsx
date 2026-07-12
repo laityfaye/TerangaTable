@@ -27,9 +27,9 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: '/' },
   openGraph: {
-    title: 'TérangaTable — Le Shopify + Odoo de la restauration en Afrique',
+    title: 'TérangaTable — Shopify + Odoo de la restauration en Afrique',
     description:
-      "Caisse POS, menu digital, commandes, réservations et marketplace de restaurants africains. Découvrez et digitalisez la restauration à Dakar, Abidjan, Casablanca et plus.",
+      "Caisse POS, menu digital, commandes et réservations pour digitaliser les restaurants africains à Dakar, Abidjan, Casablanca.",
     type: 'website',
     url: '/',
   },
