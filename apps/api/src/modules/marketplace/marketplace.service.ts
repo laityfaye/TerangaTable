@@ -90,7 +90,7 @@ export interface TenantSettingsJson {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const DAY_NAMES = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
 function isOpenNow(hours?: OpeningHours): boolean {
   if (!hours) return true;

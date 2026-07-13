@@ -160,7 +160,7 @@ export function formatDistance(km: number): string {
 /** Vérifie si un restaurant est ouvert maintenant (côté client) */
 export function checkIsOpenNow(opening_hours: Record<string, { open: string; close: string; closed?: boolean } | null> | null): boolean {
   if (!opening_hours) return true;
-  const dayNames = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   const now = new Date();
   const dayName = dayNames[now.getDay()];
   const todayHours = opening_hours[dayName ?? ''];
