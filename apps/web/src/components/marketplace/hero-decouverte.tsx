@@ -156,8 +156,10 @@ export default function HeroDecouverte({ cityName, citySlug, stats, suggestedCit
     ? `${stats.restaurant_count}+`
     : '500+';
 
+  const heroMinHeightClass = cityName ? 'min-h-[40svh] lg:min-h-[100svh]' : 'min-h-[100svh]';
+
   return (
-    <section className="relative min-h-[100svh] flex flex-col items-center justify-center overflow-hidden">
+    <section className={`relative ${heroMinHeightClass} flex flex-col items-center justify-center overflow-hidden`}>
 
       {/* ── Fond image ──────────────────────────────────────────────────────── */}
       <div className="absolute inset-0 z-0">
@@ -235,7 +237,7 @@ export default function HeroDecouverte({ cityName, citySlug, stats, suggestedCit
             <span className="relative inline-flex rounded-full h-2 w-2 bg-[#C8553D]" />
           </span>
           <span className="text-white text-xs sm:text-sm font-medium tracking-wide">
-            {restaurantCount} restaurants · Afrique & Europe
+            {cityName ? `TérangaTable ${cityName}` : `${restaurantCount} restaurants · Afrique & Europe`}
           </span>
         </div>
 
