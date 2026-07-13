@@ -156,7 +156,8 @@ export default function HeroDecouverte({ cityName, citySlug, stats, suggestedCit
     ? `${stats.restaurant_count}+`
     : '500+';
 
-  const heroMinHeightClass = cityName ? 'min-h-[40svh] lg:min-h-[100svh]' : 'min-h-[100svh]';
+  const heroMinHeightClass = cityName ? 'h-[40svh] lg:h-auto lg:min-h-[100svh]' : 'min-h-[100svh]';
+  const heroSpacingClass = cityName ? 'pt-16 pb-6 gap-3 lg:pt-28 lg:pb-20 lg:gap-7' : 'pt-28 pb-20 gap-7';
 
   return (
     <section className={`relative ${heroMinHeightClass} flex flex-col items-center justify-center overflow-hidden`}>
@@ -225,7 +226,7 @@ export default function HeroDecouverte({ cityName, citySlug, stats, suggestedCit
       )}
 
       {/* ── Contenu principal ────────────────────────────────────────────────── */}
-      <div className="relative z-10 w-full max-w-3xl mx-auto px-5 sm:px-6 pt-28 pb-20 flex flex-col items-center gap-7 text-center">
+      <div className={`relative z-10 w-full max-w-3xl mx-auto px-5 sm:px-6 flex flex-col items-center text-center ${heroSpacingClass}`}>
 
         {/* Badge live */}
         <div
@@ -277,9 +278,9 @@ export default function HeroDecouverte({ cityName, citySlug, stats, suggestedCit
           )}
         </h1>
 
-        {/* Sous-titre */}
+        {/* Sous-titre (desktop uniquement) */}
         <p
-          className={`text-white/75 text-base sm:text-lg max-w-xl leading-relaxed ${sa('anim-fade-rise', 300).className}`}
+          className={`hidden lg:block text-white/75 text-base sm:text-lg max-w-xl leading-relaxed ${sa('anim-fade-rise', 300).className}`}
           style={{ textShadow: '0 1px 12px rgba(0,0,0,0.9)', ...sa('anim-fade-rise', 300).style }}
         >
           {cityName
@@ -287,8 +288,8 @@ export default function HeroDecouverte({ cityName, citySlug, stats, suggestedCit
             : 'Commandez en ligne, réservez une table ou explorez les meilleures adresses culinaires africaines.'}
         </p>
 
-        {/* Barre de recherche */}
-        <form onSubmit={handleSearch} className={`w-full max-w-2xl ${sa('anim-spring-up', 430).className}`} style={sa('anim-spring-up', 430).style}>
+        {/* Barre de recherche (desktop uniquement) */}
+        <form onSubmit={handleSearch} className={`hidden lg:block w-full max-w-2xl ${sa('anim-spring-up', 430).className}`} style={sa('anim-spring-up', 430).style}>
           <div
             className="flex items-center bg-white rounded-2xl overflow-hidden p-1.5 gap-2"
             style={{ boxShadow: '0 25px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)' }}
@@ -374,9 +375,9 @@ export default function HeroDecouverte({ cityName, citySlug, stats, suggestedCit
           )}
         </div>
 
-        {/* Tags rapides */}
+        {/* Tags rapides (desktop uniquement) */}
         <div
-          className={`flex flex-wrap justify-center gap-2 ${sa('anim-spring-up', 660).className}`}
+          className={`hidden lg:flex flex-wrap justify-center gap-2 ${sa('anim-spring-up', 660).className}`}
           style={sa('anim-spring-up', 660).style}
         >
           <span className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-[#D4A843] font-bold uppercase tracking-widest self-center">
@@ -416,10 +417,10 @@ export default function HeroDecouverte({ cityName, citySlug, stats, suggestedCit
           </div>
         )}
 
-        {/* ── Cartes flottantes — version mobile & tablette (dans le flux) ── */}
+        {/* ── Cartes flottantes — version mobile & tablette (dans le flux, desktop/pages ville hors mobile) ── */}
         {mobileCardsVisible && (
           <div
-            className={`flex lg:hidden gap-3 justify-center flex-wrap w-full mt-2 relative ${sa('anim-spring-up', 850).className}`}
+            className={`${cityName ? 'hidden' : 'flex'} lg:hidden gap-3 justify-center flex-wrap w-full mt-2 relative ${sa('anim-spring-up', 850).className}`}
             style={sa('anim-spring-up', 850).style}
           >
             {/* Bouton de fermeture */}
