@@ -301,7 +301,9 @@ export default function RestaurantMapClient({ restaurants, citySlug, userLat, us
           </button>
 
           {selected.hero_image_url && (
-            <img src={selected.hero_image_url} alt={selected.name} className="w-full h-24 object-cover" />
+            <div className="w-full h-24 bg-[#F5F4F2] flex items-center justify-center overflow-hidden">
+              <img src={selected.hero_image_url} alt={selected.name} className="max-w-full max-h-full object-contain" />
+            </div>
           )}
           <div className="p-3">
             <div className="flex items-start justify-between gap-2 pr-6">
