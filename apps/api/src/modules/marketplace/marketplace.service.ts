@@ -90,29 +90,64 @@ export interface TenantSettingsJson {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+function getDayNameInTimezone(date: Date, timezone: string): string {
+  return new Intl.DateTimeFormat('en-US', { timeZone: timezone, weekday: 'long' })
+    .format(date)
+    .toLowerCase();
+}
+
+function toMinutes(time: string | undefined, fallback: number): number {
+  const [h, m] = (time ?? '').split(':').map(Number);
+  return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : fallback;
+}
+
 function isOpenNow(hours?: OpeningHours, timezone?: string): boolean {
   if (!hours) return true;
   // Calculer le jour/l'heure dans le fuseau horaire de la région du restaurant,
   // pas celui du serveur — sinon un serveur déployé hors du fuseau du restaurant
   // (ex. Europe pour un restaurant à Dakar) affiche un statut ouvert/fermé décalé.
+  const tz = timezone || 'UTC';
+  const now = new Date();
   const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: timezone || 'UTC',
+    timeZone: tz,
     weekday: 'long',
     hour: '2-digit',
     minute: '2-digit',
     hourCycle: 'h23',
-  }).formatToParts(new Date());
+  }).formatToParts(now);
   const dayName = parts.find((p) => p.type === 'weekday')?.value.toLowerCase();
   const hour = Number(parts.find((p) => p.type === 'hour')?.value ?? 0);
   const minute = Number(parts.find((p) => p.type === 'minute')?.value ?? 0);
-  const todayHours = hours[dayName ?? ''];
-  if (!todayHours || todayHours.closed) return false;
-  const [openH, openM] = (todayHours.open ?? '00:00').split(':').map(Number);
-  const [closeH, closeM] = (todayHours.close ?? '23:59').split(':').map(Number);
   const nowMinutes = hour * 60 + minute;
-  const openMinutes = (openH ?? 0) * 60 + (openM ?? 0);
-  const closeMinutes = (closeH ?? 0) * 60 + (closeM ?? 0);
-  return nowMinutes >= openMinutes && nowMinutes <= closeMinutes;
+
+  const todayHours = hours[dayName ?? ''];
+  if (todayHours && !todayHours.closed) {
+    const openMinutes = toMinutes(todayHours.open, 0);
+    const closeMinutes = toMinutes(todayHours.close, 24 * 60 - 1);
+    if (closeMinutes < openMinutes) {
+      // Horaires traversant minuit (ex. 08:00 → 02:00) : ouvert dès l'heure
+      // d'ouverture jusqu'à minuit ; la portion après minuit est couverte par
+      // la vérification des horaires de la veille ci-dessous.
+      if (nowMinutes >= openMinutes) return true;
+    } else if (nowMinutes >= openMinutes && nowMinutes <= closeMinutes) {
+      return true;
+    }
+  }
+
+  // Horaires de la veille traversant minuit : encore ouvert tôt le matin
+  // (ex. veille 08:00 → 02:00, il est 01:00 aujourd'hui).
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const yesterdayName = getDayNameInTimezone(yesterday, tz);
+  const yesterdayHours = hours[yesterdayName];
+  if (yesterdayHours && !yesterdayHours.closed) {
+    const openMinutes = toMinutes(yesterdayHours.open, 0);
+    const closeMinutes = toMinutes(yesterdayHours.close, 24 * 60 - 1);
+    if (closeMinutes < openMinutes && nowMinutes <= closeMinutes) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
