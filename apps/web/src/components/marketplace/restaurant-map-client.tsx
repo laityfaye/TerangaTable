@@ -27,7 +27,7 @@ const CITY_CENTERS: Record<string, [number, number]> = {
 function createRestaurantIcon(r: MarketplaceRestaurant): L.DivIcon {
   const bg = r.is_sponsored ? '#D4A843' : r.is_open_now ? '#C8553D' : '#A8A29E';
   const inner = r.logo_url
-    ? `<img src="${r.logo_url}" width="22" height="22" style="border-radius:50%;object-fit:cover;" onerror="this.style.display='none'" />`
+    ? `<img src="${r.logo_url}" width="22" height="22" style="width:22px;height:22px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'" />`
     : `<span style="font-size:15px;line-height:1">🍽</span>`;
 
   return L.divIcon({

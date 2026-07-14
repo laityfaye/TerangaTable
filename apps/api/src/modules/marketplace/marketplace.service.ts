@@ -90,17 +90,26 @@ export interface TenantSettingsJson {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-
-function isOpenNow(hours?: OpeningHours): boolean {
+function isOpenNow(hours?: OpeningHours, timezone?: string): boolean {
   if (!hours) return true;
-  const now = new Date();
-  const dayName = DAY_NAMES[now.getDay()];
+  // Calculer le jour/l'heure dans le fuseau horaire de la région du restaurant,
+  // pas celui du serveur — sinon un serveur déployé hors du fuseau du restaurant
+  // (ex. Europe pour un restaurant à Dakar) affiche un statut ouvert/fermé décalé.
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone || 'UTC',
+    weekday: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date());
+  const dayName = parts.find((p) => p.type === 'weekday')?.value.toLowerCase();
+  const hour = Number(parts.find((p) => p.type === 'hour')?.value ?? 0);
+  const minute = Number(parts.find((p) => p.type === 'minute')?.value ?? 0);
   const todayHours = hours[dayName ?? ''];
   if (!todayHours || todayHours.closed) return false;
   const [openH, openM] = (todayHours.open ?? '00:00').split(':').map(Number);
   const [closeH, closeM] = (todayHours.close ?? '23:59').split(':').map(Number);
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const nowMinutes = hour * 60 + minute;
   const openMinutes = (openH ?? 0) * 60 + (openM ?? 0);
   const closeMinutes = (closeH ?? 0) * 60 + (closeM ?? 0);
   return nowMinutes >= openMinutes && nowMinutes <= closeMinutes;
@@ -141,6 +150,7 @@ const RESTAURANT_LIST_SELECT = {
       slug: true,
       currencyCode: true,
       currencySymbol: true,
+      timezone: true,
     },
   },
   websiteSettings: {
@@ -308,7 +318,7 @@ export class MarketplaceService {
         // Extraire les slugs de modules actifs via tenant → tenantModules → module.slug
         const modules: string[] = tenant.tenantModules.map((tm) => tm.module.slug);
         const cuisineTypes: string[] = s.cuisine_types ?? (s.cuisine_type ? [s.cuisine_type] : []);
-        const openNow = isOpenNow(s.opening_hours);
+        const openNow = isOpenNow(s.opening_hours, tenant.region?.timezone);
         const hasDelivery = modules.includes('delivery');
         const hasReservations = modules.includes('reservations');
 
@@ -440,7 +450,7 @@ export class MarketplaceService {
         reviewCount: true,
         createdAt: true,
         region: {
-          select: { name: true, slug: true, currencyCode: true, currencySymbol: true },
+          select: { name: true, slug: true, currencyCode: true, currencySymbol: true, timezone: true },
         },
         websiteSettings: {
           select: {
@@ -498,7 +508,7 @@ export class MarketplaceService {
       lat: s.lat ?? null,
       lng: s.lng ?? null,
       opening_hours: s.opening_hours ?? null,
-      is_open_now: isOpenNow(s.opening_hours),
+      is_open_now: isOpenNow(s.opening_hours, tenant.region?.timezone),
       rating: Number(tenant.avgRating),
       review_count: tenant.reviewCount,
       price_range: s.price_range ?? 2,
@@ -709,7 +719,7 @@ export class MarketplaceService {
         settings: true,
         avgRating: true,
         reviewCount: true,
-        region: { select: { name: true, currencySymbol: true } },
+        region: { select: { name: true, currencySymbol: true, timezone: true } },
         websiteSettings: {
           select: { logoUrl: true, heroImageUrl: true, primaryColor: true },
         },
@@ -735,7 +745,7 @@ export class MarketplaceService {
           rating: Number(t.avgRating),
           review_count: t.reviewCount,
           price_range: s.price_range ?? 2,
-          is_open_now: isOpenNow(s.opening_hours),
+          is_open_now: isOpenNow(s.opening_hours, t.region?.timezone),
           delivery_available: false,
           estimated_delivery_time: s.estimated_delivery_time ?? 30,
           is_sponsored: s.is_sponsored ?? false,
@@ -814,7 +824,7 @@ export class MarketplaceService {
         name: true,
         settings: true,
         region: {
-          select: { currencySymbol: true },
+          select: { currencySymbol: true, timezone: true },
         },
         websiteSettings: {
           select: { logoUrl: true },
@@ -844,7 +854,7 @@ export class MarketplaceService {
     const result = tenants
       .filter((t) => {
         const s = (t.settings ?? {}) as TenantSettingsJson;
-        return isOpenNow(s.opening_hours);
+        return isOpenNow(s.opening_hours, t.region?.timezone);
       })
       .sort((a, b) => b._count.orders - a._count.orders)
       .slice(0, limit)
