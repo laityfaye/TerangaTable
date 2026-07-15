@@ -1,7 +1,9 @@
 export interface TicketData {
   restaurantName:     string;
+  restaurantLogoUrl?: string;
   restaurantAddress?: string;
   restaurantPhone?:   string;
+  cashierName?:       string;
   orderNumber:        string;
   orderType:          string;
   tableNumber?:       string;
@@ -91,6 +93,7 @@ export function buildTicketHtml(d: TicketData): string {
     `<span>🕐 ${timeStr}</span>`,
     ...(d.tableNumber  ? [`<span>🪑 Table ${esc(d.tableNumber)}</span>`]  : []),
     ...(d.customerName ? [`<span>👤 ${esc(d.customerName)}</span>`]        : []),
+    ...(d.cashierName  ? [`<span>🧑‍🍳 ${esc(d.cashierName)}</span>`]       : []),
   ].join('');
 
   const payIcon  = d.paymentMethodIcon ?? '💳';
@@ -120,6 +123,14 @@ export function buildTicketHtml(d: TicketData): string {
     .header { text-align: center; padding-bottom: 14px; }
 
     .brand-icon { font-size: 28px; display: block; margin-bottom: 4px; }
+
+    .brand-logo {
+      display: block;
+      max-width: 140px;
+      max-height: 56px;
+      margin: 0 auto 6px;
+      object-fit: contain;
+    }
 
     .brand {
       font-size: 20px;
@@ -359,7 +370,9 @@ export function buildTicketHtml(d: TicketData): string {
 
   <!-- ── HEADER ── -->
   <div class="header">
-    <span class="brand-icon">🍽️</span>
+    ${d.restaurantLogoUrl
+      ? `<img class="brand-logo" src="${esc(d.restaurantLogoUrl)}" alt="${esc(d.restaurantName)}">`
+      : '<span class="brand-icon">🍽️</span>'}
     <div class="brand">${esc(d.restaurantName.toUpperCase())}</div>
     <div class="sub-brand">La table du partage</div>
     ${d.restaurantAddress || d.restaurantPhone ? `

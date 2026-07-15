@@ -26,6 +26,7 @@ import {
 } from '@/hooks/orders/use-orders';
 import { type PaymentSuccess } from '@/components/payments/payment-modal';
 import { usePosCurrentSession } from '@/hooks/pos/use-pos-session';
+import { useWebsiteSettings } from '@/hooks/website/use-website-settings';
 import { PaymentModal } from '@/components/payments/payment-modal';
 import { SessionOpenModal } from './_components/session-open-modal';
 import { SessionCloseModal } from './_components/session-close-modal';
@@ -389,6 +390,7 @@ function PendingOrderCard({
 export default function POSPage() {
   const user    = useAuthStore((s) => s.user);
   const qc      = useQueryClient();
+  const { data: websiteSettings } = useWebsiteSettings();
 
   // ── Session ──
   const { data: session, isLoading: sessionLoading, error: sessionError } = usePosCurrentSession();
@@ -626,7 +628,9 @@ export default function POSPage() {
 
   // ── After payment success ──
   function handlePaymentSuccess(payment: PaymentSuccess) {
-    const tenantName = user?.firstName ?? 'Restaurant';
+    const tenantName  = user?.firstName ?? 'Restaurant';
+    const logoUrl      = websiteSettings?.logo_url ?? undefined;
+    const cashierName  = user ? `${user.firstName} ${user.lastName}`.trim() : undefined;
 
     if (selectedExistingOrder) {
       // Print ticket for existing order
@@ -634,6 +638,8 @@ export default function POSPage() {
       const typeMeta = POS_TYPE_META[selectedExistingOrder.type] ?? { label: selectedExistingOrder.type };
       printTicket({
         restaurantName:    tenantName,
+        ...(logoUrl ? { restaurantLogoUrl: logoUrl } : {}),
+        ...(cashierName ? { cashierName } : {}),
         orderNumber:       selectedExistingOrder.order_number,
         orderType:         typeMeta.label,
         ...(selectedExistingOrder.table ? { tableNumber: selectedExistingOrder.table.number } : {}),
@@ -682,6 +688,8 @@ export default function POSPage() {
     const tableNum = tableId ? tables.find((t) => t.id === tableId)?.number : undefined;
     printTicket({
       restaurantName:    tenantName,
+      ...(logoUrl ? { restaurantLogoUrl: logoUrl } : {}),
+      ...(cashierName ? { cashierName } : {}),
       orderNumber:       `N°${orderSeq - 1}`,
       orderType:         orderType === 'dine_in' ? 'Sur place' : 'À emporter',
       ...(tableNum ? { tableNumber: tableNum } : {}),
