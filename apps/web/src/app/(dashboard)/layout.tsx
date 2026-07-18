@@ -31,6 +31,7 @@ import { UserRole } from '@terangatable/shared';
 import { NotificationsBell } from '@/components/notifications/notifications-bell';
 import { prefetchRoute } from '@/lib/prefetch';
 import { useSettings } from '@/hooks/settings/use-settings';
+import RoleAudioGuide from '@/components/dashboard/role-audio-guide';
 
 interface NavItem {
   label: string;
@@ -425,6 +426,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [mobileOpen, setMobileOpen] = useState(false);
   const isLoading = useAuthStore((s) => s.isLoading);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
+  const primaryRole = user?.roles?.[0];
 
   const pathname = usePathname();
   useEffect(() => setMobileOpen(false), [pathname]);
@@ -466,6 +469,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </main>
       </div>
+
+      {/* Guide audio d'accueil, adapté au rôle connecté */}
+      {isAuthenticated && primaryRole && <RoleAudioGuide role={primaryRole} />}
     </div>
   );
 }
