@@ -20,6 +20,46 @@ function guideScript(cityName: string) {
   );
 }
 
+// Chrome ships several French voices (offline robotic ones plus much more
+// natural "Online (Natural)"/neural/Google ones) but only exposes the full
+// list asynchronously via the voiceschanged event — pick the best one once
+// it's available instead of leaving the browser default (usually the first,
+// most robotic voice in the list).
+function getVoicesAsync(): Promise<SpeechSynthesisVoice[]> {
+  return new Promise((resolve) => {
+    const existing = window.speechSynthesis.getVoices();
+    if (existing.length > 0) {
+      resolve(existing);
+      return;
+    }
+    const handler = () => {
+      window.speechSynthesis.removeEventListener('voiceschanged', handler);
+      resolve(window.speechSynthesis.getVoices());
+    };
+    window.speechSynthesis.addEventListener('voiceschanged', handler);
+    setTimeout(() => {
+      window.speechSynthesis.removeEventListener('voiceschanged', handler);
+      resolve(window.speechSynthesis.getVoices());
+    }, 500);
+  });
+}
+
+function pickBestFrenchVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null {
+  const french = voices.filter((v) => v.lang.toLowerCase().startsWith('fr'));
+  if (french.length === 0) return null;
+
+  const score = (v: SpeechSynthesisVoice) => {
+    const name = v.name.toLowerCase();
+    if (name.includes('online') && name.includes('natural')) return 4; // Edge neural
+    if (name.includes('neural')) return 4;
+    if (name.includes('google')) return 3; // Chrome's network French voice
+    if (v.lang.toLowerCase() === 'fr-fr') return 2;
+    return 1;
+  };
+
+  return [...french].sort((a, b) => score(b) - score(a))[0];
+}
+
 // Chrome/Safari can reject speech playback started without a user gesture tied
 // to the current page load, so we try to autoplay once and fall back to a
 // visible "tap to listen" prompt if the browser refuses.
@@ -27,6 +67,14 @@ export default function CityAudioGuide({ cityName }: Props) {
   const [visible, setVisible] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    getVoicesAsync().then((voices) => {
+      voicesRef.current = voices;
+    });
+  }, []);
 
   function speakGuide(onBlocked: () => void, onDone: () => void) {
     try {
@@ -35,8 +83,11 @@ export default function CityAudioGuide({ cityName }: Props) {
         return;
       }
       const utterance = new SpeechSynthesisUtterance(guideScript(cityName));
+      const bestVoice = pickBestFrenchVoice(voicesRef.current);
+      if (bestVoice) utterance.voice = bestVoice;
       utterance.lang = 'fr-FR';
-      utterance.rate = 0.98;
+      utterance.rate = 0.95;
+      utterance.pitch = 1;
       utterance.onstart = () => setSpeaking(true);
       utterance.onend = () => {
         setSpeaking(false);
