@@ -712,21 +712,40 @@ const ABOUT_IMAGES = [
   'https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?auto=format&fit=crop&w=800&q=80',
 ];
 
-function AboutSection() {
-  const [idx, setIdx] = useState(0);
+// Deux "pistes" d'images qui défilent indépendamment, crossfade continu (comme le hero)
+const ABOUT_SLOT_A = [ABOUT_IMAGES[0], ABOUT_IMAGES[2], ABOUT_IMAGES[4]];
+const ABOUT_SLOT_B = [ABOUT_IMAGES[1], ABOUT_IMAGES[3], ABOUT_IMAGES[5]];
+
+function AboutImageSlot({ images, className }: { images: string[]; className: string }) {
+  const [step, setStep] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setIdx((i) => (i + 2) % ABOUT_IMAGES.length);
+      setStep((s) => (s + 1) % images.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
-
-  const first = ABOUT_IMAGES[idx];
-  const second = ABOUT_IMAGES[(idx + 1) % ABOUT_IMAGES.length];
+  }, [images.length]);
 
   return (
-    <section className="py-20 sm:py-28 px-4 sm:px-6 bg-white overflow-hidden">
+    <div className={className}>
+      {images.map((src, i) => (
+        <motion.img
+          key={src}
+          src={src}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+          initial={false}
+          animate={{ opacity: i === step ? 1 : 0, scale: i === step ? 1 : 1.06 }}
+          transition={{ duration: 1.4, ease: EASE }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function AboutSection() {
+  return (
+    <section className="py-20 sm:py-28 px-4 sm:px-6 bg-[#0C0C0A] overflow-hidden">
       <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 md:gap-16 items-center">
         {/* Texte */}
         <motion.div
@@ -736,26 +755,26 @@ function AboutSection() {
           transition={{ duration: 0.7, ease: EASE }}
         >
           <h2
-            className="text-3xl sm:text-4xl font-bold text-[#1C1917] mb-6 leading-[1.15] tracking-tight"
+            className="text-3xl sm:text-4xl font-bold text-white mb-6 leading-[1.15] tracking-tight"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
             L&apos;innovation au service de l&apos;efficacité opérationnelle.
           </h2>
-          <p className="text-[#57534E] text-base leading-relaxed mb-8">
+          <p className="text-white/55 text-base leading-relaxed mb-8">
             TérangaTable est une plateforme de gestion tout-en-un spécialement conçue pour
             l&apos;industrie de la restauration africaine. Elle intègre des systèmes de point de
             vente, des menus numériques, des réservations en ligne et des analyses avancées dans
             un seul outil, aidant les propriétaires à rationaliser les opérations et à augmenter
             leurs revenus grâce à un écosystème numérique localisé.
           </p>
-          <blockquote className="border-l-4 border-[#D4A843] pl-5 italic text-[#57534E] text-base leading-relaxed">
+          <blockquote className="border-l-4 border-[#D4A843] pl-5 italic text-white/55 text-base leading-relaxed">
             TérangaTable positions itself as a comprehensive SaaS solution that bridges the gap
             between traditional hospitality and modern digital management, tailored specifically
             for African urban markets.
           </blockquote>
         </motion.div>
 
-        {/* Images — se renouvellent par deux toutes les 5 secondes */}
+        {/* Images — deux pistes qui se renouvellent en fondu toutes les 5 secondes */}
         <motion.div
           className="relative h-[420px] sm:h-[480px]"
           initial={{ opacity: 0, y: 28 }}
@@ -763,34 +782,14 @@ function AboutSection() {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.7, delay: 0.1, ease: EASE }}
         >
-          <div className="absolute left-0 top-10 w-[58%] h-[85%] rounded-2xl overflow-hidden shadow-2xl shadow-black/20">
-            <AnimatePresence mode="wait">
-              <motion.img
-                key={first}
-                src={first}
-                alt=""
-                className="absolute inset-0 w-full h-full object-cover"
-                initial={{ opacity: 0, scale: 1.05 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.9, ease: EASE }}
-              />
-            </AnimatePresence>
-          </div>
-          <div className="absolute right-0 top-0 w-[46%] h-[60%] rounded-2xl overflow-hidden shadow-2xl shadow-black/20">
-            <AnimatePresence mode="wait">
-              <motion.img
-                key={second}
-                src={second}
-                alt=""
-                className="absolute inset-0 w-full h-full object-cover"
-                initial={{ opacity: 0, scale: 1.05 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.9, ease: EASE }}
-              />
-            </AnimatePresence>
-          </div>
+          <AboutImageSlot
+            images={ABOUT_SLOT_A}
+            className="absolute left-0 top-10 w-[58%] h-[85%] rounded-2xl overflow-hidden shadow-2xl shadow-black/40 ring-1 ring-white/10"
+          />
+          <AboutImageSlot
+            images={ABOUT_SLOT_B}
+            className="absolute right-0 top-0 w-[46%] h-[60%] rounded-2xl overflow-hidden shadow-2xl shadow-black/40 ring-1 ring-white/10"
+          />
         </motion.div>
       </div>
     </section>
