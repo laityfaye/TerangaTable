@@ -10,6 +10,7 @@ import {
   CheckCircle2, Star, Package,
   ChevronLeft, ChevronRight,
 } from 'lucide-react';
+import LandingAudioGuide from './landing-audio-guide';
 
 // ── Shared ─────────────────────────────────────────────────────────────────────
 
@@ -1502,6 +1503,7 @@ export default function LandingPageClient() {
         <PricingSection />
         <CtaSection />
       </main>
+      <LandingAudioGuide />
       <LandingFooter />
     </>
   );
