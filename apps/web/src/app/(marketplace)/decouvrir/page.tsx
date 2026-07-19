@@ -11,6 +11,7 @@ import HeroDecouverte from '@/components/marketplace/hero-decouverte';
 import CuisineCategories from '@/components/marketplace/cuisine-categories';
 import StatsLive from '@/components/marketplace/stats-live';
 import CitySelector from '@/components/marketplace/city-selector';
+import CityAudioGuide from '@/components/marketplace/city-audio-guide';
 import type { MarketplaceCity } from '@/types/marketplace';
 
 export const revalidate = 60;
@@ -374,6 +375,9 @@ export default async function DiscoveryHomePage({
             .map((c) => ({ slug: c.slug, lat: c.lat!, lng: c.lng! }))}
         />
       </Suspense>
+
+      {/* Guide audio d'accueil */}
+      <CityAudioGuide />
 
       {/* ── Footer ── */}
       <MarketplaceFooter cities={cities.filter((c) => c.restaurant_count > 0).slice(0, 6)} />

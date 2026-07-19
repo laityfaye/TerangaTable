@@ -4,12 +4,21 @@ import { Volume2, Play, X } from 'lucide-react';
 import { useVoiceGuide } from '@/hooks/use-voice-guide';
 
 interface Props {
-  cityName: string;
+  cityName?: string;
 }
 
 const STORAGE_KEY = 'tt_audio_guide_seen';
 
-function guideScript(cityName: string) {
+function guideScript(cityName?: string) {
+  if (!cityName) {
+    return (
+      `Bienvenue sur TérangaTable ! Découvrez les meilleurs restaurants d'Afrique en un seul endroit. ` +
+      `Choisissez votre ville pour voir les restaurants disponibles, ` +
+      `tapez un plat ou un nom de restaurant dans la recherche, ` +
+      `ou activez votre position pour découvrir ce qui est ouvert près de vous. ` +
+      `Bonne découverte !`
+    );
+  }
   return (
     `Bienvenue sur TérangaTable ! Découvrez les restaurants de ${cityName}. ` +
     `Utilisez la barre de recherche pour trouver un plat ou un restaurant, ` +
