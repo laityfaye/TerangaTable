@@ -740,6 +740,8 @@ function AboutImageSlot({ images, className }: { images: string[]; className: st
           transition={{ duration: 1.4, ease: EASE }}
         />
       ))}
+      {/* Vignette pour intégrer l'image au fond sombre */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/0 to-black/10 pointer-events-none" />
     </div>
   );
 }
@@ -783,14 +785,38 @@ function AboutSection() {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.7, delay: 0.1, ease: EASE }}
         >
+          {/* Halos de couleur en fond, pour sortir les images du noir plat */}
+          <div className="absolute -top-8 -right-4 w-64 h-64 bg-[#C8553D]/20 rounded-full blur-[90px] pointer-events-none" />
+          <div className="absolute bottom-0 -left-10 w-56 h-56 bg-[#D4A843]/14 rounded-full blur-[80px] pointer-events-none" />
+
+          {/* Cadre pointillé en retrait, derrière l'image principale */}
+          <div className="absolute left-3 top-[3.25rem] w-[58%] h-[85%] rounded-2xl border border-dashed border-white/12 pointer-events-none" />
+
           <AboutImageSlot
             images={ABOUT_SLOT_A}
-            className="absolute left-0 top-10 w-[58%] h-[85%] rounded-2xl overflow-hidden shadow-2xl shadow-black/40 ring-1 ring-white/10"
+            className="absolute left-0 top-10 w-[58%] h-[85%] rounded-2xl overflow-hidden shadow-2xl shadow-black/50 ring-1 ring-white/15"
           />
           <AboutImageSlot
             images={ABOUT_SLOT_B}
-            className="absolute right-0 top-0 w-[46%] h-[60%] rounded-2xl overflow-hidden shadow-2xl shadow-black/40 ring-1 ring-white/10"
+            className="absolute right-0 top-0 w-[46%] h-[60%] rounded-2xl overflow-hidden shadow-2xl shadow-black/50 ring-1 ring-white/15"
           />
+
+          {/* Badge flottant — note moyenne */}
+          <motion.div
+            className="absolute -bottom-5 left-[36%] sm:left-[40%] w-[9.5rem] bg-[#161614]/95 backdrop-blur-md border border-white/12 rounded-2xl p-3 shadow-xl shadow-black/50"
+            initial={{ opacity: 0, y: 14 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-80px' }}
+            transition={{ duration: 0.6, delay: 0.45, ease: EASE }}
+          >
+            <div className="flex items-center gap-1.5 mb-1">
+              <Star className="w-3.5 h-3.5 fill-[#D4A843] text-[#D4A843]" />
+              <span className="text-white font-bold text-sm">4.9/5</span>
+            </div>
+            <p className="text-white/45 text-[11px] leading-snug">
+              Note moyenne des restaurateurs
+            </p>
+          </motion.div>
         </motion.div>
       </div>
     </section>
