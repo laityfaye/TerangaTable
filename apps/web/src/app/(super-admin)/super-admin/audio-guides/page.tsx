@@ -247,7 +247,7 @@ function GuideCard({ item }: { item: AudioGuideListItem }) {
                 onClick={stopRecording}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/20 text-red-300 text-xs font-medium hover:bg-red-500/30 transition-colors animate-pulse"
               >
-                <Square size={13} /> Arrêter l'enregistrement
+                <Square size={13} /> Arrêter l&apos;enregistrement
               </button>
             )}
 
@@ -305,7 +305,7 @@ export default function AudioGuidesPage() {
           Guides audio
         </h1>
         <p className="mt-1 text-sm text-slate-400 max-w-2xl">
-          Le français utilise la synthèse vocale du navigateur — rien à faire ici. Le wolof n'a pas
+          Le français utilise la synthèse vocale du navigateur — rien à faire ici. Le wolof n&apos;a pas
           de voix disponible dans les navigateurs : enregistre un vrai audio (micro ou fichier) pour
           chaque guide ci-dessous. Une fois déposé, le sélecteur Français / Wolof apparaît
           automatiquement sur la page concernée.
