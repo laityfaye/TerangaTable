@@ -1,7 +1,8 @@
 'use client';
 
 import { Volume2, Play, X } from 'lucide-react';
-import { useVoiceGuide } from '@/hooks/use-voice-guide';
+import { useVoiceGuide, type VoiceGuideSources } from '@/hooks/use-voice-guide';
+import { useAudioGuideUrl } from '@/hooks/use-audio-guides';
 
 interface Props {
   cityName?: string;
@@ -9,7 +10,13 @@ interface Props {
 
 const STORAGE_KEY = 'tt_audio_guide_seen';
 
-function guideScript(cityName?: string) {
+// Le wolof est un fichier pré-enregistré unique (pas de synthèse vocale wolof
+// dans les navigateurs) — il reste donc générique, sans nom de ville, pour
+// pouvoir être réutilisé sur /decouvrir et sur /decouvrir/[ville]. Déposé
+// depuis le super-admin (Guides audio) ; voir apps/api audio-guides module.
+const AUDIO_GUIDE_KEY = 'decouvrir';
+
+function guideScriptFr(cityName?: string) {
   if (!cityName) {
     return (
       `Bienvenue sur TérangaTable ! Découvrez les meilleurs restaurants d'Afrique en un seul endroit. ` +
@@ -30,7 +37,13 @@ function guideScript(cityName?: string) {
 }
 
 export default function CityAudioGuide({ cityName }: Props) {
-  const { visible, speaking, play, dismiss, replay } = useVoiceGuide(guideScript(cityName), STORAGE_KEY);
+  const { data: audioWoSrc } = useAudioGuideUrl(AUDIO_GUIDE_KEY);
+  const sources: VoiceGuideSources = {
+    fr: { type: 'tts', script: guideScriptFr(cityName) },
+    ...(audioWoSrc ? { wo: { type: 'audio' as const, src: audioWoSrc } } : {}),
+  };
+  const { visible, speaking, lang, availableLangs, setLang, sourceUnavailable, play, dismiss, replay } =
+    useVoiceGuide(sources, STORAGE_KEY);
 
   return (
     <div className="fixed bottom-6 left-5 z-[3000] flex flex-col items-start gap-2">
@@ -58,6 +71,28 @@ export default function CityAudioGuide({ cityName }: Props) {
               <X className="w-4 h-4" />
             </button>
           </div>
+
+          {availableLangs.length > 1 && (
+            <div className="mt-3 flex items-center gap-1.5">
+              {availableLangs.map((l) => (
+                <button
+                  key={l}
+                  onClick={() => setLang(l)}
+                  className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-colors ${
+                    lang === l ? 'bg-[#C8553D] text-white' : 'bg-[#F5F4F2] text-[#57534E] hover:bg-[#EDEAE6]'
+                  }`}
+                >
+                  {l === 'fr' ? 'Français' : 'Wolof'}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {lang === 'wo' && sourceUnavailable && (
+            <p className="mt-2 text-[11px] text-[#A8A29E] italic">
+              Audio wolof bientôt disponible — écoutez en français en attendant.
+            </p>
+          )}
 
           {!speaking && (
             <button

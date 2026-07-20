@@ -42,23 +42,43 @@ function pickBestFrenchVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoi
   return [...french].sort((a, b) => score(b) - score(a))[0];
 }
 
+// Browser TTS engines (Chrome/Edge/Safari) don't ship Wolof voices, so a
+// 'wo' guide can only be a pre-recorded audio file — never speechSynthesis.
+export type VoiceGuideLang = 'fr' | 'wo';
+
+export type VoiceGuideSource =
+  | { type: 'tts'; script: string }
+  | { type: 'audio'; src: string };
+
+export type VoiceGuideSources = Partial<Record<VoiceGuideLang, VoiceGuideSource>>;
+
 export interface VoiceGuide {
   /** Whether the guide card should be rendered (banner or replay button state is derived from this + speaking). */
   visible: boolean;
   speaking: boolean;
-  /** Speak the script — call from a real click handler so the browser accepts it even if autoplay was blocked. */
+  lang: VoiceGuideLang;
+  /** Languages this guide actually has a source for — drives whether the language toggle renders. */
+  availableLangs: VoiceGuideLang[];
+  setLang: (lang: VoiceGuideLang) => void;
+  /** True once the current language's source has failed to play (e.g. the Wolof mp3 isn't uploaded yet). */
+  sourceUnavailable: boolean;
+  /** Speak the current-language script — call from a real click handler so the browser accepts it even if autoplay was blocked. */
   play: () => void;
   dismiss: () => void;
   replay: () => void;
 }
 
-// Chrome/Safari can reject speech playback started without a user gesture tied
+// Chrome/Safari can reject speech/audio playback started without a user gesture tied
 // to the current page load, so we try to autoplay once on mount and fall back
 // to a visible "tap to listen" prompt if the browser refuses.
-export function useVoiceGuide(script: string, storageKey: string): VoiceGuide {
+export function useVoiceGuide(sources: VoiceGuideSources, storageKey: string): VoiceGuide {
+  const availableLangs = (['fr', 'wo'] as const).filter((l) => sources[l]);
   const [visible, setVisible] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [lang, setLangState] = useState<VoiceGuideLang>(sources.fr ? 'fr' : (availableLangs[0] ?? 'fr'));
+  const [sourceUnavailable, setSourceUnavailable] = useState(false);
   const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
@@ -67,7 +87,15 @@ export function useVoiceGuide(script: string, storageKey: string): VoiceGuide {
     });
   }, []);
 
-  function speak(onBlocked: () => void, onDone: () => void) {
+  function stopAll() {
+    window.speechSynthesis?.cancel();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+  }
+
+  function speakTts(script: string, onBlocked: () => void, onDone: () => void) {
     try {
       if (!('speechSynthesis' in window)) {
         onBlocked();
@@ -95,8 +123,39 @@ export function useVoiceGuide(script: string, storageKey: string): VoiceGuide {
     }
   }
 
+  function playAudioFile(src: string, onBlocked: () => void, onDone: () => void) {
+    const audio = new Audio(src);
+    audioRef.current = audio;
+    audio.onplay = () => setSpeaking(true);
+    audio.onended = () => {
+      setSpeaking(false);
+      onDone();
+    };
+    audio.onerror = () => {
+      setSpeaking(false);
+      setSourceUnavailable(true);
+      onBlocked();
+    };
+    audio.play().catch(() => {
+      setSpeaking(false);
+      setSourceUnavailable(true);
+      onBlocked();
+    });
+  }
+
+  function speakCurrent(onBlocked: () => void, onDone: () => void) {
+    const source = sources[lang];
+    if (!source) {
+      onBlocked();
+      return;
+    }
+    setSourceUnavailable(false);
+    if (source.type === 'tts') speakTts(source.script, onBlocked, onDone);
+    else playAudioFile(source.src, onBlocked, onDone);
+  }
+
   function playAndMarkSeen() {
-    speak(
+    speakCurrent(
       () => {},
       () => {
         sessionStorage.setItem(storageKey, '1');
@@ -112,14 +171,12 @@ export function useVoiceGuide(script: string, storageKey: string): VoiceGuide {
     setVisible(true);
     playAndMarkSeen();
 
-    return () => {
-      window.speechSynthesis?.cancel();
-    };
+    return () => stopAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageKey]);
 
   function dismiss() {
-    window.speechSynthesis?.cancel();
+    stopAll();
     setSpeaking(false);
     sessionStorage.setItem(storageKey, '1');
     setVisible(false);
@@ -130,5 +187,13 @@ export function useVoiceGuide(script: string, storageKey: string): VoiceGuide {
     playAndMarkSeen();
   }
 
-  return { visible, speaking, play: playAndMarkSeen, dismiss, replay };
+  function setLang(next: VoiceGuideLang) {
+    if (next === lang) return;
+    stopAll();
+    setSpeaking(false);
+    setSourceUnavailable(false);
+    setLangState(next);
+  }
+
+  return { visible, speaking, lang, availableLangs, setLang, sourceUnavailable, play: playAndMarkSeen, dismiss, replay };
 }

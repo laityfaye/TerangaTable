@@ -1090,3 +1090,19 @@ model PosSession {
   @@index([tenantId, status])
   @@map("pos_sessions")
 }
+
+// ──────────────── DOMAINE GUIDES AUDIO (PLATEFORME) ────────────────
+
+// Registre global (pas de tenantId — ce sont des pages/écrans publics de la
+// plateforme, pas du contenu par restaurant) des enregistrements audio wolof
+// déposés depuis le super-admin. Une clé sans ligne correspondante = pas
+// encore enregistrée ; la liste des clés valides vit dans
+// apps/api/src/modules/audio-guides/audio-guides.constants.ts.
+model AudioGuide {
+  id        String   @id @default(uuid()) @db.Uuid
+  key       String   @unique @db.VarChar(100)
+  url       String   @db.VarChar(500)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("audio_guides")
+}

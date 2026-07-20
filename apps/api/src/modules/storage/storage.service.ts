@@ -29,6 +29,21 @@ const WEBSITE_MAX_SIZE: Record<string, number> = {
   gallery: 3 * 1024 * 1024,
 };
 
+// Formats produits par MediaRecorder (webm/opus dans Chrome/Edge/Firefox,
+// mp4/aac dans Safari) en plus des imports directs de fichiers mp3/wav.
+const AUDIO_GUIDE_MAX_SIZE = 10 * 1024 * 1024; // 10 MB
+const AUDIO_GUIDE_EXT_BY_MIME: Record<string, string> = {
+  'audio/mpeg': 'mp3',
+  'audio/mp3': 'mp3',
+  'audio/wav': 'wav',
+  'audio/x-wav': 'wav',
+  'audio/webm': 'webm',
+  'audio/ogg': 'ogg',
+  'audio/mp4': 'm4a',
+  'audio/x-m4a': 'm4a',
+  'audio/aac': 'aac',
+};
+
 export interface UploadResult {
   url: string;
   thumbnailUrl: string;
@@ -191,6 +206,44 @@ export class StorageService {
       }
       this.logger.error(`Erreur upload MinIO (${assetType})`, s3Err);
       throw new InternalServerErrorException('Échec de l\'upload');
+    }
+  }
+
+  // Guides audio de la plateforme (pas de tenantId — écrans publics
+  // landing/marketplace + dashboard). Pas de transcodage : le navigateur
+  // lit le fichier tel quel via <audio>, quel que soit le format d'origine.
+  async uploadAudioGuide(key: string, file: Express.Multer.File): Promise<string> {
+    const ext = AUDIO_GUIDE_EXT_BY_MIME[file.mimetype];
+    if (!ext) {
+      throw new BadRequestException(
+        `Type audio non supporté (${file.mimetype}). Acceptés : ${Object.keys(AUDIO_GUIDE_EXT_BY_MIME).join(', ')}`,
+      );
+    }
+    if (file.size > AUDIO_GUIDE_MAX_SIZE) {
+      throw new BadRequestException('Fichier audio trop volumineux (max 10 Mo)');
+    }
+
+    const uuid = randomUUID();
+    const objectKey = `platform/audio-guides/${key}/${uuid}.${ext}`;
+
+    try {
+      await this.s3.send(
+        new PutObjectCommand({
+          Bucket: this.bucket,
+          Key: objectKey,
+          Body: file.buffer,
+          ContentType: file.mimetype,
+          CacheControl: 'public, max-age=3600',
+        }),
+      );
+      return this.buildUrl(objectKey);
+    } catch (s3Err) {
+      if (process.env['NODE_ENV'] !== 'production') {
+        this.logger.warn(`MinIO non disponible, fallback filesystem local (audio-guide ${key}): ${String(s3Err)}`);
+        return this.saveLocally(objectKey, file.buffer, ext);
+      }
+      this.logger.error(`Erreur upload MinIO (audio-guide ${key})`, s3Err);
+      throw new InternalServerErrorException('Échec de l\'upload audio');
     }
   }
 

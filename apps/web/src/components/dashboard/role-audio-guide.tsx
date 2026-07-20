@@ -1,7 +1,8 @@
 'use client';
 
 import { Volume2, Play, X } from 'lucide-react';
-import { useVoiceGuide } from '@/hooks/use-voice-guide';
+import { useVoiceGuide, type VoiceGuideSources } from '@/hooks/use-voice-guide';
+import { useAudioGuideUrl } from '@/hooks/use-audio-guides';
 import { UserRole } from '@terangatable/shared';
 
 interface Props {
@@ -47,10 +48,29 @@ const DEFAULT_SCRIPT =
   'Bienvenue sur votre tableau de bord TérangaTable ! Utilisez le menu à gauche pour accéder aux ' +
   'différentes sections de votre espace.';
 
+// Pas de synthèse vocale wolof côté navigateur — fichiers pré-enregistrés,
+// un par rôle, déposés depuis le super-admin (Guides audio).
+const ROLE_AUDIO_GUIDE_KEY: Record<string, string> = {
+  [UserRole.OWNER]: 'dashboard-owner',
+  [UserRole.MANAGER]: 'dashboard-manager',
+  [UserRole.SERVEUR]: 'dashboard-serveur',
+  [UserRole.CAISSIER]: 'dashboard-caissier',
+  [UserRole.CUISINIER]: 'dashboard-cuisinier',
+  [UserRole.LIVREUR]: 'dashboard-livreur',
+};
+const DEFAULT_AUDIO_GUIDE_KEY = 'dashboard-default';
+
 export default function RoleAudioGuide({ role }: Props) {
   const script = ROLE_SCRIPTS[role] ?? DEFAULT_SCRIPT;
+  const audioGuideKey = ROLE_AUDIO_GUIDE_KEY[role] ?? DEFAULT_AUDIO_GUIDE_KEY;
+  const { data: audioWoSrc } = useAudioGuideUrl(audioGuideKey);
   const storageKey = `tt_dashboard_audio_guide_seen_${role || 'default'}`;
-  const { visible, speaking, play, dismiss, replay } = useVoiceGuide(script, storageKey);
+  const sources: VoiceGuideSources = {
+    fr: { type: 'tts', script },
+    ...(audioWoSrc ? { wo: { type: 'audio' as const, src: audioWoSrc } } : {}),
+  };
+  const { visible, speaking, lang, availableLangs, setLang, sourceUnavailable, play, dismiss, replay } =
+    useVoiceGuide(sources, storageKey);
 
   return (
     <div className="fixed bottom-6 right-5 z-[3000] flex flex-col items-end gap-2">
@@ -78,6 +98,28 @@ export default function RoleAudioGuide({ role }: Props) {
               <X className="w-4 h-4" />
             </button>
           </div>
+
+          {availableLangs.length > 1 && (
+            <div className="mt-3 flex items-center gap-1.5">
+              {availableLangs.map((l) => (
+                <button
+                  key={l}
+                  onClick={() => setLang(l)}
+                  className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-colors ${
+                    lang === l ? 'bg-terracotta text-white' : 'bg-[#F5F4F2] text-[#57534E] hover:bg-[#EDEAE6]'
+                  }`}
+                >
+                  {l === 'fr' ? 'Français' : 'Wolof'}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {lang === 'wo' && sourceUnavailable && (
+            <p className="mt-2 text-[11px] text-[#A8A29E] italic">
+              Audio wolof bientôt disponible — écoutez en français en attendant.
+            </p>
+          )}
 
           {!speaking && (
             <button

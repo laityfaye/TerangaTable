@@ -11,6 +11,7 @@ import {
   Puzzle,
   UserCog,
   Star,
+  Volume2,
   LogOut,
   Shield,
   ChevronRight,
@@ -44,6 +45,7 @@ const SUPER_ADMIN_NAV = [
   { label: 'Tenants', href: '/super-admin/tenants', icon: Store, exact: false },
   { label: 'Modules', href: '/super-admin/modules', icon: Puzzle, exact: false },
   { label: 'Avis signalés', href: '/super-admin/reviews', icon: Star, exact: false },
+  { label: 'Guides audio', href: '/super-admin/audio-guides', icon: Volume2, exact: false },
   { label: 'Admins', href: '/super-admin/admins', icon: UserCog, exact: false },
 ] as const;
 

@@ -33,6 +33,7 @@ import { MailModule } from './common/mail/mail.module';
 import { MarketplaceModule } from './modules/marketplace/marketplace.module';
 import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
+import { AudioGuidesModule } from './modules/audio-guides/audio-guides.module';
 import { EventsModule } from './events/events.module';
 
 @Module({
@@ -76,6 +77,7 @@ import { EventsModule } from './events/events.module';
     MarketplaceModule,
     WhatsappModule,
     ReviewsModule,
+    AudioGuidesModule,
     EventsModule,
   ],
   providers: [
