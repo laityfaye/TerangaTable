@@ -9,20 +9,20 @@ export class CreatePlanDto {
   @ApiProperty({ description: 'Prix mensuel (devise locale)' })
   @IsNumber()
   @Min(0)
-  priceMonthly!: number;
+  price_monthly!: number;
 
   @ApiProperty({ description: 'Prix annuel (devise locale)' })
   @IsNumber()
   @Min(0)
-  priceYearly!: number;
+  price_yearly!: number;
 
   @ApiProperty({ description: 'Nombre max d\'utilisateurs (-1 = illimité)' })
   @IsInt()
-  maxUsers!: number;
+  max_users!: number;
 
   @ApiProperty({ description: 'Nombre max de produits (-1 = illimité)' })
   @IsInt()
-  maxProducts!: number;
+  max_products!: number;
 
   @ApiProperty({ description: 'Modules inclus dans le plan (slug -> activé)' })
   @IsObject()
@@ -31,5 +31,5 @@ export class CreatePlanDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsBoolean()
-  isActive?: boolean;
+  is_active?: boolean;
 }

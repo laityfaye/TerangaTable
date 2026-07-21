@@ -56,12 +56,12 @@ export class PlansService {
     const plan = await this.prisma.plan.create({
       data: {
         name: dto.name,
-        priceMonthly: dto.priceMonthly,
-        priceYearly: dto.priceYearly,
-        maxUsers: dto.maxUsers,
-        maxProducts: dto.maxProducts,
+        priceMonthly: dto.price_monthly,
+        priceYearly: dto.price_yearly,
+        maxUsers: dto.max_users,
+        maxProducts: dto.max_products,
         features: dto.features as Prisma.InputJsonValue,
-        isActive: dto.isActive ?? true,
+        isActive: dto.is_active ?? true,
       },
     });
 
@@ -76,12 +76,12 @@ export class PlansService {
       where: { id },
       data: {
         ...(dto.name !== undefined && { name: dto.name }),
-        ...(dto.priceMonthly !== undefined && { priceMonthly: dto.priceMonthly }),
-        ...(dto.priceYearly !== undefined && { priceYearly: dto.priceYearly }),
-        ...(dto.maxUsers !== undefined && { maxUsers: dto.maxUsers }),
-        ...(dto.maxProducts !== undefined && { maxProducts: dto.maxProducts }),
+        ...(dto.price_monthly !== undefined && { priceMonthly: dto.price_monthly }),
+        ...(dto.price_yearly !== undefined && { priceYearly: dto.price_yearly }),
+        ...(dto.max_users !== undefined && { maxUsers: dto.max_users }),
+        ...(dto.max_products !== undefined && { maxProducts: dto.max_products }),
         ...(dto.features !== undefined && { features: dto.features as Prisma.InputJsonValue }),
-        ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+        ...(dto.is_active !== undefined && { isActive: dto.is_active }),
       },
     });
 
