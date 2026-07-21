@@ -154,9 +154,12 @@ export function useVoiceGuide(sources: VoiceGuideSources, storageKey: string): V
     else playAudioFile(source.src, onBlocked, onDone);
   }
 
+  const blockedRef = useRef(false);
+
   function playAndMarkSeen() {
+    blockedRef.current = false;
     speakCurrent(
-      () => {},
+      () => { blockedRef.current = true; },
       () => {
         sessionStorage.setItem(storageKey, '1');
         setTimeout(() => setVisible(false), 1500);
@@ -172,6 +175,26 @@ export function useVoiceGuide(sources: VoiceGuideSources, storageKey: string): V
     playAndMarkSeen();
 
     return () => stopAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storageKey]);
+
+  // The autoplay attempt above can be silently rejected without a prior user
+  // gesture on this page load (Chrome/Safari policy) — retry once on the very
+  // first real interaction anywhere on the page so the guide still starts
+  // talking on its own instead of waiting for a tap on its own "Écouter" button.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onFirstInteraction = () => {
+      if (blockedRef.current && !sessionStorage.getItem(storageKey)) {
+        playAndMarkSeen();
+      }
+    };
+    document.addEventListener('pointerdown', onFirstInteraction, { once: true });
+    document.addEventListener('keydown', onFirstInteraction, { once: true });
+    return () => {
+      document.removeEventListener('pointerdown', onFirstInteraction);
+      document.removeEventListener('keydown', onFirstInteraction);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageKey]);
 
