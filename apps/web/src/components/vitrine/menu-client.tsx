@@ -1681,14 +1681,19 @@ export default function MenuClient({
                         variants={{ hidden: { scaleX: 0 }, visible: { scaleX: 1, transition: { duration: 0.8, ease: EASE, delay: 0.15 } } }} />
                     </motion.div>
 
-                    <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" variants={cardGridVars}>
-                      {cat.products.map((product) => (
-                        <motion.div key={product.id} variants={cardItemVars}>
-                          <ProductCard product={product} currencySymbol={currencySymbol}
-                            primaryColor={primaryColor} onClick={() => setSelectedProduct(product)} />
-                        </motion.div>
-                      ))}
-                    </motion.div>
+                    <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-visible">
+                      <motion.div
+                        className="grid grid-flow-col grid-rows-2 auto-cols-[46%] snap-x snap-mandatory sm:grid-flow-row sm:grid-rows-none sm:auto-cols-auto sm:snap-none sm:grid-cols-2 lg:grid-cols-3 gap-4"
+                        variants={cardGridVars}
+                      >
+                        {cat.products.map((product) => (
+                          <motion.div key={product.id} variants={cardItemVars} className="snap-start">
+                            <ProductCard product={product} currencySymbol={currencySymbol}
+                              primaryColor={primaryColor} onClick={() => setSelectedProduct(product)} />
+                          </motion.div>
+                        ))}
+                      </motion.div>
+                    </div>
                   </motion.section>
                 ))}
 
