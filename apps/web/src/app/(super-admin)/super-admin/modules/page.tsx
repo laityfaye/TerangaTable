@@ -1,21 +1,7 @@
 'use client';
 
 import { toast } from 'sonner';
-import { useModules, useToggleModule, type PlatformModule } from '@/hooks/use-super-admin';
-
-// ── Constants ──────────────────────────────────────────────────────────────────
-
-const PLAN_BADGE: Record<string, string> = {
-  starter: 'bg-slate-700/80 text-slate-300',
-  growth: 'bg-violet-500/20 text-violet-300',
-  enterprise: 'bg-yellow-500/20 text-yellow-300',
-};
-
-const PLAN_LABEL: Record<string, string> = {
-  starter: 'Starter',
-  growth: 'Growth',
-  enterprise: 'Enterprise',
-};
+import { useModules, useToggleModule, usePlans, type PlatformModule } from '@/hooks/use-super-admin';
 
 // ── Module row ─────────────────────────────────────────────────────────────────
 
@@ -57,11 +43,20 @@ function ModuleRow({
           <span className="font-mono text-[10px] text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded">
             {module.slug}
           </span>
-          <span
-            className={`inline-flex px-2 py-0.5 rounded text-[10px] font-medium ${PLAN_BADGE[module.required_plan]}`}
-          >
-            {PLAN_LABEL[module.required_plan]}
-          </span>
+          {module.included_in_plans.length > 0 ? (
+            module.included_in_plans.map((planName) => (
+              <span
+                key={planName}
+                className="inline-flex px-2 py-0.5 rounded text-[10px] font-medium bg-violet-500/20 text-violet-300"
+              >
+                {planName}
+              </span>
+            ))
+          ) : (
+            <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-medium bg-slate-700 text-slate-400">
+              Aucun plan
+            </span>
+          )}
         </div>
         <p className="text-xs text-slate-500 mt-0.5">{module.description}</p>
       </div>
@@ -79,6 +74,7 @@ function ModuleRow({
 
 export default function ModulesPage() {
   const { data: apiData, isLoading, isError } = useModules();
+  const { data: plans } = usePlans();
   const toggleMutation = useToggleModule();
 
   const modules = apiData ?? [];
@@ -94,9 +90,12 @@ export default function ModulesPage() {
     }
   }
 
-  const byPlan = (['starter', 'growth', 'enterprise'] as const).map((plan) => ({
+  // Résumé par plan — calculé dynamiquement depuis Plan.features (via included_in_plans),
+  // pas depuis un groupement figé starter/growth/enterprise : un plan peut être créé,
+  // renommé ou supprimé librement depuis la page Plans.
+  const byPlan = (plans ?? []).map((plan) => ({
     plan,
-    modules: modules.filter((m) => m.required_plan === plan),
+    count: modules.filter((m) => m.included_in_plans.includes(plan.name)).length,
   }));
 
   return (
@@ -119,49 +118,39 @@ export default function ModulesPage() {
         </p>
       ) : (
         <>
-          {/* Summary cards */}
-          <div className="grid grid-cols-3 gap-4">
-            {byPlan.map(({ plan, modules: planMods }) => (
-              <div
-                key={plan}
-                className="bg-slate-800/60 border border-white/10 rounded-xl p-4 flex items-center gap-3"
-              >
-                <div className="w-9 h-9 rounded-lg bg-violet-500/20 flex items-center justify-center flex-shrink-0">
-                  <span className="text-sm font-bold text-violet-400">
-                    {planMods.filter((m) => m.is_active).length}/{planMods.length}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500">Plan</p>
-                  <p className="text-sm font-semibold text-white capitalize">{PLAN_LABEL[plan]}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Module list grouped by plan */}
-          {byPlan.map(({ plan, modules: planMods }) => (
-            <div key={plan} className="bg-slate-800/60 border border-white/10 rounded-xl overflow-hidden">
-              <div className="px-5 py-3 border-b border-white/10 flex items-center gap-2">
-                <span
-                  className={`inline-flex px-2 py-0.5 rounded text-xs font-semibold ${PLAN_BADGE[plan]}`}
+          {/* Summary cards — un par plan configuré */}
+          {byPlan.length > 0 && (
+            <div className="flex flex-wrap gap-4">
+              {byPlan.map(({ plan, count }) => (
+                <div
+                  key={plan.id}
+                  className="flex-1 min-w-[160px] bg-slate-800/60 border border-white/10 rounded-xl p-4 flex items-center gap-3"
                 >
-                  {PLAN_LABEL[plan]}
-                </span>
-                <span className="text-xs text-slate-500">
-                  — requis à partir de ce plan
-                </span>
-              </div>
-              {planMods.map((mod) => (
-                <ModuleRow
-                  key={mod.id}
-                  module={mod}
-                  onToggle={(m) => void handleToggle(m)}
-                  loading={toggleMutation.isPending}
-                />
+                  <div className="w-9 h-9 rounded-lg bg-violet-500/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm font-bold text-violet-400">
+                      {count}/{modules.length}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500">Plan</p>
+                    <p className="text-sm font-semibold text-white">{plan.name}</p>
+                  </div>
+                </div>
               ))}
             </div>
-          ))}
+          )}
+
+          {/* Liste des modules */}
+          <div className="bg-slate-800/60 border border-white/10 rounded-xl overflow-hidden">
+            {modules.map((mod) => (
+              <ModuleRow
+                key={mod.id}
+                module={mod}
+                onToggle={(m) => void handleToggle(m)}
+                loading={toggleMutation.isPending}
+              />
+            ))}
+          </div>
         </>
       )}
     </div>

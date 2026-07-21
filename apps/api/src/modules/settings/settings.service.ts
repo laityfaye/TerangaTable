@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisCacheService } from '../../common/services/redis-cache.service';
 import { Prisma, SettingType } from '@terangatable/database';
@@ -142,30 +142,64 @@ export class SettingsService {
   // ── Modules ────────────────────────────────────────────────────────────────
 
   async getModules(tenantId: string) {
-    const [allModules, tenantModules] = await Promise.all([
+    const [tenant, allModules, tenantModules, plans] = await Promise.all([
+      this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { plan: { select: { features: true } } },
+      }),
       this.prisma.module.findMany({ where: { isActive: true } }),
       this.prisma.tenantModule.findMany({
         where: { tenantId },
         include: { module: true },
       }),
+      this.prisma.plan.findMany({
+        where: { isActive: true },
+        orderBy: { priceMonthly: 'asc' },
+        select: { name: true, features: true },
+      }),
     ]);
 
+    const planFeatures = (tenant?.plan.features ?? {}) as Record<string, boolean>;
     const activatedIds = new Set(tenantModules.map((tm) => tm.moduleId));
 
-    return allModules.map((mod) => ({
-      id: mod.id,
-      slug: mod.slug,
-      name: mod.name,
-      description: mod.description,
-      icon: mod.icon,
-      required_plan: mod.requiredPlan,
-      is_active: activatedIds.has(mod.id),
-    }));
+    return {
+      data: allModules.map((mod) => {
+        const includedInPlan = Boolean(planFeatures[mod.slug]);
+        // Pour l'incitation à l'upgrade : le moins cher des plans actifs qui inclut ce module.
+        const minPlanName = includedInPlan
+          ? null
+          : (plans.find((p) => (p.features as Record<string, boolean>)[mod.slug])?.name ?? null);
+
+        return {
+          id: mod.id,
+          slug: mod.slug,
+          name: mod.name,
+          description: mod.description,
+          icon: mod.icon,
+          included_in_plan: includedInPlan,
+          min_plan_name: minPlanName,
+          is_active: activatedIds.has(mod.id),
+        };
+      }),
+    };
   }
 
   async activateModule(tenantId: string, moduleId: string) {
-    const mod = await this.prisma.module.findUnique({ where: { id: moduleId } });
+    const [tenant, mod] = await Promise.all([
+      this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { plan: { select: { features: true, name: true } } },
+      }),
+      this.prisma.module.findUnique({ where: { id: moduleId } }),
+    ]);
     if (!mod) throw new NotFoundException('Module introuvable');
+
+    const planFeatures = (tenant?.plan.features ?? {}) as Record<string, boolean>;
+    if (!planFeatures[mod.slug]) {
+      throw new ForbiddenException(
+        `Ce module n'est pas inclus dans votre plan actuel (${tenant?.plan.name ?? 'inconnu'})`,
+      );
+    }
 
     await this.prisma.tenantModule.upsert({
       where: { tenantId_moduleId: { tenantId, moduleId } },

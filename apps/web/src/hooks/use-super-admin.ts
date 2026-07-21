@@ -82,7 +82,7 @@ export interface PlatformModule {
   name: string;
   slug: string;
   description: string;
-  required_plan: string;
+  included_in_plans: string[];
   is_active: boolean;
   active_tenants_count?: number;
 }

@@ -58,7 +58,8 @@ interface TenantModule {
   name: string;
   description: string | null;
   icon: string | null;
-  required_plan: string;
+  included_in_plan: boolean;
+  min_plan_name: string | null;
   is_active: boolean;
 }
 
@@ -668,8 +669,8 @@ function ModulesTab() {
   const { data: modules, isLoading } = useQuery<TenantModule[]>({
     queryKey: ['settings', 'modules'],
     queryFn: async () => {
-      const { data } = await apiClient.get<TenantModule[]>('/settings/modules');
-      return data;
+      const { data } = await apiClient.get<{ data: TenantModule[] }>('/settings/modules');
+      return data.data;
     },
   });
 
@@ -732,8 +733,12 @@ function ModulesTab() {
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-[11px] text-slate-400 capitalize">
-              Plan requis: {mod.required_plan}
+            <span className="text-[11px] text-slate-400">
+              {mod.included_in_plan
+                ? 'Inclus dans votre plan'
+                : mod.min_plan_name
+                  ? `Disponible à partir du plan ${mod.min_plan_name}`
+                  : 'Non disponible sur les plans actuels'}
             </span>
             {mod.is_active ? (
               <button
@@ -748,7 +753,8 @@ function ModulesTab() {
               <button
                 type="button"
                 onClick={() => activate(mod.id)}
-                disabled={isBusy}
+                disabled={isBusy || !mod.included_in_plan}
+                title={mod.included_in_plan ? undefined : 'Passez à un plan supérieur pour activer ce module'}
                 className="px-3 py-1.5 rounded-lg text-xs font-medium bg-terracotta text-white hover:bg-terracotta/90 transition-colors disabled:opacity-50"
               >
                 Activer

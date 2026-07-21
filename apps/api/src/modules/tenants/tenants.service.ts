@@ -633,12 +633,22 @@ export class TenantsService {
   // ── Modules plateforme ───────────────────────────────────────────────────
 
   async findAllModules() {
-    const modules = await this.prisma.module.findMany({
-      orderBy: { name: 'asc' },
-      include: {
-        _count: { select: { tenantModules: true } },
-      },
-    });
+    // `Module.requiredPlan` est un champ texte libre, non relié à `Plan.features`
+    // (source de vérité réelle utilisée pour l'activation) — on calcule donc ici
+    // dynamiquement dans quels plans un module est inclus, plutôt que d'afficher
+    // ce champ statique qui peut diverger des plans réellement configurés.
+    const [modules, plans] = await Promise.all([
+      this.prisma.module.findMany({
+        orderBy: { name: 'asc' },
+        include: {
+          _count: { select: { tenantModules: true } },
+        },
+      }),
+      this.prisma.plan.findMany({
+        orderBy: { priceMonthly: 'asc' },
+        select: { name: true, features: true },
+      }),
+    ]);
 
     return {
       data: modules.map((m) => ({
@@ -646,7 +656,9 @@ export class TenantsService {
         name: m.name,
         slug: m.slug,
         description: m.description ?? undefined,
-        required_plan: m.requiredPlan,
+        included_in_plans: plans
+          .filter((p) => (p.features as Record<string, boolean>)[m.slug])
+          .map((p) => p.name),
         is_active: m.isActive,
         active_tenants_count: m._count.tenantModules,
       })),
