@@ -24,6 +24,8 @@ import {
   UserCog,
   LayoutGrid,
   Loader2,
+  ChefHat,
+  MessageCircle,
 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth.store';
@@ -38,9 +40,6 @@ interface NavItem {
   href: string;
   icon: React.ReactNode;
   roles?: string[]; // undefined = tous les rôles autorisés
-  /** Libellé affiché à la place de `label` si l'utilisateur a un des rôles listés dans `altLabelRoles`. */
-  altLabel?: string;
-  altLabelRoles?: string[];
   /** Slug du module plateforme requis (ex: 'reservations'). Absent = toujours visible. */
   module?: string;
 }
@@ -79,8 +78,6 @@ const NAV: NavGroup[] = [
         href: '/dashboard/orders',
         icon: <ShoppingCart size={18} />,
         roles: ALL_TENANT_ROLES,
-        altLabel: 'Écran cuisine',
-        altLabelRoles: [UserRole.CUISINIER],
       },
       {
         label: 'Caisse (POS)',
@@ -96,6 +93,19 @@ const NAV: NavGroup[] = [
         module: 'reservations',
       },
     ],
+  },
+  {
+    title: 'CUISINE',
+    module: 'kds',
+    items: [
+      {
+        label: 'Écran cuisine',
+        href: '/dashboard/kds',
+        icon: <ChefHat size={18} />,
+        roles: [...OWNER_MANAGER, UserRole.CUISINIER],
+      },
+    ],
+    roles: [...OWNER_MANAGER, UserRole.CUISINIER],
   },
   {
     title: 'MENU',
@@ -198,6 +208,13 @@ const NAV: NavGroup[] = [
         href: '/dashboard/settings/tables',
         icon: <LayoutGrid size={18} />,
         roles: OWNER_MANAGER,
+      },
+      {
+        label: 'Assistant WhatsApp',
+        href: '/dashboard/settings/whatsapp',
+        icon: <MessageCircle size={18} />,
+        roles: OWNER_MANAGER,
+        module: 'whatsapp',
       },
     ],
     roles: OWNER_MANAGER,
@@ -315,13 +332,7 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
         {NAV.filter((group) => hasAccess(group.roles) && hasModule(group.module)).map((group) => {
-          const visibleItems = group.items
-            .filter((item) => hasAccess(item.roles) && hasModule(item.module))
-            .map((item) =>
-              item.altLabel && item.altLabelRoles?.some((r) => userRoles.includes(r))
-                ? { ...item, label: item.altLabel }
-                : item
-            );
+          const visibleItems = group.items.filter((item) => hasAccess(item.roles) && hasModule(item.module));
           if (visibleItems.length === 0) return null;
           return (
             <div key={group.title}>

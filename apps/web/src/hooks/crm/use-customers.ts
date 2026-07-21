@@ -127,8 +127,8 @@ export function useCustomer(id: string) {
   return useQuery({
     queryKey: CUSTOMERS_QKEY.detail(id),
     queryFn: async () => {
-      const { data } = await apiClient.get<Customer>(`/customers/${id}`);
-      return data;
+      const { data } = await apiClient.get<{ data: Customer }>(`/customers/${id}`);
+      return data.data;
     },
     enabled: !!id,
   });
@@ -140,8 +140,8 @@ export function useCustomerOrders(customerId: string) {
   return useQuery({
     queryKey: CUSTOMERS_QKEY.orders(customerId),
     queryFn: async () => {
-      const { data } = await apiClient.get<CustomerOrder[]>(`/customers/${customerId}/orders`);
-      return data;
+      const { data } = await apiClient.get<{ data: CustomerOrder[] }>(`/customers/${customerId}/orders`);
+      return data.data;
     },
     enabled: !!customerId,
   });
@@ -153,8 +153,8 @@ export function useCustomerLoyalty(customerId: string) {
   return useQuery({
     queryKey: CUSTOMERS_QKEY.loyalty(customerId),
     queryFn: async () => {
-      const { data } = await apiClient.get<LoyaltyTransaction[]>(`/customers/${customerId}/loyalty`);
-      return data;
+      const { data } = await apiClient.get<{ data: LoyaltyTransaction[] }>(`/customers/${customerId}/loyalty`);
+      return data.data;
     },
     enabled: !!customerId,
   });
@@ -166,8 +166,8 @@ export function useLoyaltySettings() {
   return useQuery({
     queryKey: CUSTOMERS_QKEY.loyaltySettings(),
     queryFn: async () => {
-      const { data } = await apiClient.get<LoyaltySettings>('/loyalty/settings');
-      return data;
+      const { data } = await apiClient.get<{ data: LoyaltySettings }>('/loyalty/settings');
+      return data.data;
     },
     staleTime: 60_000,
   });
@@ -177,8 +177,8 @@ export function useUpdateLoyaltySettings() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (settings: LoyaltySettings) => {
-      const { data } = await apiClient.put<LoyaltySettings>('/loyalty/settings', settings);
-      return data;
+      const { data } = await apiClient.put<{ data: LoyaltySettings }>('/loyalty/settings', settings);
+      return data.data;
     },
     onSuccess: (data) => {
       qc.setQueryData(CUSTOMERS_QKEY.loyaltySettings(), data);
@@ -192,8 +192,10 @@ export function useLoyaltyBalance(customerId: string) {
   return useQuery({
     queryKey: CUSTOMERS_QKEY.loyaltyBalance(customerId),
     queryFn: async () => {
-      const { data } = await apiClient.get(`/loyalty/balance/${customerId}`);
-      return data as { customer_id: string; balance: number; transactions: LoyaltyTransaction[] };
+      const { data } = await apiClient.get<{
+        data: { customer_id: string; balance: number; transactions: LoyaltyTransaction[] };
+      }>(`/loyalty/balance/${customerId}`);
+      return data.data;
     },
     enabled: !!customerId,
   });
@@ -205,8 +207,8 @@ export function useCreateCustomer() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: CreateCustomerPayload) => {
-      const { data } = await apiClient.post<Customer>('/customers', payload);
-      return data;
+      const { data } = await apiClient.post<{ data: Customer }>('/customers', payload);
+      return data.data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['customers'] }),
   });
@@ -216,8 +218,8 @@ export function useUpdateCustomer() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...payload }: { id: string } & UpdateCustomerPayload) => {
-      const { data } = await apiClient.patch<Customer>(`/customers/${id}`, payload);
-      return data;
+      const { data } = await apiClient.patch<{ data: Customer }>(`/customers/${id}`, payload);
+      return data.data;
     },
     onSuccess: (customer) => {
       qc.setQueryData(CUSTOMERS_QKEY.detail(customer.id), customer);
@@ -240,8 +242,11 @@ export function useEarnPoints() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: { customer_id: string; order_id?: string; amount: number }) => {
-      const { data } = await apiClient.post('/loyalty/earn', payload);
-      return data as { points_earned: number; new_balance: number };
+      const { data } = await apiClient.post<{ data: { points_earned: number; new_balance: number } }>(
+        '/loyalty/earn',
+        payload
+      );
+      return data.data;
     },
     onSuccess: (_, { customer_id }) => {
       qc.invalidateQueries({ queryKey: CUSTOMERS_QKEY.detail(customer_id) });
@@ -254,8 +259,10 @@ export function useRedeemPoints() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: { customer_id: string; order_id?: string; points: number }) => {
-      const { data } = await apiClient.post('/loyalty/redeem', payload);
-      return data as { points_redeemed: number; discount_value: number; new_balance: number };
+      const { data } = await apiClient.post<{
+        data: { points_redeemed: number; discount_value: number; new_balance: number };
+      }>('/loyalty/redeem', payload);
+      return data.data;
     },
     onSuccess: (_, { customer_id }) => {
       qc.invalidateQueries({ queryKey: CUSTOMERS_QKEY.detail(customer_id) });

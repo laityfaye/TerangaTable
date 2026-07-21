@@ -6,6 +6,7 @@ import { OrdersModule } from '../orders/orders.module';
 import { OrderPublisher } from '../../events/publishers/order.publisher';
 import { WhatsappWebhookController } from './whatsapp-webhook.controller';
 import { WhatsappMediaController } from './whatsapp-media.controller';
+import { WhatsappAdminController } from './whatsapp-admin.controller';
 import { WhatsappService } from './whatsapp.service';
 import { WhatsappOrdersService } from './whatsapp-orders.service';
 import { MenuContextService } from './services/menu-context.service';
@@ -15,7 +16,7 @@ import { TwilioSignatureGuard } from './guards/twilio-signature.guard';
 
 @Module({
   imports: [MarketplaceModule, WebsiteModule, CrmModule, OrdersModule],
-  controllers: [WhatsappWebhookController, WhatsappMediaController],
+  controllers: [WhatsappWebhookController, WhatsappMediaController, WhatsappAdminController],
   providers: [
     WhatsappService,
     WhatsappOrdersService,

@@ -1,4 +1,5 @@
-import { IsUUID, IsOptional, IsNumber, Min, IsString } from 'class-validator';
+import { IsUUID, IsOptional, IsNumber, Min, IsString, IsBoolean, IsIn, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class EarnPointsDto {
@@ -49,12 +50,43 @@ export class LoyaltyRewardDto {
 }
 
 export class LoyaltySettingsDto {
+  @ApiProperty()
+  @IsBoolean()
   enabled!: boolean;
+
+  @ApiProperty()
+  @IsNumber()
+  @Min(0)
   points_per_amount!: number;
+
+  @ApiProperty()
+  @IsNumber()
+  @Min(0)
   redemption_points!: number;
+
+  @ApiProperty()
+  @IsNumber()
+  @Min(0)
   redemption_value!: number;
+
+  @ApiProperty()
+  @IsNumber()
+  @Min(0)
   expiry_days!: number;
+
+  @ApiProperty({ enum: ['percent', 'amount'] })
+  @IsIn(['percent', 'amount'])
   vip_threshold_type!: 'percent' | 'amount';
+
+  @ApiProperty()
+  @IsNumber()
+  @Min(0)
   vip_threshold_value!: number;
+
+  @ApiPropertyOptional({ type: [LoyaltyRewardDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => LoyaltyRewardDto)
   rewards?: LoyaltyRewardDto[];
 }

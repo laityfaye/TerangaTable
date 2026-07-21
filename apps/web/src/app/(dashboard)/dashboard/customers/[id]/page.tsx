@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -25,6 +25,8 @@ import {
   useCustomerLoyalty,
   useUpdateCustomer,
   useArchiveCustomer,
+  useLoyaltySettings,
+  useRedeemPoints,
   type CustomerSegment,
 } from '@/hooks/crm/use-customers';
 import { DynamicForm } from '@/components/custom-fields/dynamic-form';
@@ -253,7 +255,69 @@ function OrdersTab({ customerId }: { customerId: string }) {
 
 // ── Loyalty tab ────────────────────────────────────────────────────────────────
 
-function LoyaltyTab({ customerId }: { customerId: string }) {
+function RedeemPointsForm({ customerId, balance }: { customerId: string; balance: number }) {
+  const { data: settings } = useLoyaltySettings();
+  const { mutate: redeem, isPending, error } = useRedeemPoints();
+  const [feedback, setFeedback] = useState<string | null>(null);
+
+  const step = settings?.redemption_points ?? 0;
+  const maxRedeemable = step > 0 ? Math.floor(balance / step) * step : 0;
+  const [points, setPoints] = useState(0);
+
+  // `step` n'est connu qu'après le chargement async des réglages fidélité —
+  // resynchronise la valeur par défaut du champ une fois `step` disponible.
+  useEffect(() => {
+    if (step > 0) setPoints(step);
+  }, [step]);
+
+  if (!settings?.enabled) return null;
+  if (maxRedeemable <= 0) {
+    return (
+      <p className="text-xs text-slate-400 mb-4">
+        Solde insuffisant pour un rachat (minimum {step} pts).
+      </p>
+    );
+  }
+
+  const discountPreview = step > 0 ? Math.floor(points / step) * settings.redemption_value : 0;
+
+  return (
+    <div className="mb-4 p-4 bg-terracotta/5 border border-terracotta/20 rounded-xl">
+      <p className="text-sm font-medium text-[#1C1917] mb-2">Échanger des points</p>
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
+          min={step}
+          max={maxRedeemable}
+          step={step}
+          value={points}
+          onChange={(e) => setPoints(Math.min(maxRedeemable, Math.max(step, Number(e.target.value) || step)))}
+          className="w-28 h-9 px-3 rounded-lg border border-slate-200 text-sm"
+        />
+        <span className="text-xs text-slate-500">pts → {formatAmount(discountPreview)} de réduction</span>
+        <button
+          disabled={isPending}
+          onClick={() =>
+            redeem(
+              { customer_id: customerId, points },
+              {
+                onSuccess: (res) =>
+                  setFeedback(`${res.points_redeemed} pts échangés — réduction de ${formatAmount(res.discount_value)}.`),
+              }
+            )
+          }
+          className="ml-auto h-9 px-4 rounded-lg bg-terracotta text-white text-sm font-medium disabled:opacity-50"
+        >
+          {isPending ? 'En cours…' : 'Échanger'}
+        </button>
+      </div>
+      {error && <p className="text-xs text-red-500 mt-2">{(error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Erreur lors du rachat'}</p>}
+      {feedback && <p className="text-xs text-green-600 mt-2">{feedback}</p>}
+    </div>
+  );
+}
+
+function LoyaltyTab({ customerId, balance }: { customerId: string; balance: number }) {
   const { data: transactions = [], isLoading } = useCustomerLoyalty(customerId);
 
   if (isLoading) {
@@ -268,15 +332,19 @@ function LoyaltyTab({ customerId }: { customerId: string }) {
 
   if (transactions.length === 0) {
     return (
-      <div className="text-center py-10 text-slate-400">
-        <Gift size={32} className="mx-auto mb-2 opacity-40" />
-        <p className="text-sm">Aucune transaction de fidélité</p>
-      </div>
+      <>
+        <RedeemPointsForm customerId={customerId} balance={balance} />
+        <div className="text-center py-10 text-slate-400">
+          <Gift size={32} className="mx-auto mb-2 opacity-40" />
+          <p className="text-sm">Aucune transaction de fidélité</p>
+        </div>
+      </>
     );
   }
 
   return (
     <div className="space-y-2">
+      <RedeemPointsForm customerId={customerId} balance={balance} />
       {transactions.map((tx) => (
         <div
           key={tx.id}
@@ -487,7 +555,7 @@ export default function CustomerDetailPage() {
 
         <div className="p-5">
           {activeTab === 'orders' && <OrdersTab customerId={customer.id} />}
-          {activeTab === 'loyalty' && <LoyaltyTab customerId={customer.id} />}
+          {activeTab === 'loyalty' && <LoyaltyTab customerId={customer.id} balance={customer.loyalty_points} />}
           {activeTab === 'notes' && <NotesTab customer={customer} />}
           {activeTab === 'custom' && (
             <DynamicForm entityType="customer" entityId={customer.id} />
