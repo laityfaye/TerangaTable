@@ -1,5 +1,6 @@
 import { IsString, IsEmail, IsUUID, IsOptional, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsLooseUuid } from '../../../common/validators/is-loose-uuid.decorator';
 
 export class CreateTenantRequestDto {
   @ApiProperty()
@@ -39,6 +40,6 @@ export class CreateTenantRequestDto {
 
   @ApiPropertyOptional({ description: 'Plan suggéré côté formulaire selon la taille déclarée (indicatif — le SuperAdmin peut le changer à la validation)' })
   @IsOptional()
-  @IsUUID()
+  @IsLooseUuid()
   desiredPlanId?: string;
 }

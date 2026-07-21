@@ -1,6 +1,7 @@
-import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ReviewDecision } from './review-decision.enum';
+import { IsLooseUuid } from '../../../common/validators/is-loose-uuid.decorator';
 
 export { ReviewDecision };
 
@@ -11,7 +12,7 @@ export class ReviewTenantRequestDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsUUID()
+  @IsLooseUuid()
   planId?: string;
 
   @ApiPropertyOptional()

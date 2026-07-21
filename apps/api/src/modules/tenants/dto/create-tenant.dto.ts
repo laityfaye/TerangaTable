@@ -1,5 +1,6 @@
 import { IsString, IsUUID, IsOptional } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsLooseUuid } from '../../../common/validators/is-loose-uuid.decorator';
 
 export class CreateTenantDto {
   @ApiProperty()
@@ -15,7 +16,7 @@ export class CreateTenantDto {
   slug!: string;
 
   @ApiProperty()
-  @IsUUID()
+  @IsLooseUuid()
   planId!: string;
 
   @ApiPropertyOptional()
