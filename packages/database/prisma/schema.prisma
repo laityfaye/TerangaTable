@@ -209,13 +209,15 @@ model TenantRequest {
   city           String?             @db.VarChar(100)
   message        String?
   status         TenantRequestStatus @default(pending)
+  desiredPlanId  String?             @map("desired_plan_id") @db.Uuid
   reviewedBy     String?             @map("reviewed_by") @db.Uuid
   reviewedAt     DateTime?           @map("reviewed_at")
   createdAt      DateTime            @default(now()) @map("created_at")
 
-  region   Region  @relation(fields: [regionId], references: [id])
-  tenant   Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
-  reviewer User?   @relation(fields: [reviewedBy], references: [id], onDelete: SetNull)
+  region      Region  @relation(fields: [regionId], references: [id])
+  tenant      Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  reviewer    User?   @relation(fields: [reviewedBy], references: [id], onDelete: SetNull)
+  desiredPlan Plan?   @relation(fields: [desiredPlanId], references: [id], onDelete: SetNull)
 
   @@index([status])
   @@index([regionId, status])
@@ -234,7 +236,8 @@ model Plan {
   features     Json    @default("{}")
   isActive     Boolean @default(true) @map("is_active")
 
-  tenants Tenant[]
+  tenants        Tenant[]
+  tenantRequests TenantRequest[]
 
   @@index([isActive])
   @@map("plans")

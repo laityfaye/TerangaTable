@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { apiClient } from '@/lib/api-client'
 import type { WizardState, WizardAction } from '../page'
+import { usePublicPlans } from '@/hooks/use-super-admin'
+import { suggestPlan } from '../plan-suggestion'
 
 const SERVICE_LABELS: Record<string, string> = {
   dine_in: '🍽️ Sur place',
@@ -40,6 +42,8 @@ export default function Step4Confirm({
 }) {
   const [cguAccepted, setCguAccepted] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { data: plans } = usePublicPlans()
+  const suggested = suggestPlan(state.teamSize, plans)
 
   const handleSubmit = async () => {
     if (!cguAccepted || state.isSubmitting) return
@@ -54,6 +58,7 @@ export default function Step4Confirm({
         phone: state.phone || undefined,
         city: state.city || undefined,
         message: state.message || undefined,
+        desiredPlanId: suggested?.id,
       })
       const id: string = res.data?.data?.id ?? 'demo'
       onSubmitted(id)
@@ -105,6 +110,7 @@ export default function Step4Confirm({
             {state.teamSize && (
               <Row label="Équipe" value={TEAM_LABELS[state.teamSize] ?? state.teamSize} />
             )}
+            {suggested && <Row label="Plan recommandé" value={suggested.name} />}
             {state.modules.length > 0 && (
               <Row
                 label="Modules"

@@ -1,6 +1,8 @@
 'use client'
 
 import type { WizardState, WizardAction } from '../page'
+import { usePublicPlans } from '@/hooks/use-super-admin'
+import { suggestPlan } from '../plan-suggestion'
 
 const SERVICE_TYPES = [
   { id: 'dine_in', emoji: '🍽️', label: 'Sur place' },
@@ -36,6 +38,9 @@ export default function Step3Needs({
   onNext: () => void
   onBack: () => void
 }) {
+  const { data: plans } = usePublicPlans()
+  const suggested = suggestPlan(state.teamSize, plans)
+
   return (
     <div className="animate-fade-in-up">
       <h1 className="font-heading text-2xl font-bold text-[#1C1917]">Vos besoins</h1>
@@ -79,6 +84,12 @@ export default function Step3Needs({
             />
           ))}
         </div>
+        {suggested && (
+          <p className="mt-3 text-xs text-[#57534E]">
+            Plan recommandé pour cette taille d&apos;équipe :{' '}
+            <span className="font-semibold text-[#C8553D]">{suggested.name}</span>
+          </p>
+        )}
       </section>
 
       {/* Modules souhaités */}

@@ -17,6 +17,7 @@ import { CreateTenantDto } from './dto/create-tenant.dto';
 import { CreateTenantRequestDto } from './dto/create-tenant-request.dto';
 import { ReviewTenantRequestDto } from './dto/review-tenant-request.dto';
 import { UpdateTenantStatusDto } from './dto/update-tenant-status.dto';
+import { UpdateTenantPlanDto } from './dto/update-tenant-plan.dto';
 import { ListTenantsDto } from './dto/list-tenants.dto';
 import { InviteAdminDto } from './dto/invite-admin.dto';
 import { ToggleAdminDto } from './dto/toggle-admin.dto';
@@ -66,6 +67,14 @@ export class TenantsController {
   @ApiOperation({ summary: 'Suspendre ou réactiver un tenant (SuperAdmin)' })
   updateStatus(@Param('id') id: string, @Body() dto: UpdateTenantStatusDto) {
     return this.tenantsService.updateStatus(id, dto);
+  }
+
+  @Patch('tenants/:id/plan')
+  @UseGuards(JwtAuthGuard, SuperAdminGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Changer le plan d\'un tenant — upgrade ou downgrade (SuperAdmin)' })
+  updatePlan(@Param('id') id: string, @Body() dto: UpdateTenantPlanDto) {
+    return this.tenantsService.updatePlan(id, dto.planId);
   }
 
   @Delete('tenants/:id')

@@ -76,10 +76,8 @@ export class TenantsService {
       slug: t.slug,
       region_id: t.regionId,
       region_name: t.region.name,
-      plan: (t.plan?.name?.toLowerCase() ?? 'starter') as
-        | 'starter'
-        | 'growth'
-        | 'enterprise',
+      plan_id: t.planId,
+      plan: t.plan?.name?.toLowerCase() ?? 'starter',
       status: t.status as 'active' | 'trial' | 'suspended' | 'deleted',
       created_at: t.createdAt.toISOString(),
       users_count: t._count.users,
@@ -130,6 +128,53 @@ export class TenantsService {
     await this.redis.invalidateAll(tenant.id, tenant.slug);
 
     return updated;
+  }
+
+  async updatePlan(id: string, planId: string) {
+    const tenant = await this.prisma.tenant.findUnique({ where: { id } });
+    if (!tenant) throw new NotFoundException('Tenant introuvable');
+
+    const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
+    if (!plan) throw new NotFoundException('Plan introuvable');
+    if (!plan.isActive) throw new BadRequestException('Ce plan n\'est plus disponible à la souscription');
+
+    if (tenant.planId === planId) {
+      return { data: { id: tenant.id, plan_id: planId } };
+    }
+
+    // Modules inclus dans le nouveau plan (upgrade : ajoute l'accès, downgrade : le retire)
+    const planFeatures = plan.features as Record<string, boolean>;
+    const includedSlugs = Object.entries(planFeatures)
+      .filter(([, enabled]) => enabled)
+      .map(([slug]) => slug);
+
+    const includedModules = includedSlugs.length
+      ? await this.prisma.module.findMany({ where: { slug: { in: includedSlugs }, isActive: true } })
+      : [];
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.tenant.update({ where: { id }, data: { planId } });
+
+      await tx.tenantModule.deleteMany({
+        where: {
+          tenantId: id,
+          ...(includedModules.length > 0
+            ? { moduleId: { notIn: includedModules.map((m) => m.id) } }
+            : {}),
+        },
+      });
+
+      if (includedModules.length > 0) {
+        await tx.tenantModule.createMany({
+          data: includedModules.map((m) => ({ tenantId: id, moduleId: m.id })),
+          skipDuplicates: true,
+        });
+      }
+    });
+
+    await this.redis.invalidateAll(tenant.id, tenant.slug);
+
+    return { data: { id: tenant.id, plan_id: planId } };
   }
 
   async deleteTenant(id: string) {
@@ -213,6 +258,7 @@ export class TenantsService {
       include: {
         region: { select: { name: true, slug: true } },
         reviewer: { select: { firstName: true, lastName: true, email: true } },
+        desiredPlan: { select: { id: true, name: true } },
       },
     });
 
@@ -228,6 +274,8 @@ export class TenantsService {
       city: r.city ?? undefined,
       message: r.message ?? undefined,
       desired_modules: [] as string[],
+      desired_plan_id: r.desiredPlan?.id ?? undefined,
+      desired_plan_name: r.desiredPlan?.name ?? undefined,
       status: r.status as 'pending' | 'approved' | 'rejected',
       rejection_reason: undefined as string | undefined,
       created_at: r.createdAt.toISOString(),
@@ -245,6 +293,18 @@ export class TenantsService {
     });
     if (!region) throw new NotFoundException('Région introuvable ou inactive');
 
+    // Le plan désiré est calculé côté formulaire à partir de la taille déclarée
+    // (indicatif seulement) — on ignore silencieusement une valeur invalide plutôt
+    // que de bloquer l'inscription pour un champ non déterminant.
+    let desiredPlanId: string | undefined;
+    if (dto.desiredPlanId) {
+      const desiredPlan = await this.prisma.plan.findUnique({
+        where: { id: dto.desiredPlanId },
+        select: { id: true, isActive: true },
+      });
+      if (desiredPlan?.isActive) desiredPlanId = desiredPlan.id;
+    }
+
     const request = await this.prisma.tenantRequest.create({
       data: {
         regionId: dto.regionId,
@@ -254,6 +314,7 @@ export class TenantsService {
         phone: dto.phone,
         city: dto.city,
         message: dto.message,
+        desiredPlanId,
         status: 'pending',
       },
     });
@@ -294,7 +355,7 @@ export class TenantsService {
 
     if (dto.decision === ReviewDecision.APPROVE) {
       try {
-        await this.onboardTenant(request, dto.planId);
+        await this.onboardTenant(request, dto.planId ?? request.desiredPlanId ?? undefined);
       } catch (err) {
         // Rollback : remettre la demande en pending si l'onboarding échoue
         await this.prisma.tenantRequest.update({

@@ -11,6 +11,7 @@ import {
   ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import LandingAudioGuide from './landing-audio-guide';
+import { usePublicPlans, type PublicPlan } from '@/hooks/use-super-admin';
 
 // ── Shared ─────────────────────────────────────────────────────────────────────
 
@@ -93,63 +94,131 @@ const FEATURES = [
   },
 ];
 
-const PLANS = [
-  {
-    name: 'Starter',
-    price: '15 000',
-    currency: 'XOF',
-    description: 'Pour les petits restaurants qui démarrent',
+// Tarifs, quotas et modules inclus par plan viennent de la table `Plan` (via
+// `usePublicPlans` / GET /plans/public) pour ne jamais désynchroniser cette
+// section du back-office super-admin (cf. page Plans). Seule la présentation
+// (couleur, accroche, CTA, ligne de support) reste éditoriale — ces attributs
+// n'existent pas en base et n'ont pas vocation à y être.
+const PLAN_META: Record<string, { color: string; description: string; cta: string; support: string }> = {
+  starter: {
     color: '#D4A843',
-    features: [
-      "Jusqu'à 2 utilisateurs",
-      'Caisse POS',
-      'Menu digital',
-      'Gestion commandes',
-      'Site vitrine de base',
-      'Support email',
-    ],
+    description: 'Pour les petits restaurants qui démarrent',
     cta: 'Démarrer gratuitement',
-    highlight: false,
+    support: 'Support email',
   },
-  {
-    name: 'Growth',
-    price: '35 000',
-    currency: 'XOF',
-    description: 'Pour les restaurants en croissance',
+  growth: {
     color: '#C8553D',
-    features: [
-      "Jusqu'à 10 utilisateurs",
-      'Tout Starter inclus',
-      'Réservations en ligne',
-      'CRM & Fidélité',
-      'Analytics avancés',
-      'Livraison & Zones',
-      'Site vitrine + domaine',
-      'Support prioritaire',
-    ],
+    description: 'Pour les restaurants en croissance',
     cta: 'Commencer avec Growth',
-    highlight: true,
+    support: 'Support prioritaire',
+  },
+  enterprise: {
+    color: '#2D6A4F',
+    description: 'Pour les chaînes et franchises',
+    cta: "Contacter l'équipe",
+    support: 'Gestionnaire dédié',
+  },
+};
+const DEFAULT_PLAN_META = { color: '#8A8A86', description: '', cta: 'Choisir ce plan', support: 'Support email' };
+
+// Modules additionnels (au-delà du socle POS/menu/commandes, inclus dans tous
+// les plans) — libellé affiché seulement si activé dans `plan.features`.
+const FEATURE_LABEL: Record<string, string> = {
+  reservations: 'Réservations en ligne',
+  delivery: 'Livraison & zones',
+  crm: 'CRM & Fidélité',
+  whatsapp: 'Assistant WhatsApp IA',
+  analytics_pro: 'Analytics avancés',
+  website: 'Site vitrine + domaine personnalisé',
+  kds: 'Écran cuisine (KDS)',
+  workflows: 'Workflows sur mesure',
+  custom_fields: 'Champs personnalisés',
+  rules_engine: 'Automatisations métier',
+  reviews: 'Avis clients',
+};
+const FEATURE_ORDER = Object.keys(FEATURE_LABEL);
+const BASE_FEATURES = ['Caisse & POS', 'Menu digital', 'Gestion des commandes'];
+
+// Reflète les valeurs seedées (packages/database/prisma/seed.ts) — utilisé
+// uniquement le temps que /plans/public réponde, jamais affiché en cas d'erreur
+// durable puisque remplacé dès que la requête aboutit.
+const FALLBACK_PLANS: PublicPlan[] = [
+  {
+    id: 'fallback-starter',
+    name: 'Starter',
+    price_monthly: 15000,
+    price_yearly: 150000,
+    max_users: 3,
+    max_products: 50,
+    features: { pos: true, reservations: false, delivery: false, crm: false, reviews: true },
   },
   {
+    id: 'fallback-growth',
+    name: 'Growth',
+    price_monthly: 35000,
+    price_yearly: 350000,
+    max_users: 10,
+    max_products: 200,
+    features: { pos: true, reservations: true, delivery: true, crm: true, whatsapp: true, reviews: true },
+  },
+  {
+    id: 'fallback-enterprise',
     name: 'Enterprise',
-    price: '75 000',
-    currency: 'XOF',
-    description: 'Pour les chaînes et franchises',
-    color: '#2D6A4F',
-    features: [
-      'Utilisateurs illimités',
-      'Tout Growth inclus',
-      'Multi-établissements',
-      'Champs personnalisés',
-      'Workflows sur mesure',
-      'API & Intégrations',
-      'SLA 99.9% garanti',
-      'Gestionnaire dédié',
-    ],
-    cta: "Contacter l'équipe",
-    highlight: false,
+    price_monthly: 75000,
+    price_yearly: 750000,
+    max_users: -1,
+    max_products: -1,
+    features: {
+      pos: true,
+      reservations: true,
+      delivery: true,
+      crm: true,
+      analytics_pro: true,
+      website: true,
+      rules_engine: true,
+      custom_fields: true,
+      workflows: true,
+      kds: true,
+      whatsapp: true,
+      reviews: true,
+    },
   },
 ];
+
+interface DisplayPlan {
+  name: string;
+  price: string;
+  currency: string;
+  description: string;
+  color: string;
+  features: string[];
+  cta: string;
+  highlight: boolean;
+}
+
+function buildDisplayPlans(apiPlans: PublicPlan[] | undefined): DisplayPlan[] {
+  const source = apiPlans && apiPlans.length > 0 ? apiPlans : FALLBACK_PLANS;
+
+  return source.map((p) => {
+    const meta = PLAN_META[p.name.toLowerCase()] ?? DEFAULT_PLAN_META;
+
+    return {
+      name: p.name,
+      price: Math.round(p.price_monthly).toLocaleString('fr-FR'),
+      currency: 'XOF',
+      description: meta.description,
+      color: meta.color,
+      cta: meta.cta,
+      highlight: p.name.toLowerCase() === 'growth',
+      features: [
+        p.max_users === -1 ? 'Utilisateurs illimités' : `Jusqu'à ${p.max_users} utilisateurs`,
+        ...BASE_FEATURES,
+        ...FEATURE_ORDER.filter((slug) => p.features[slug]).map((slug) => FEATURE_LABEL[slug]),
+        meta.support,
+      ],
+    };
+  });
+}
 
 const REGIONS = [
   { city: 'Dakar', country: 'Sénégal', code: 'SN', currency: 'XOF', status: 'active', primary: '#009A44', stripes: ['#009A44', '#FDEF42', '#CE1126'] },
@@ -1212,17 +1281,19 @@ function TestimonialsSection() {
 function PricingSection() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
+  const { data: apiPlans } = usePublicPlans();
+  const plans = buildDisplayPlans(apiPlans);
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     const onScroll = () => {
       const idx = Math.round(el.scrollLeft / el.offsetWidth);
-      setActive(Math.max(0, Math.min(idx, PLANS.length - 1)));
+      setActive(Math.max(0, Math.min(idx, plans.length - 1)));
     };
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [plans.length]);
 
   const scrollTo = (i: number) => {
     const el = scrollRef.current;
@@ -1230,7 +1301,7 @@ function PricingSection() {
     el.scrollTo({ left: i * el.offsetWidth, behavior: 'smooth' });
   };
 
-  const PlanCard = ({ plan }: { plan: typeof PLANS[0] }) => (
+  const PlanCard = ({ plan }: { plan: DisplayPlan }) => (
     <div
       className={`relative rounded-2xl flex flex-col p-7 h-full ${
         plan.highlight
@@ -1297,7 +1368,7 @@ function PricingSection() {
           ref={scrollRef}
           className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide gap-4 px-4 sm:px-6 pb-2"
         >
-          {PLANS.map((plan) => (
+          {plans.map((plan) => (
             <div key={plan.name} className="snap-center shrink-0 w-[calc(100vw-3rem)] sm:w-[calc(100vw-4rem)]">
               <PlanCard plan={plan} />
             </div>
@@ -1306,14 +1377,14 @@ function PricingSection() {
 
         {/* Dots */}
         <div className="flex justify-center gap-2 mt-5">
-          {PLANS.map((plan, i) => (
+          {plans.map((plan, i) => (
             <button
               key={i}
               onClick={() => scrollTo(i)}
               className="h-2 rounded-full transition-all duration-300 focus:outline-none"
               style={{
                 width: i === active ? 20 : 8,
-                backgroundColor: i === active ? PLANS[active].color : 'rgba(255,255,255,0.2)',
+                backgroundColor: i === active ? plans[active]?.color : 'rgba(255,255,255,0.2)',
               }}
               aria-label={plan.name}
             />
@@ -1323,7 +1394,7 @@ function PricingSection() {
 
       {/* ── Desktop : grille 3 colonnes ── */}
       <div className="hidden md:grid grid-cols-3 gap-5 max-w-5xl mx-auto px-6">
-        {PLANS.map((plan) => (
+        {plans.map((plan) => (
           <motion.div
             key={plan.name}
             initial={{ opacity: 0, y: 28 }}

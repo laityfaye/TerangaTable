@@ -1,9 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Search, ChevronDown, CheckCircle, XCircle, X, Eye, Trash2 } from 'lucide-react';
-import { useRequests, useReviewRequest, useDeleteRequest, type TenantRequest } from '@/hooks/use-super-admin';
+import {
+  useRequests,
+  useReviewRequest,
+  useDeleteRequest,
+  usePlans,
+  type TenantRequest,
+} from '@/hooks/use-super-admin';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -111,6 +117,12 @@ function RequestDrawer({
               <p className="text-xs text-slate-500 mb-1">Date soumission</p>
               <p className="text-sm text-slate-200">{formatDate(request.created_at)}</p>
             </div>
+            {request.desired_plan_name && (
+              <div>
+                <p className="text-xs text-slate-500 mb-1">Plan recommandé</p>
+                <p className="text-sm text-slate-200">{request.desired_plan_name}</p>
+              </div>
+            )}
           </div>
 
           {/* Message */}
@@ -187,9 +199,23 @@ function ApproveModal({
 }: {
   request: TenantRequest | null;
   loading: boolean;
-  onConfirm: () => void;
+  onConfirm: (planId: string) => void;
   onCancel: () => void;
 }) {
+  const { data: plans } = usePlans();
+  const [planId, setPlanId] = useState('');
+
+  useEffect(() => {
+    if (!request) return;
+    const active = (plans ?? []).filter((p) => p.is_active);
+    const fallback = active[0]?.id ?? '';
+    setPlanId(
+      request.desired_plan_id && active.some((p) => p.id === request.desired_plan_id)
+        ? request.desired_plan_id
+        : fallback,
+    );
+  }, [request, plans]);
+
   if (!request) return null;
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
@@ -204,6 +230,29 @@ function ApproveModal({
           <span className="text-white font-medium">{request.restaurant_name}</span> sera activé et
           recevra ses accès.
         </p>
+
+        <div className="mt-4">
+          <label className="block text-xs text-slate-400 mb-1.5">
+            Plan attribué
+            {request.desired_plan_name && (
+              <span className="text-slate-600"> — recommandé : {request.desired_plan_name}</span>
+            )}
+          </label>
+          <select
+            value={planId}
+            onChange={(e) => setPlanId(e.target.value)}
+            className="w-full appearance-none bg-slate-800 border border-white/10 rounded-lg px-3 h-10 text-sm text-white focus:outline-none focus:border-violet-500/50 cursor-pointer"
+          >
+            {(plans ?? [])
+              .filter((p) => p.is_active)
+              .map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+          </select>
+        </div>
+
         <div className="mt-6 flex gap-3">
           <button
             onClick={onCancel}
@@ -212,8 +261,8 @@ function ApproveModal({
             Annuler
           </button>
           <button
-            onClick={onConfirm}
-            disabled={loading}
+            onClick={() => onConfirm(planId)}
+            disabled={loading || !planId}
             className="flex-1 h-10 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium transition-colors disabled:opacity-50"
           >
             {loading ? 'Validation...' : 'Confirmer'}
@@ -318,9 +367,9 @@ export default function RequestsPage() {
     return true;
   });
 
-  async function handleApprove(id: string) {
+  async function handleApprove(id: string, planId: string) {
     try {
-      await reviewMutation.mutateAsync({ id, status: 'approved' });
+      await reviewMutation.mutateAsync({ id, status: 'approved', planId });
       toast.success('Demande approuvée — le tenant a été créé.');
       setApproveTarget(null);
       setSelected(null);
@@ -556,7 +605,7 @@ export default function RequestsPage() {
       <ApproveModal
         request={approveTarget}
         loading={reviewMutation.isPending}
-        onConfirm={() => approveTarget && void handleApprove(approveTarget.id)}
+        onConfirm={(planId) => approveTarget && void handleApprove(approveTarget.id, planId)}
         onCancel={() => setApproveTarget(null)}
       />
       <RejectModal

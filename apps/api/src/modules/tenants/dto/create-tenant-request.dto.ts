@@ -36,4 +36,9 @@ export class CreateTenantRequestDto {
   @IsOptional()
   @IsString()
   message?: string;
+
+  @ApiPropertyOptional({ description: 'Plan suggéré côté formulaire selon la taille déclarée (indicatif — le SuperAdmin peut le changer à la validation)' })
+  @IsOptional()
+  @IsUUID()
+  desiredPlanId?: string;
 }

@@ -15,6 +15,8 @@ export interface TenantRequest {
   city?: string;
   message?: string;
   desired_modules?: string[];
+  desired_plan_id?: string;
+  desired_plan_name?: string;
   status: 'pending' | 'approved' | 'rejected' | 'revoked';
   rejection_reason?: string;
   created_at: string;
@@ -27,7 +29,8 @@ export interface Tenant {
   slug: string;
   region_id: string;
   region_name: string;
-  plan: 'starter' | 'growth' | 'enterprise';
+  plan: string;
+  plan_id: string;
   status: 'active' | 'trial' | 'suspended' | 'deleted';
   created_at: string;
   orders_total?: number;
@@ -59,6 +62,20 @@ export interface DashboardStats {
   pending_requests: number;
   new_this_month: number;
 }
+
+export interface Plan {
+  id: string;
+  name: string;
+  price_monthly: number;
+  price_yearly: number;
+  max_users: number;
+  max_products: number;
+  features: Record<string, boolean>;
+  is_active: boolean;
+  tenants_count?: number;
+}
+
+export type PlanFormData = Omit<Plan, 'id' | 'tenants_count'>;
 
 export interface PlatformModule {
   id: string;
@@ -151,15 +168,18 @@ export function useReviewRequest() {
       id,
       status,
       reason,
+      planId,
     }: {
       id: string;
       status: 'approved' | 'rejected';
       reason?: string;
+      planId?: string;
     }) => {
       const decision = status === 'approved' ? 'approve' : 'reject';
       const { data } = await apiClient.patch(`/tenant-requests/${id}/review`, {
         decision,
         ...(reason && { notes: reason }),
+        ...(planId && { planId }),
       });
       return data;
     },
@@ -187,6 +207,19 @@ export function useToggleTenant() {
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: 'active' | 'suspended' }) => {
       const { data } = await apiClient.patch(`/tenants/${id}/status`, { status });
+      return data;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['super-admin', 'tenants'] });
+    },
+  });
+}
+
+export function useUpdateTenantPlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, planId }: { id: string; planId: string }) => {
+      const { data } = await apiClient.patch(`/tenants/${id}/plan`, { planId });
       return data;
     },
     onSuccess: () => {
@@ -328,6 +361,64 @@ export function useModerateReview() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['super-admin', 'reviews', 'moderation'] });
+    },
+  });
+}
+
+export interface PublicPlan {
+  id: string;
+  name: string;
+  price_monthly: number;
+  price_yearly: number;
+  max_users: number;
+  max_products: number;
+  features: Record<string, boolean>;
+}
+
+// Public — consommé par la landing page (section tarifs). Pas d'auth requise.
+export function usePublicPlans() {
+  return useQuery({
+    queryKey: ['plans', 'public'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: PublicPlan[] }>('/plans/public');
+      return data.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function usePlans() {
+  return useQuery({
+    queryKey: ['super-admin', 'plans'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<{ data: Plan[] }>('/plans');
+      return data.data;
+    },
+  });
+}
+
+export function useCreatePlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: PlanFormData) => {
+      const { data } = await apiClient.post('/plans', payload);
+      return data;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['super-admin', 'plans'] });
+    },
+  });
+}
+
+export function useUpdatePlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...payload }: Partial<PlanFormData> & { id: string }) => {
+      const { data } = await apiClient.patch(`/plans/${id}`, payload);
+      return data;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['super-admin', 'plans'] });
     },
   });
 }

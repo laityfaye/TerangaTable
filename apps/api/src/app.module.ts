@@ -11,6 +11,7 @@ import { RedisCacheModule } from './common/redis-cache.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
+import { PlansModule } from './modules/plans/plans.module';
 import { RegionsModule } from './modules/regions/regions.module';
 import { UsersModule } from './modules/users/users.module';
 import { RolesModule } from './modules/roles/roles.module';
@@ -55,6 +56,7 @@ import { EventsModule } from './events/events.module';
     HealthModule,
     AuthModule,
     TenantsModule,
+    PlansModule,
     RegionsModule,
     UsersModule,
     RolesModule,

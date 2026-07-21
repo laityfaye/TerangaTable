@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import {
   Search,
@@ -14,8 +14,17 @@ import {
   Users,
   Package,
   AlertTriangle,
+  ArrowUpDown,
 } from 'lucide-react';
-import { useTenants, useToggleTenant, useDeleteTenant, usePurgeTenant, type Tenant } from '@/hooks/use-super-admin';
+import {
+  useTenants,
+  useToggleTenant,
+  useDeleteTenant,
+  usePurgeTenant,
+  usePlans,
+  useUpdateTenantPlan,
+  type Tenant,
+} from '@/hooks/use-super-admin';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -38,6 +47,7 @@ const PLAN_BADGE: Record<string, string> = {
   growth: 'bg-violet-500/20 text-violet-300',
   enterprise: 'bg-yellow-500/20 text-yellow-300',
 };
+const DEFAULT_PLAN_BADGE = 'bg-blue-500/20 text-blue-300';
 
 const STATUS_BADGE: Record<string, string> = {
   active: 'bg-green-500/20 text-green-400',
@@ -74,21 +84,33 @@ function TenantDrawer({
   onToggle,
   onDelete,
   onPurge,
+  onChangePlan,
   loadingToggle,
   loadingDelete,
   loadingPurge,
+  loadingChangePlan,
 }: {
   tenant: Tenant | null;
   onClose: () => void;
   onToggle: (t: Tenant) => void;
   onDelete: (t: Tenant) => void;
   onPurge: (t: Tenant) => void;
+  onChangePlan: (t: Tenant, planId: string) => void;
   loadingToggle: boolean;
   loadingDelete: boolean;
   loadingPurge: boolean;
+  loadingChangePlan: boolean;
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmPurge, setConfirmPurge] = useState(false);
+  const [changingPlan, setChangingPlan] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState('');
+  const { data: plans } = usePlans();
+
+  useEffect(() => {
+    setSelectedPlanId(tenant?.plan_id ?? '');
+    setChangingPlan(false);
+  }, [tenant?.id, tenant?.plan_id]);
 
   if (!tenant) return null;
   const canSuspend = tenant.status === 'active' || tenant.status === 'trial';
@@ -109,11 +131,53 @@ function TenantDrawer({
               >
                 {STATUS_LABEL[tenant.status]}
               </span>
-              <span
-                className={`inline-flex px-2 py-0.5 rounded text-xs font-medium capitalize ${PLAN_BADGE[tenant.plan]}`}
-              >
-                {tenant.plan}
-              </span>
+              {!changingPlan ? (
+                <>
+                  <span
+                    className={`inline-flex px-2 py-0.5 rounded text-xs font-medium capitalize ${PLAN_BADGE[tenant.plan] ?? DEFAULT_PLAN_BADGE}`}
+                  >
+                    {tenant.plan}
+                  </span>
+                  <button
+                    onClick={() => setChangingPlan(true)}
+                    className="flex items-center gap-1 text-[11px] text-violet-400 hover:text-violet-300 transition-colors"
+                    title="Changer de plan (upgrade / downgrade)"
+                  >
+                    <ArrowUpDown size={11} />
+                    Changer
+                  </button>
+                </>
+              ) : (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <select
+                    value={selectedPlanId}
+                    onChange={(e) => setSelectedPlanId(e.target.value)}
+                    className="bg-slate-800 border border-white/10 rounded px-2 h-7 text-xs text-white focus:outline-none focus:border-violet-500/50"
+                  >
+                    {(plans ?? [])
+                      .filter((p) => p.is_active || p.id === tenant.plan_id)
+                      .map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                  </select>
+                  <button
+                    onClick={() => onChangePlan(tenant, selectedPlanId)}
+                    disabled={loadingChangePlan || !selectedPlanId || selectedPlanId === tenant.plan_id}
+                    className="px-2.5 h-7 rounded bg-violet-600 hover:bg-violet-700 text-white text-[11px] font-medium transition-colors disabled:opacity-50"
+                  >
+                    {loadingChangePlan ? '...' : 'Valider'}
+                  </button>
+                  <button
+                    onClick={() => setChangingPlan(false)}
+                    disabled={loadingChangePlan}
+                    className="px-2.5 h-7 rounded border border-white/10 text-slate-400 hover:text-white text-[11px] transition-colors disabled:opacity-50"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              )}
             </div>
             <h3 className="font-heading font-bold text-white text-lg">{tenant.name}</h3>
             <p className="text-xs text-slate-500 font-mono mt-0.5">{tenant.slug}</p>
@@ -353,6 +417,7 @@ export default function TenantsPage() {
   const toggleMutation = useToggleTenant();
   const deleteMutation = useDeleteTenant();
   const purgeMutation = usePurgeTenant();
+  const changePlanMutation = useUpdateTenantPlan();
 
   const tenants = (apiData ?? []).filter((t) => {
     if (regionFilter !== 'Toutes' && t.region_name !== regionFilter) return false;
@@ -394,6 +459,16 @@ export default function TenantsPage() {
       setSelected(null);
     } catch {
       toast.error('Erreur lors de la purge');
+    }
+  }
+
+  async function handleChangePlan(tenant: Tenant, planId: string) {
+    try {
+      await changePlanMutation.mutateAsync({ id: tenant.id, planId });
+      toast.success(`Plan de "${tenant.name}" mis à jour.`);
+      setSelected(null);
+    } catch {
+      toast.error('Erreur lors du changement de plan');
     }
   }
 
@@ -491,7 +566,7 @@ export default function TenantsPage() {
                     <td className="px-5 py-3.5 text-slate-400">{t.region_name}</td>
                     <td className="px-5 py-3.5">
                       <span
-                        className={`inline-flex px-2 py-0.5 rounded text-xs font-medium capitalize ${PLAN_BADGE[t.plan]}`}
+                        className={`inline-flex px-2 py-0.5 rounded text-xs font-medium capitalize ${PLAN_BADGE[t.plan] ?? DEFAULT_PLAN_BADGE}`}
                       >
                         {t.plan}
                       </span>
@@ -564,9 +639,11 @@ export default function TenantsPage() {
         onToggle={(t) => void handleToggle(t)}
         onDelete={(t) => void handleDelete(t)}
         onPurge={(t) => void handlePurge(t)}
+        onChangePlan={(t, planId) => void handleChangePlan(t, planId)}
         loadingToggle={toggleMutation.isPending}
         loadingDelete={deleteMutation.isPending}
         loadingPurge={purgeMutation.isPending}
+        loadingChangePlan={changePlanMutation.isPending}
       />
     </div>
   );
