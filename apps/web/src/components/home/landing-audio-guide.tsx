@@ -24,11 +24,11 @@ export default function LandingAudioGuide() {
     fr: { type: 'tts', script: SCRIPT_FR },
     ...(audioWoSrc ? { wo: { type: 'audio' as const, src: audioWoSrc } } : {}),
   };
-  const { visible, speaking, lang, availableLangs, setLang, sourceUnavailable, play, dismiss, replay } =
+  const { visible, speaking, lang, availableLangs, setLang, sourceUnavailable, play, dismiss, replay, onMouseEnter } =
     useVoiceGuide(sources, STORAGE_KEY);
 
   return (
-    <div className="fixed bottom-6 left-5 z-[3000] flex flex-col items-start gap-2">
+    <div className="fixed bottom-6 left-5 z-[3000] flex flex-col items-start gap-2" onMouseEnter={onMouseEnter}>
       {visible && (
         <div className="pointer-events-auto w-[260px] bg-white border border-[#E7E5E4] rounded-2xl shadow-2xl p-4 animate-in fade-in slide-in-from-bottom-2">
           <div className="flex items-start gap-2.5">

@@ -66,6 +66,8 @@ export interface VoiceGuide {
   play: () => void;
   dismiss: () => void;
   replay: () => void;
+  /** Attach to the guide widget's root element (onMouseEnter) to retry a blocked autoplay on hover. */
+  onMouseEnter: () => void;
 }
 
 // Chrome/Safari can reject speech/audio playback started without a user gesture tied
@@ -179,24 +181,20 @@ export function useVoiceGuide(sources: VoiceGuideSources, storageKey: string): V
   }, [storageKey]);
 
   // The autoplay attempt above can be silently rejected without a prior user
-  // gesture on this page load (Chrome/Safari policy) — retry once on the very
-  // first real interaction anywhere on the page so the guide still starts
-  // talking on its own instead of waiting for a tap on its own "Écouter" button.
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const onFirstInteraction = () => {
-      if (blockedRef.current && !sessionStorage.getItem(storageKey)) {
-        playAndMarkSeen();
-      }
-    };
-    document.addEventListener('pointerdown', onFirstInteraction, { once: true });
-    document.addEventListener('keydown', onFirstInteraction, { once: true });
-    return () => {
-      document.removeEventListener('pointerdown', onFirstInteraction);
-      document.removeEventListener('keydown', onFirstInteraction);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storageKey]);
+  // gesture on this page load (Chrome/Safari policy) — retry once when the
+  // pointer enters this specific guide's widget, so the guide starts talking
+  // on its own without waiting for a tap on its "Écouter" button, but without
+  // hijacking clicks elsewhere on the page (which could fire several guides
+  // at once if more than one is mounted).
+  const hasHoverRetriedRef = useRef(false);
+
+  function onMouseEnter() {
+    if (hasHoverRetriedRef.current) return;
+    hasHoverRetriedRef.current = true;
+    if (blockedRef.current && !sessionStorage.getItem(storageKey)) {
+      playAndMarkSeen();
+    }
+  }
 
   function dismiss() {
     stopAll();
@@ -218,5 +216,5 @@ export function useVoiceGuide(sources: VoiceGuideSources, storageKey: string): V
     setLangState(next);
   }
 
-  return { visible, speaking, lang, availableLangs, setLang, sourceUnavailable, play: playAndMarkSeen, dismiss, replay };
+  return { visible, speaking, lang, availableLangs, setLang, sourceUnavailable, play: playAndMarkSeen, dismiss, replay, onMouseEnter };
 }
