@@ -70,7 +70,7 @@ export default function AboutSection({
             variants={textCol}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: '-80px' }}
+            viewport={{ once: true, margin: '200px' }}
           >
             {/* Label + line */}
             <motion.div variants={fadeLeft} className="flex items-center gap-4">
@@ -155,7 +155,7 @@ export default function AboutSection({
             variants={fadeRight}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: '-80px' }}
+            viewport={{ once: true, margin: '200px' }}
           >
             <div
               className="relative w-full max-w-sm overflow-hidden"

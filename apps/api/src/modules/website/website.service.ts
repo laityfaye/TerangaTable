@@ -7,6 +7,7 @@ import { CreatePublicReservationDto } from './dto/create-public-reservation.dto'
 import { CreatePublicOrderDto } from './dto/create-public-order.dto';
 import { UpdateWebsiteSettingsDto } from './dto/update-website-settings.dto';
 import { OrdersGateway } from '../orders/orders.gateway';
+import { ReviewsService } from '../reviews/reviews.service';
 
 const PUBLIC_DATA_TTL  = 300; // 5 min — matches Next.js revalidate
 const PUBLIC_MENU_TTL  = 60;  // 1 min — menu changes more often
@@ -59,6 +60,7 @@ export class WebsiteService {
     private readonly redis: RedisCacheService,
     private readonly ordersGateway: OrdersGateway,
     private readonly config: ConfigService,
+    private readonly reviewsService: ReviewsService,
   ) {}
 
   // ── Public endpoints ───────────────────────────────────────────────────────
@@ -412,6 +414,7 @@ export class WebsiteService {
       total:        mapped.total,
       type:         mapped.type,
       created_at:   mapped.created_at,
+      review_token: this.reviewsService.signReviewToken(mapped.id),
     };
   }
 

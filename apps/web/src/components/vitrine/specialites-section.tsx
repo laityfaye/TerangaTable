@@ -60,7 +60,7 @@ export default function SpecialitesSection({
           variants={headerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-60px' }}
+          viewport={{ once: true, margin: '200px' }}
         >
           <motion.div variants={fadeUp} className="flex items-center justify-center gap-4 mb-4">
             <motion.div
@@ -103,7 +103,7 @@ export default function SpecialitesSection({
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-40px' }}
+          viewport={{ once: true, margin: '150px' }}
         >
           {products.map((product) => (
             <motion.div key={product.id} variants={cardVariants}>
@@ -122,7 +122,7 @@ export default function SpecialitesSection({
           className="text-center mt-14"
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-40px' }}
+          viewport={{ once: true, margin: '150px' }}
           transition={{ duration: 0.65, ease: EASE }}
         >
           <Link

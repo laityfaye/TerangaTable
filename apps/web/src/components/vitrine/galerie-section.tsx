@@ -58,7 +58,7 @@ export default function GalerieSection({ images, restaurantName }: Props) {
           variants={headerContainer}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-60px' }}
+          viewport={{ once: true, margin: '200px' }}
         >
           <motion.div variants={fadeUp} className="flex items-center justify-center gap-4 mb-4">
             <motion.div
@@ -90,7 +90,7 @@ export default function GalerieSection({ images, restaurantName }: Props) {
             variants={imgReveal}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: '-40px' }}
+            viewport={{ once: true, margin: '150px' }}
           >
             <GalImage
               src={display[0]!}
@@ -107,7 +107,7 @@ export default function GalerieSection({ images, restaurantName }: Props) {
             variants={gridContainer}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: '-40px' }}
+            viewport={{ once: true, margin: '150px' }}
           >
             {display.map((src, i) => (
               <motion.div key={i} variants={imgReveal}>
@@ -128,7 +128,7 @@ export default function GalerieSection({ images, restaurantName }: Props) {
             variants={gridContainer}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: '-40px' }}
+            viewport={{ once: true, margin: '150px' }}
           >
             {/* Featured — spans 2 rows */}
             <motion.div

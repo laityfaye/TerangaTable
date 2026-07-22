@@ -605,6 +605,8 @@ function CartDrawer({
     total: string;
     orderType: OrderType;
     tableNum: string | undefined;
+    orderId: string;
+    reviewToken: string;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -666,15 +668,20 @@ function CartDrawer({
         }),
       });
 
-      const json = await res.json() as { data?: { order_number: string; total: string }; order_number?: string; total?: string };
+      const json = await res.json() as {
+        data?: { id: string; order_number: string; total: string; review_token: string };
+        id?: string; order_number?: string; total?: string; review_token?: string;
+      };
       if (!res.ok) throw new Error((json as { message?: string }).message ?? 'Erreur lors de la commande');
 
-      const data = json.data ?? (json as { order_number: string; total: string });
+      const data = json.data ?? (json as { id: string; order_number: string; total: string; review_token: string });
       setConfirmed({
         order_number: data.order_number,
         total: data.total,
         orderType,
         tableNum,
+        orderId: data.id,
+        reviewToken: data.review_token,
       });
       onClearCart();
     } catch (e) {
@@ -801,18 +808,37 @@ function CartDrawer({
                 </span>
               </motion.p>
 
-              <motion.button
-                onClick={onClose}
-                className="px-8 py-3 rounded-xl text-white font-semibold"
-                style={{ backgroundColor: primaryColor }}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+              <motion.div
+                className="flex flex-col items-center gap-3 w-full"
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                Fermer
-              </motion.button>
+                <motion.a
+                  href={`/avis/${confirmed.orderId}?token=${confirmed.reviewToken}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-8 py-3 rounded-xl font-semibold border"
+                  style={{ borderColor: primaryColor, color: primaryColor }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.958a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.368 2.447a1 1 0 00-.363 1.118l1.287 3.957c.3.922-.755 1.688-1.538 1.118l-3.367-2.446a1 1 0 00-1.176 0l-3.367 2.446c-.783.57-1.838-.196-1.538-1.118l1.286-3.957a1 1 0 00-.363-1.118L2.02 9.385c-.783-.57-.38-1.81.588-1.81h4.163a1 1 0 00.95-.69l1.286-3.958z" />
+                  </svg>
+                  Noter le restaurant
+                </motion.a>
+
+                <motion.button
+                  onClick={onClose}
+                  className="px-8 py-3 rounded-xl text-white font-semibold"
+                  style={{ backgroundColor: primaryColor }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  Fermer
+                </motion.button>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -1659,7 +1685,7 @@ export default function MenuClient({
                 {filteredCategories.map((cat) => (
                   <motion.section key={cat.id} id={`menu-cat-${cat.id}`}
                     ref={(el: HTMLElement | null) => { sectionRefs.current[cat.id] = el; }}
-                    initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-60px' }}>
+                    initial="hidden" whileInView="visible" viewport={{ once: true, margin: '200px' }}>
                     <motion.div className="flex items-center gap-5 mb-8" variants={catHeaderVars}>
                       <motion.div variants={catHeaderItem}>
                         <div className="flex items-center gap-2 mb-1">

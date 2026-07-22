@@ -823,7 +823,7 @@ function AboutSection() {
         <motion.div
           initial={{ opacity: 0, y: 28 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={{ once: true, margin: '200px' }}
           transition={{ duration: 0.7, ease: EASE }}
         >
           <h2
@@ -851,7 +851,7 @@ function AboutSection() {
           className="relative h-[420px] sm:h-[480px]"
           initial={{ opacity: 0, y: 28 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={{ once: true, margin: '200px' }}
           transition={{ duration: 0.7, delay: 0.1, ease: EASE }}
         >
           {/* Halos de couleur en fond, pour sortir les images du noir plat */}
@@ -875,7 +875,7 @@ function AboutSection() {
             className="absolute -bottom-5 left-[36%] sm:left-[40%] w-[9.5rem] bg-[#161614]/95 backdrop-blur-md border border-white/12 rounded-2xl p-3 shadow-xl shadow-black/50"
             initial={{ opacity: 0, y: 14 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-80px' }}
+            viewport={{ once: true, margin: '200px' }}
             transition={{ duration: 0.6, delay: 0.45, ease: EASE }}
           >
             <div className="flex items-center gap-1.5 mb-1">
@@ -944,7 +944,7 @@ function StatsSection() {
           className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-10 text-center"
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-60px' }}
+          viewport={{ once: true, margin: '200px' }}
           variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
         >
           {STATS.map((s) => (
@@ -990,7 +990,7 @@ function FeaturesSection() {
           className="grid grid-cols-4 gap-3 sm:gap-6"
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-60px' }}
+          viewport={{ once: true, margin: '200px' }}
           variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
         >
           {FEATURES.map((f) => (
@@ -1132,7 +1132,7 @@ function MarketplaceCtaSection() {
           className="text-center max-w-3xl mx-auto mb-14"
           initial={{ opacity: 0, y: 32 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={{ once: true, margin: '200px' }}
           transition={{ duration: 0.75, ease: EASE }}
         >
           {/* Badge */}
@@ -1399,7 +1399,7 @@ function PricingSection() {
             key={plan.name}
             initial={{ opacity: 0, y: 28 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-80px' }}
+            viewport={{ once: true, margin: '200px' }}
             transition={{ duration: 0.55, ease: EASE }}
             whileHover={{ y: -4, transition: { duration: 0.22 } }}
           >

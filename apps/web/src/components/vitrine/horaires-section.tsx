@@ -76,7 +76,7 @@ export default function HorairesSection({ openingHours, address, lat, lng, phone
           variants={headerContainer}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-60px' }}
+          viewport={{ once: true, margin: '200px' }}
         >
           <motion.div variants={fadeUp} className="flex items-center justify-center gap-4 mb-4">
             <motion.div
@@ -110,7 +110,7 @@ export default function HorairesSection({ openingHours, address, lat, lng, phone
             variants={slideLeft}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: '-60px' }}
+            viewport={{ once: true, margin: '200px' }}
           >
             <h3 className="font-semibold text-[#1C1917] text-lg mb-5 flex items-center gap-2.5">
               <span className="w-8 h-8 rounded-xl bg-[#F5EAE7] flex items-center justify-center shrink-0">
@@ -126,7 +126,7 @@ export default function HorairesSection({ openingHours, address, lat, lng, phone
               variants={rowContainer}
               initial="hidden"
               whileInView="visible"
-              viewport={{ once: true, margin: '-40px' }}
+              viewport={{ once: true, margin: '150px' }}
             >
               {days.map((day) => {
                 const hours = openingHours[day];
@@ -163,7 +163,7 @@ export default function HorairesSection({ openingHours, address, lat, lng, phone
             variants={slideRight}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: '-60px' }}
+            viewport={{ once: true, margin: '200px' }}
           >
             {/* Contact card */}
             <div className="bg-[#FAFAF8] rounded-2xl p-7 border border-[#E7E5E4] shadow-sm">
@@ -181,7 +181,7 @@ export default function HorairesSection({ openingHours, address, lat, lng, phone
                 variants={contactContainer}
                 initial="hidden"
                 whileInView="visible"
-                viewport={{ once: true, margin: '-40px' }}
+                viewport={{ once: true, margin: '150px' }}
               >
                 {address && (
                   <motion.li variants={contactItem} className="flex items-start gap-3 text-[#57534E] text-sm">
@@ -230,7 +230,7 @@ export default function HorairesSection({ openingHours, address, lat, lng, phone
                 style={{ height: 192 }}
                 initial={{ opacity: 0, scale: 0.97 }}
                 whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true, margin: '-40px' }}
+                viewport={{ once: true, margin: '150px' }}
                 transition={{ duration: 0.6, delay: 0.2, ease: EASE }}
               >
                 <iframe

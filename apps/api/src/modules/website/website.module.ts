@@ -6,12 +6,14 @@ import { WebsiteDashboardController } from './website-dashboard.controller';
 import { WebsiteService } from './website.service';
 import { StorageModule } from '../storage/storage.module';
 import { OrdersModule } from '../orders/orders.module';
+import { ReviewsModule } from '../reviews/reviews.module';
 
 @Module({
   imports: [
     StorageModule,
     MulterModule.register({ storage: memoryStorage() }),
     OrdersModule,
+    ReviewsModule,
   ],
   controllers: [WebsiteController, WebsiteDashboardController],
   providers: [WebsiteService],

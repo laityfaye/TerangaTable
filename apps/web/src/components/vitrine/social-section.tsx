@@ -104,7 +104,7 @@ export default function SocialSection({ socialLinks, primaryColor }: Props) {
           variants={headerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-60px' }}
+          viewport={{ once: true, margin: '200px' }}
         >
           <motion.div variants={fadeUp} className="inline-flex items-center gap-3 mb-4">
             <div className="h-px w-8 bg-[#E7E5E4]" />
@@ -133,7 +133,7 @@ export default function SocialSection({ socialLinks, primaryColor }: Props) {
           variants={buttonContainer}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-40px' }}
+          viewport={{ once: true, margin: '150px' }}
         >
           {entries.map(([platform, url]) => {
             const config = SOCIAL_CONFIG[platform];
