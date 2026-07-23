@@ -112,9 +112,10 @@ const BODY_FONTS = [
 ];
 
 const COLOR_PRESETS = [
-  '#C8553D', '#D4A843', '#2D6A4F', '#1A1A18',
-  '#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B',
-  '#10B981', '#6B7280',
+  '#C8553D', '#D4A843', '#2D6A4F', '#1A1A18', '#7C2D12',
+  '#3B82F6', '#8B5CF6', '#EC4899', '#F59E0B', '#0EA5E9',
+  '#10B981', '#6B7280', '#EF4444', '#84CC16', '#14B8A6',
+  '#6366F1', '#D97706', '#DB2777', '#059669', '#0F172A',
 ];
 
 const SECTION_META: Record<string, { label: string; emoji: string }> = {
@@ -178,36 +179,12 @@ function ColorPicker({
     }
   }
 
+  const isCustom = !COLOR_PRESETS.includes(value);
+
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-[#1C1917]">{label}</label>
-      <div className="flex items-center gap-3">
-        <label className="cursor-pointer">
-          <div
-            className="w-10 h-10 rounded-lg border-2 border-white shadow-md ring-1 ring-[#E7E5E4]"
-            style={{ backgroundColor: value }}
-          />
-          <input
-            type="color"
-            value={value}
-            onChange={(e) => {
-              setHex(e.target.value);
-              onChange(e.target.value);
-            }}
-            className="sr-only"
-          />
-        </label>
-        <input
-          type="text"
-          value={hex}
-          onChange={(e) => setHex(e.target.value)}
-          onBlur={(e) => commitHex(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && commitHex(hex)}
-          maxLength={7}
-          placeholder="#C8553D"
-          className="w-28 h-9 px-3 rounded-md border border-[#E7E5E4] text-sm font-mono text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-terracotta/20 focus:border-terracotta"
-        />
-      </div>
+
       {/* Presets */}
       <div className="flex gap-1.5 flex-wrap">
         {COLOR_PRESETS.map((preset) => (
@@ -223,6 +200,47 @@ function ColorPicker({
             }}
           />
         ))}
+      </div>
+
+      {/* Couleur personnalisée */}
+      <div
+        className={`flex items-center gap-3 rounded-lg border p-2 transition-colors ${
+          isCustom ? 'border-terracotta/40 bg-terracotta/5' : 'border-[#E7E5E4]'
+        }`}
+      >
+        <label className="group relative cursor-pointer" title="Choisir n'importe quelle couleur">
+          <div
+            className="w-10 h-10 rounded-lg border-2 border-white shadow-md ring-1 ring-[#E7E5E4] flex items-center justify-center overflow-hidden"
+            style={{ backgroundColor: value }}
+          >
+            <Palette
+              size={14}
+              className="opacity-0 group-hover:opacity-100 transition-opacity mix-blend-difference text-white"
+            />
+          </div>
+          <input
+            type="color"
+            value={value}
+            onChange={(e) => {
+              setHex(e.target.value);
+              onChange(e.target.value);
+            }}
+            className="sr-only"
+          />
+        </label>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[11px] font-medium text-slate-500">Couleur personnalisée</span>
+          <input
+            type="text"
+            value={hex}
+            onChange={(e) => setHex(e.target.value)}
+            onBlur={(e) => commitHex(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && commitHex(hex)}
+            maxLength={7}
+            placeholder="#C8553D"
+            className="w-28 h-8 px-2 rounded-md border border-[#E7E5E4] text-sm font-mono text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-terracotta/20 focus:border-terracotta"
+          />
+        </div>
       </div>
     </div>
   );

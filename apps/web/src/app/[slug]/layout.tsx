@@ -128,25 +128,20 @@ export default async function VitrineLayout({ children, params }: Props) {
 }
 
 function buildGoogleFontsUrl(heading: string, body: string): string {
-  const families: string[] = [];
-
   const normalise = (f: string) => f.split(',')[0]?.trim() ?? '';
-  const headingFamily = normalise(heading);
-  const bodyFamily = normalise(body);
 
-  const knownFamilies: Record<string, string> = {
-    'Playfair Display': 'Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,700',
-    'DM Sans': 'DM+Sans:wght@300;400;500;600',
-    'Plus Jakarta Sans': 'Plus+Jakarta+Sans:wght@400;500;600;700;800',
-    Sora: 'Sora:wght@400;600;700',
-    Lora: 'Lora:ital,wght@0,400;0,700;1,400',
-    Montserrat: 'Montserrat:wght@400;500;600;700',
-    Poppins: 'Poppins:wght@300;400;500;600;700',
-  };
-
-  if (knownFamilies[headingFamily]) families.push(knownFamilies[headingFamily]);
-  if (knownFamilies[bodyFamily] && bodyFamily !== headingFamily) families.push(knownFamilies[bodyFamily]);
+  const families = Array.from(
+    new Set([normalise(heading), normalise(body)].filter(Boolean)),
+  );
 
   if (families.length === 0) return '';
-  return `https://fonts.googleapis.com/css2?${families.map((f) => `family=${f}`).join('&')}&display=swap`;
+
+  // Toute police proposée dans le sélecteur du dashboard doit pouvoir être
+  // chargée ici — pas de liste blanche, sinon les polices ajoutées côté UI
+  // sans mise à jour de cette fonction s'affichent avec la police système.
+  const params = families
+    .map((f) => `family=${f.replace(/\s+/g, '+')}:wght@400;600;700`)
+    .join('&');
+
+  return `https://fonts.googleapis.com/css2?${params}&display=swap`;
 }

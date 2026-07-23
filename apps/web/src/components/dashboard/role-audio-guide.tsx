@@ -73,7 +73,7 @@ export default function RoleAudioGuide({ role }: Props) {
     useVoiceGuide(sources, storageKey);
 
   return (
-    <div className="fixed bottom-6 right-5 z-[3000] flex flex-col items-end gap-2" onMouseEnter={onMouseEnter}>
+    <div className="fixed bottom-24 right-5 z-[3000] flex flex-col items-end gap-2" onMouseEnter={onMouseEnter}>
       {visible && (
         <div className="pointer-events-auto w-[260px] bg-white border border-[#E7E5E4] rounded-2xl shadow-2xl p-4 animate-in fade-in slide-in-from-bottom-2">
           <div className="flex items-start gap-2.5">
