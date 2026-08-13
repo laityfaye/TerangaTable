@@ -108,6 +108,8 @@ services:
       args:
         NEXT_PUBLIC_API_URL: https://api.terangatable.cloud/v1
         NEXT_PUBLIC_WS_URL: wss://api.terangatable.cloud
+        NEXT_PUBLIC_PLATFORM_DOMAIN: terangatable.cloud
+        NEXT_PUBLIC_BASE_URL: https://terangatable.cloud
     restart: always
     env_file: ../.env.production
     environment:

@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   try {
     const data = await fetchVitrineData(slug);
     const ws = data.website_settings;
-    const baseUrl = process.env['NEXT_PUBLIC_BASE_URL'] ?? 'https://terangatable.com';
+    const baseUrl = process.env['NEXT_PUBLIC_BASE_URL'] ?? 'https://terangatable.cloud';
     const cityName = data.region.name;
 
     // Mots-clés générés automatiquement quand le restaurateur n'a pas configuré

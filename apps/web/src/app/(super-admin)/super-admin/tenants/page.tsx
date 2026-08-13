@@ -49,6 +49,8 @@ const PLAN_BADGE: Record<string, string> = {
 };
 const DEFAULT_PLAN_BADGE = 'bg-blue-500/20 text-blue-300';
 
+const PLATFORM_DOMAIN = process.env.NEXT_PUBLIC_PLATFORM_DOMAIN ?? 'terangatable.cloud';
+
 const STATUS_BADGE: Record<string, string> = {
   active: 'bg-green-500/20 text-green-400',
   trial: 'bg-blue-500/20 text-blue-400',
@@ -342,7 +344,7 @@ function TenantDrawer({
 
           <div className="flex gap-3">
             <a
-              href={`https://${tenant.slug}.terangatable.com/dashboard`}
+              href={`https://${tenant.slug}.${PLATFORM_DOMAIN}/dashboard`}
               target="_blank"
               rel="noreferrer"
               className="flex items-center gap-2 h-10 px-4 rounded-lg bg-slate-800 border border-white/10 text-slate-300 hover:text-white hover:border-white/20 transition-colors text-sm"
@@ -587,7 +589,7 @@ export default function TenantsPage() {
                     >
                       <div className="flex items-center gap-1.5">
                         <a
-                          href={`https://${t.slug}.terangatable.com/dashboard`}
+                          href={`https://${t.slug}.${PLATFORM_DOMAIN}/dashboard`}
                           target="_blank"
                           rel="noreferrer"
                           className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-white/10 transition-colors"

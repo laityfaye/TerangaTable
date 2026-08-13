@@ -19,6 +19,8 @@ import { useAuthStore } from '@/stores/auth.store';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
+const PLATFORM_DOMAIN = process.env.NEXT_PUBLIC_PLATFORM_DOMAIN ?? 'terangatable.cloud';
+
 const STATUS_OPTS = [
   { value: 'Tous', label: 'Tous statuts' },
   { value: 'active', label: 'Actifs' },
@@ -131,7 +133,7 @@ function TenantDrawer({
         </div>
 
         <div className="px-6 py-5 border-t border-white/10 flex gap-3">
-          <a href={`https://${tenant.slug}.terangatable.com/dashboard`} target="_blank" rel="noreferrer"
+          <a href={`https://${tenant.slug}.${PLATFORM_DOMAIN}/dashboard`} target="_blank" rel="noreferrer"
             className="flex items-center gap-2 h-10 px-4 rounded-lg bg-slate-800 border border-white/10 text-slate-300 hover:text-white hover:border-white/20 transition-colors text-sm">
             <ExternalLink size={14} /> Voir dashboard
           </a>
@@ -285,7 +287,7 @@ export default function RegionTenantsPage({ params }: { params: { slug: string }
                     <td className="px-5 py-3.5 text-slate-500 font-mono text-xs">{formatDate(t.created_at)}</td>
                     <td className="px-5 py-3.5" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-1.5">
-                        <a href={`https://${t.slug}.terangatable.com/dashboard`} target="_blank" rel="noreferrer"
+                        <a href={`https://${t.slug}.${PLATFORM_DOMAIN}/dashboard`} target="_blank" rel="noreferrer"
                           className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-white/10 transition-colors" title="Voir dashboard">
                           <ExternalLink size={14} />
                         </a>

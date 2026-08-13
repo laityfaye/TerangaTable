@@ -81,6 +81,8 @@ import {
 
 type ActiveSection = 'apparence' | 'contenu' | 'medias' | 'sections' | 'seo' | 'social' | 'domaine';
 
+const PLATFORM_DOMAIN = process.env.NEXT_PUBLIC_PLATFORM_DOMAIN ?? 'terangatable.cloud';
+
 const NAV_ITEMS: { id: ActiveSection; label: string; icon: React.ReactNode }[] = [
   { id: 'apparence', label: 'Apparence',           icon: <Palette size={16} /> },
   { id: 'contenu',   label: 'Contenu',             icon: <FileText size={16} /> },
@@ -652,7 +654,7 @@ function SeoPreview({
   description: string;
   slug: string;
 }) {
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://terangatable.com';
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://terangatable.cloud';
   const url = `${origin}/${slug}`;
 
   return (
@@ -1260,10 +1262,10 @@ function DomainePanel({
           </div>
         </div>
         <div className="bg-white rounded-md border border-blue-200 px-3 py-2 flex items-center justify-between gap-2">
-          <code className="text-sm font-mono text-blue-800">vitrine.terangatable.com</code>
+          <code className="text-sm font-mono text-blue-800">{PLATFORM_DOMAIN}</code>
           <button
             type="button"
-            onClick={() => void navigator.clipboard.writeText('vitrine.terangatable.com')}
+            onClick={() => void navigator.clipboard.writeText(PLATFORM_DOMAIN)}
             className="text-xs text-blue-600 hover:text-blue-800 font-medium"
           >
             Copier

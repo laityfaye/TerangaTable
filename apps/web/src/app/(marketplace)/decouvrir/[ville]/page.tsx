@@ -268,7 +268,7 @@ export default async function CityDiscoveryPage({ params, searchParams }: Props)
               item: {
                 '@type': 'Restaurant',
                 name: r.name,
-                url: `https://terangatable.com/${r.slug}`,
+                url: `https://terangatable.cloud/${r.slug}`,
                 address: { '@type': 'PostalAddress', addressLocality: city.name },
                 aggregateRating: r.review_count > 0 ? { '@type': 'AggregateRating', ratingValue: r.rating, reviewCount: r.review_count } : undefined,
               },

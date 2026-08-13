@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   try {
     const data = await fetchVitrineData(slug);
-    const baseUrl = process.env['NEXT_PUBLIC_BASE_URL'] ?? 'https://terangatable.com';
+    const baseUrl = process.env['NEXT_PUBLIC_BASE_URL'] ?? 'https://terangatable.cloud';
     const cityName = data.region.name;
     const title = `Commander en ligne — ${data.name}`;
     const description = `Passez votre commande en ligne chez ${data.name} à ${cityName}. Livraison et à emporter disponibles.`;

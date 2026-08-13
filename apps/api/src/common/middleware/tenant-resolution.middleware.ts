@@ -12,7 +12,7 @@ export class TenantResolutionMiddleware implements NestMiddleware {
 
   async use(req: Request, _res: Response, next: NextFunction) {
     const host = (req.headers['host'] as string) ?? '';
-    const platformDomain = process.env['PLATFORM_DOMAIN'] ?? 'terangatable.com';
+    const platformDomain = process.env['PLATFORM_DOMAIN'] ?? 'terangatable.cloud';
 
     const subdomain = this.extractSubdomain(host, platformDomain);
     let tenantId: string | null = null;

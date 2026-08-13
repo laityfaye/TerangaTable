@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   try {
     const data = await fetchVitrineData(slug);
-    const baseUrl = process.env['NEXT_PUBLIC_BASE_URL'] ?? 'https://terangatable.com';
+    const baseUrl = process.env['NEXT_PUBLIC_BASE_URL'] ?? 'https://terangatable.cloud';
     const cityName = data.region.name;
     const title = `Menu — ${data.name}`;
     const description = `Découvrez le menu complet de ${data.name} à ${cityName} : plats, spécialités africaines et boissons.`;

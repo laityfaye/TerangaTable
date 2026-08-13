@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   try {
     const data = await fetchVitrineData(slug);
     const title = `Avis clients — ${data.name}`;
-    const baseUrl = process.env['NEXT_PUBLIC_BASE_URL'] ?? 'https://terangatable.com';
+    const baseUrl = process.env['NEXT_PUBLIC_BASE_URL'] ?? 'https://terangatable.cloud';
     return {
       title,
       description: `Découvrez les avis clients de ${data.name}.`,

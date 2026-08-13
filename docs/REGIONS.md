@@ -99,7 +99,7 @@ Le middleware s'exécute sur chaque requête entrante avant les API routes et le
 
 ```
 1. Sous-domaine plateforme
-   {slug}.terangatable.com
+   {slug}.terangatable.cloud
    → lookup Redis : "tenant:slug:{slug}" → tenantId
 
 2. Domaine personnalisé
@@ -264,8 +264,8 @@ function formatCurrency(amount: number, region: Region): string {
 REDIS_URL=redis://...
 
 # Domaine racine plateforme
-PLATFORM_DOMAIN=terangatable.com
+PLATFORM_DOMAIN=terangatable.cloud
 
 # CDN pour assets (logos, images)
-CDN_BASE_URL=https://cdn.terangatable.com
+CDN_BASE_URL=https://terangatable.cloud/cdn
 ```
