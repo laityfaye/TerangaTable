@@ -34,6 +34,8 @@ import { NotificationsBell } from '@/components/notifications/notifications-bell
 import { prefetchRoute } from '@/lib/prefetch';
 import { useSettings } from '@/hooks/settings/use-settings';
 import RoleAudioGuide from '@/components/dashboard/role-audio-guide';
+import { TenantBlockedScreen } from '@/components/dashboard/tenant-blocked-screen';
+import { useTenantStatusStore } from '@/stores/tenant-status.store';
 
 interface NavItem {
   label: string;
@@ -443,12 +445,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   useEffect(() => setMobileOpen(false), [pathname]);
 
+  const blockReason = useTenantStatusStore((s) => s.blockReason);
+
   if (isLoading && !isAuthenticated) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#FAFAF8]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-terracotta" />
       </div>
     );
+  }
+
+  if (blockReason) {
+    return <TenantBlockedScreen reason={blockReason} />;
   }
 
   return (

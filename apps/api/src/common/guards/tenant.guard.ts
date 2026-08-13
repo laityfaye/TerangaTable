@@ -8,6 +8,18 @@ import {
 } from '@nestjs/common';
 import { TenantStatus } from '@terangatable/shared';
 
+export class TrialExpiredException extends ForbiddenException {
+  constructor() {
+    super("Période d'essai expirée");
+  }
+}
+
+export class AccountSuspendedException extends ForbiddenException {
+  constructor() {
+    super('Compte suspendu');
+  }
+}
+
 @Injectable()
 export class TenantGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
@@ -24,7 +36,7 @@ export class TenantGuard implements CanActivate {
     }
 
     if (tenant.status === TenantStatus.SUSPENDED) {
-      throw new ForbiddenException('Compte suspendu');
+      throw new AccountSuspendedException();
     }
 
     if (tenant.status === TenantStatus.DELETED) {
@@ -36,7 +48,7 @@ export class TenantGuard implements CanActivate {
       tenant.trialEndsAt &&
       new Date(tenant.trialEndsAt) < new Date()
     ) {
-      throw new ForbiddenException('Période d\'essai expirée');
+      throw new TrialExpiredException();
     }
 
     if (user && user.tenantId !== tenant.id) {

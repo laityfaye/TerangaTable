@@ -430,8 +430,8 @@ export default function TenantsPage() {
     return true;
   });
 
-  async function handleToggle(tenant: Tenant) {
-    const newStatus = tenant.status === 'suspended' ? 'active' : 'suspended';
+  async function handleToggle(tenant: Tenant, explicitStatus?: 'active' | 'suspended') {
+    const newStatus = explicitStatus ?? (tenant.status === 'suspended' ? 'active' : 'suspended');
     const action = newStatus === 'suspended' ? 'suspendu' : 'réactivé';
     try {
       await toggleMutation.mutateAsync({ id: tenant.id, status: newStatus });
@@ -595,6 +595,15 @@ export default function TenantsPage() {
                         >
                           <ExternalLink size={14} />
                         </a>
+                        {t.status === 'trial' && (
+                          <button
+                            onClick={() => void handleToggle(t, 'active')}
+                            className="p-1.5 rounded text-green-400 hover:text-green-300 hover:bg-green-500/10 transition-colors"
+                            title="Activer"
+                          >
+                            <Power size={14} />
+                          </button>
+                        )}
                         {(t.status === 'active' || t.status === 'trial') && (
                           <button
                             onClick={() => void handleToggle(t)}
