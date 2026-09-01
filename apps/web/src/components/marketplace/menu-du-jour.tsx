@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Flame, Clock, Star, ChevronRight } from 'lucide-react';
@@ -25,6 +28,8 @@ function categoryEmoji(category: string | null): string {
 }
 
 export default function MenuDuJour({ menus }: Props) {
+  const [showAll, setShowAll] = useState(false);
+
   if (menus.length === 0) return null;
 
   const today = new Date().toLocaleDateString('fr-FR', {
@@ -64,7 +69,7 @@ export default function MenuDuJour({ menus }: Props) {
 
       {/* Grille produits */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {items.slice(0, 6).map((item) => {
+        {(showAll ? items : items.slice(0, 6)).map((item) => {
           const currencySymbol = item.menu.currency_symbol;
           return (
             <Link
@@ -135,10 +140,13 @@ export default function MenuDuJour({ menus }: Props) {
       {/* CTA */}
       {items.length > 6 && (
         <div className="mt-4 text-center">
-          <div className="inline-flex items-center gap-2 text-sm text-[#C8553D] font-semibold hover:text-[#A33D28] cursor-pointer transition-colors">
-            Voir tous les menus du jour
-            <ChevronRight className="w-4 h-4" />
-          </div>
+          <button
+            onClick={() => setShowAll((v) => !v)}
+            className="inline-flex items-center gap-2 text-sm text-[#C8553D] font-semibold hover:text-[#A33D28] transition-colors"
+          >
+            {showAll ? 'Voir moins' : 'Voir tous les menus du jour'}
+            <ChevronRight className={`w-4 h-4 transition-transform ${showAll ? 'rotate-90' : ''}`} />
+          </button>
         </div>
       )}
     </section>

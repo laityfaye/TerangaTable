@@ -69,8 +69,19 @@ export default function RoleAudioGuide({ role }: Props) {
     fr: { type: 'tts', script },
     ...(audioWoSrc ? { wo: { type: 'audio' as const, src: audioWoSrc } } : {}),
   };
-  const { visible, speaking, lang, availableLangs, setLang, sourceUnavailable, play, dismiss, replay, onMouseEnter } =
-    useVoiceGuide(sources, storageKey);
+  const {
+    visible,
+    loading,
+    speaking,
+    lang,
+    availableLangs,
+    setLang,
+    sourceUnavailable,
+    play,
+    dismiss,
+    replay,
+    onMouseEnter,
+  } = useVoiceGuide(sources, storageKey);
 
   return (
     <div className="fixed bottom-24 right-5 z-[3000] flex flex-col items-end gap-2" onMouseEnter={onMouseEnter}>
@@ -79,15 +90,19 @@ export default function RoleAudioGuide({ role }: Props) {
           <div className="flex items-start gap-2.5">
             <div
               className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${
-                speaking ? 'bg-terracotta animate-pulse' : 'bg-terracotta/10'
+                speaking || loading ? 'bg-terracotta animate-pulse' : 'bg-terracotta/10'
               }`}
             >
-              <Volume2 className={`w-4 h-4 ${speaking ? 'text-white' : 'text-terracotta'}`} />
+              <Volume2 className={`w-4 h-4 ${speaking || loading ? 'text-white' : 'text-terracotta'}`} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-[#1C1917]">Guide audio</p>
               <p className="text-xs text-[#57534E] mt-0.5 leading-snug">
-                {speaking ? 'Lecture en cours…' : 'Écoutez comment utiliser votre espace'}
+                {loading
+                  ? 'Chargement…'
+                  : speaking
+                    ? 'Lecture en cours…'
+                    : 'Écoutez comment utiliser votre espace'}
               </p>
             </div>
             <button
@@ -124,9 +139,16 @@ export default function RoleAudioGuide({ role }: Props) {
           {!speaking && (
             <button
               onClick={play}
-              className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-terracotta text-white text-xs font-semibold hover:bg-terracotta-dark transition-colors"
+              disabled={loading}
+              className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-terracotta text-white text-xs font-semibold hover:bg-terracotta-dark transition-colors disabled:opacity-60"
             >
-              <Play className="w-3.5 h-3.5" /> Écouter
+              {loading ? (
+                'Chargement…'
+              ) : (
+                <>
+                  <Play className="w-3.5 h-3.5" /> Écouter
+                </>
+              )}
             </button>
           )}
         </div>

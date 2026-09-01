@@ -55,6 +55,8 @@ export type VoiceGuideSources = Partial<Record<VoiceGuideLang, VoiceGuideSource>
 export interface VoiceGuide {
   /** Whether the guide card should be rendered (banner or replay button state is derived from this + speaking). */
   visible: boolean;
+  /** True between the play request and the browser/audio actually starting — network TTS voices (Google/Online Natural) can take a second or two to generate speech before playback begins. */
+  loading: boolean;
   speaking: boolean;
   lang: VoiceGuideLang;
   /** Languages this guide actually has a source for — drives whether the language toggle renders. */
@@ -76,6 +78,7 @@ export interface VoiceGuide {
 export function useVoiceGuide(sources: VoiceGuideSources, storageKey: string): VoiceGuide {
   const availableLangs = (['fr', 'wo'] as const).filter((l) => sources[l]);
   const [visible, setVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [lang, setLangState] = useState<VoiceGuideLang>(sources.fr ? 'fr' : (availableLangs[0] ?? 'fr'));
   const [sourceUnavailable, setSourceUnavailable] = useState(false);
@@ -109,12 +112,16 @@ export function useVoiceGuide(sources: VoiceGuideSources, storageKey: string): V
       utterance.lang = 'fr-FR';
       utterance.rate = 0.95;
       utterance.pitch = 1;
-      utterance.onstart = () => setSpeaking(true);
+      utterance.onstart = () => {
+        setLoading(false);
+        setSpeaking(true);
+      };
       utterance.onend = () => {
         setSpeaking(false);
         onDone();
       };
       utterance.onerror = () => {
+        setLoading(false);
         setSpeaking(false);
         onBlocked();
       };
@@ -128,17 +135,22 @@ export function useVoiceGuide(sources: VoiceGuideSources, storageKey: string): V
   function playAudioFile(src: string, onBlocked: () => void, onDone: () => void) {
     const audio = new Audio(src);
     audioRef.current = audio;
-    audio.onplay = () => setSpeaking(true);
+    audio.onplay = () => {
+      setLoading(false);
+      setSpeaking(true);
+    };
     audio.onended = () => {
       setSpeaking(false);
       onDone();
     };
     audio.onerror = () => {
+      setLoading(false);
       setSpeaking(false);
       setSourceUnavailable(true);
       onBlocked();
     };
     audio.play().catch(() => {
+      setLoading(false);
       setSpeaking(false);
       setSourceUnavailable(true);
       onBlocked();
@@ -152,6 +164,7 @@ export function useVoiceGuide(sources: VoiceGuideSources, storageKey: string): V
       return;
     }
     setSourceUnavailable(false);
+    setLoading(true);
     if (source.type === 'tts') speakTts(source.script, onBlocked, onDone);
     else playAudioFile(source.src, onBlocked, onDone);
   }
@@ -161,7 +174,7 @@ export function useVoiceGuide(sources: VoiceGuideSources, storageKey: string): V
   function playAndMarkSeen() {
     blockedRef.current = false;
     speakCurrent(
-      () => { blockedRef.current = true; },
+      () => { setLoading(false); blockedRef.current = true; },
       () => {
         sessionStorage.setItem(storageKey, '1');
         setTimeout(() => setVisible(false), 1500);
@@ -198,6 +211,7 @@ export function useVoiceGuide(sources: VoiceGuideSources, storageKey: string): V
 
   function dismiss() {
     stopAll();
+    setLoading(false);
     setSpeaking(false);
     sessionStorage.setItem(storageKey, '1');
     setVisible(false);
@@ -211,10 +225,11 @@ export function useVoiceGuide(sources: VoiceGuideSources, storageKey: string): V
   function setLang(next: VoiceGuideLang) {
     if (next === lang) return;
     stopAll();
+    setLoading(false);
     setSpeaking(false);
     setSourceUnavailable(false);
     setLangState(next);
   }
 
-  return { visible, speaking, lang, availableLangs, setLang, sourceUnavailable, play: playAndMarkSeen, dismiss, replay, onMouseEnter };
+  return { visible, loading, speaking, lang, availableLangs, setLang, sourceUnavailable, play: playAndMarkSeen, dismiss, replay, onMouseEnter };
 }

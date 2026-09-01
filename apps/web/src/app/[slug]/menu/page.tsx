@@ -55,6 +55,7 @@ export default async function MenuPage({ params, searchParams }: Props) {
       heroImageUrl={data.website_settings?.hero_image_url ?? null}
       logoUrl={data.website_settings?.logo_url ?? null}
       tableNumber={table ?? null}
+      managerPhone={data.settings.phone ?? null}
     />
   );
 }

@@ -26,6 +26,8 @@ interface Props {
   logoUrl: string | null;
   /** Numéro de table issu du QR code — ex: "12" ou "Terrasse A" */
   tableNumber?: string | null;
+  /** Téléphone du restaurant (réglages du site vitrine) — sert à ouvrir WhatsApp après la commande. */
+  managerPhone?: string | null;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -571,12 +573,65 @@ function ProductModal({
 
 // ── Cart Drawer ───────────────────────────────────────────────────────────────
 
+const ORDER_TYPE_LABELS: Record<OrderType, string> = {
+  dine_in: 'Sur place',
+  takeaway: 'À emporter',
+  online: 'Livraison',
+};
+
+/** wa.me n'accepte que des chiffres (pas de "+", espaces, tirets…). */
+function toWhatsAppDigits(phone: string): string {
+  return phone.replace(/\D/g, '');
+}
+
+function buildOrderWhatsAppUrl(args: {
+  managerPhone: string;
+  restaurantName: string;
+  orderNumber: string;
+  orderType: OrderType;
+  tableNum: string | undefined;
+  total: string;
+  currencySymbol: string;
+  items: CartItem[];
+  customerName: string | undefined;
+}): string | null {
+  const digits = toWhatsAppDigits(args.managerPhone);
+  if (!digits) return null;
+
+  const lines = [
+    `Bonjour ${args.restaurantName}, je viens de passer la commande *#${args.orderNumber}* sur votre site :`,
+    '',
+    ...args.items.map((i) => `• ${i.quantity}x ${i.product.name}`),
+    '',
+    `Type : ${ORDER_TYPE_LABELS[args.orderType]}`,
+    ...(args.tableNum ? [`Table : ${args.tableNum}`] : []),
+    `Total : ${formatPrice(parseFloat(args.total), args.currencySymbol)}`,
+    ...(args.customerName ? [`Client : ${args.customerName}`] : []),
+  ];
+
+  return `https://wa.me/${digits}?text=${encodeURIComponent(lines.join('\n'))}`;
+}
+
+/**
+ * Lien de partage WhatsApp sans destinataire fixe (wa.me/?text=…) — ouvre le
+ * sélecteur de contact WhatsApp (le client peut se l'envoyer à lui-même via
+ * "Vous"/Note perso, ou le transférer). Aucun numéro client requis.
+ */
+function buildReviewWhatsAppUrl(args: { restaurantName: string; orderId: string; reviewToken: string }): string {
+  const baseUrl = process.env['NEXT_PUBLIC_BASE_URL'] ?? 'https://terangatable.cloud';
+  const reviewUrl = `${baseUrl}/avis/${args.orderId}?token=${args.reviewToken}`;
+  const text = `Merci pour votre commande chez ${args.restaurantName} ! Donnez votre avis ici : ${reviewUrl}`;
+  return `https://wa.me/?text=${encodeURIComponent(text)}`;
+}
+
 function CartDrawer({
   cart,
   currencySymbol,
   primaryColor,
   slug,
   tableNumber,
+  restaurantName,
+  managerPhone,
   onClose,
   onUpdateQty,
   onRemove,
@@ -587,6 +642,8 @@ function CartDrawer({
   primaryColor: string;
   slug: string;
   tableNumber?: string | null | undefined;
+  restaurantName: string;
+  managerPhone?: string | null;
   onClose: () => void;
   onUpdateQty: (productId: string, qty: number) => void;
   onRemove: (productId: string) => void;
@@ -605,6 +662,8 @@ function CartDrawer({
     total: string;
     orderType: OrderType;
     tableNum: string | undefined;
+    waUrl: string | null;
+    reviewWaUrl: string | null;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -673,13 +732,39 @@ function CartDrawer({
       if (!res.ok) throw new Error((json as { message?: string }).message ?? 'Erreur lors de la commande');
 
       const data = json.data ?? (json as { id: string; order_number: string; total: string; review_token: string });
+
+      const waUrl = managerPhone
+        ? buildOrderWhatsAppUrl({
+            managerPhone,
+            restaurantName,
+            orderNumber: data.order_number,
+            orderType,
+            tableNum,
+            total: data.total,
+            currencySymbol,
+            items: cart,
+            customerName: needsName ? name.trim() : undefined,
+          })
+        : null;
+
+      const reviewWaUrl = data.id && data.review_token
+        ? buildReviewWhatsAppUrl({ restaurantName, orderId: data.id, reviewToken: data.review_token })
+        : null;
+
       setConfirmed({
         order_number: data.order_number,
         total: data.total,
         orderType,
         tableNum,
+        waUrl,
+        reviewWaUrl,
       });
       onClearCart();
+
+      // Ouvre WhatsApp avec la commande pré-remplie, adressée au restaurant —
+      // le client n'a plus qu'à appuyer sur Envoyer. Peut être bloqué par le
+      // navigateur (popup), d'où le bouton de secours dans l'écran de confirmation.
+      if (waUrl) window.open(waUrl, '_blank', 'noopener,noreferrer');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Une erreur est survenue');
     } finally {
@@ -810,6 +895,30 @@ function CartDrawer({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
               >
+                {confirmed.waUrl && (
+                  <motion.a
+                    href={confirmed.waUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-8 py-3 rounded-xl text-white font-semibold bg-[#25D366]"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    Envoyer par WhatsApp
+                  </motion.a>
+                )}
+                {confirmed.reviewWaUrl && (
+                  <motion.a
+                    href={confirmed.reviewWaUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-8 py-3 rounded-xl font-semibold border-2 border-[#25D366] text-[#25D366]"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    Recevoir le lien d&apos;avis par WhatsApp
+                  </motion.a>
+                )}
                 <motion.button
                   onClick={onClose}
                   className="px-8 py-3 rounded-xl text-white font-semibold"
@@ -1132,6 +1241,7 @@ export default function MenuClient({
   heroImageUrl,
   slug,
   tableNumber,
+  managerPhone,
 }: Props) {
   const [activeFilter, setActiveFilter]         = useState<Filter>('all');
   const [activeCategoryId, setActiveCategoryId] = useState<string>(categories[0]?.id ?? '');
@@ -1768,6 +1878,8 @@ export default function MenuClient({
             primaryColor={primaryColor}
             slug={slug}
             tableNumber={tableNumber}
+            restaurantName={restaurantName}
+            managerPhone={managerPhone}
             onClose={() => setCartOpen(false)}
             onUpdateQty={updateQty}
             onRemove={removeFromCart}
