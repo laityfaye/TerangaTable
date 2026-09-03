@@ -4,6 +4,7 @@ export interface VitrineRegion {
   currencySymbol: string;
   locale: string;
   countryName: string;
+  countryCode: string;
 }
 
 export interface TenantSettings {

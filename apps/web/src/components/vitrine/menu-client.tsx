@@ -28,9 +28,19 @@ interface Props {
   tableNumber?: string | null;
   /** Téléphone du restaurant (réglages du site vitrine) — sert à ouvrir WhatsApp après la commande. */
   managerPhone?: string | null;
+  /** Code pays ISO de la région du restaurant (ex: "SN") — pré-remplit l'indicatif téléphonique du client. */
+  countryCode: string;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
+
+// Régions actuellement couvertes par la plateforme (cf. packages/database/prisma/seed.ts)
+const COUNTRY_DIAL_CODES: Record<string, string> = {
+  SN: '+221',
+  CI: '+225',
+  MA: '+212',
+  FR: '+33',
+};
 
 const FILTERS: { key: Filter; label: string; icon: string }[] = [
   { key: 'all',         label: 'Tout',        icon: '✦'  },
@@ -632,6 +642,7 @@ function CartDrawer({
   tableNumber,
   restaurantName,
   managerPhone,
+  countryCode,
   onClose,
   onUpdateQty,
   onRemove,
@@ -644,16 +655,18 @@ function CartDrawer({
   tableNumber?: string | null | undefined;
   restaurantName: string;
   managerPhone?: string | null;
+  countryCode: string;
   onClose: () => void;
   onUpdateQty: (productId: string, qty: number) => void;
   onRemove: (productId: string) => void;
   onClearCart: () => void;
 }) {
+  const dialCode = COUNTRY_DIAL_CODES[countryCode] ?? '';
   // Si QR code (dine_in), on force le mode "sur place" et on le verrouille
   const isDineIn = !!tableNumber;
   const [orderType, setOrderType] = useState<OrderType>(isDineIn ? 'dine_in' : 'online');
   const [name, setName]                   = useState('');
-  const [phone, setPhone]                 = useState('');
+  const [phone, setPhone]                 = useState(dialCode ? `${dialCode} ` : '');
   const [notes, setNotes]                 = useState('');
   const [manualTableNumber, setManualTableNumber] = useState('');
   const [loading, setLoading] = useState(false);
@@ -693,7 +706,7 @@ function CartDrawer({
       setError('Veuillez saisir votre nom');
       return;
     }
-    if (needsName && !phone.trim()) {
+    if (needsName && (!phone.trim() || phone.trim() === dialCode)) {
       setError('Veuillez saisir votre numéro de téléphone');
       return;
     }
@@ -1075,7 +1088,7 @@ function CartDrawer({
                   <input
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+33 6 00 00 00 00"
+                    placeholder={dialCode ? `${dialCode} 77 000 00 00` : '+33 6 00 00 00 00'}
                     type="tel"
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-[#F7F4F0] placeholder-white/25 focus:outline-none focus:border-white/30 transition-colors"
                   />
@@ -1246,6 +1259,7 @@ export default function MenuClient({
   slug,
   tableNumber,
   managerPhone,
+  countryCode,
 }: Props) {
   const [activeFilter, setActiveFilter]         = useState<Filter>('all');
   const [activeCategoryId, setActiveCategoryId] = useState<string>(categories[0]?.id ?? '');
@@ -1884,6 +1898,7 @@ export default function MenuClient({
             tableNumber={tableNumber}
             restaurantName={restaurantName}
             managerPhone={managerPhone}
+            countryCode={countryCode}
             onClose={() => setCartOpen(false)}
             onUpdateQty={updateQty}
             onRemove={removeFromCart}

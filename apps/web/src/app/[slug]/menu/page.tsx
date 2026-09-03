@@ -56,6 +56,7 @@ export default async function MenuPage({ params, searchParams }: Props) {
       logoUrl={data.website_settings?.logo_url ?? null}
       tableNumber={table ?? null}
       managerPhone={data.settings.phone ?? null}
+      countryCode={data.region.countryCode}
     />
   );
 }

@@ -53,6 +53,7 @@ export default async function CommandePage({ params }: Props) {
       heroImageUrl={data.website_settings?.hero_image_url ?? null}
       logoUrl={data.website_settings?.logo_url ?? null}
       managerPhone={data.settings.phone ?? null}
+      countryCode={data.region.countryCode}
     />
   );
 }

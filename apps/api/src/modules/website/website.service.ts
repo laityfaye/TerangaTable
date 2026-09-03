@@ -81,6 +81,7 @@ export class WebsiteService {
             currencySymbol: true,
             locale: true,
             countryName: true,
+            countryCode: true,
           },
         },
         websiteSettings: true,
