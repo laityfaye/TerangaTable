@@ -511,12 +511,12 @@ function ProductModal({
           )}
 
           {/* Quantity + Add to cart */}
-          <div className="flex items-center gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 pt-2">
             {/* Qty stepper */}
-            <div className="flex items-center gap-1 rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.12)' }}>
+            <div className="flex items-center justify-center gap-1 rounded-xl overflow-hidden self-center sm:self-auto" style={{ border: '1px solid rgba(255,255,255,0.12)' }}>
               <button
                 onClick={() => setQty((q) => Math.max(1, q - 1))}
-                className="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white transition-colors hover:bg-white/5"
+                className="w-9 h-9 flex items-center justify-center text-white/60 hover:text-white transition-colors hover:bg-white/5"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
@@ -525,7 +525,7 @@ function ProductModal({
               <span className="w-8 text-center text-white font-semibold tabular-nums">{qty}</span>
               <button
                 onClick={() => setQty((q) => q + 1)}
-                className="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white transition-colors hover:bg-white/5"
+                className="w-9 h-9 flex items-center justify-center text-white/60 hover:text-white transition-colors hover:bg-white/5"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -536,18 +536,18 @@ function ProductModal({
             {/* Add button */}
             <motion.button
               onClick={handleAdd}
-              className="flex-1 group relative flex items-center justify-center gap-2 py-3 rounded-xl text-white font-semibold overflow-hidden"
+              className="w-full sm:flex-1 group relative flex items-center justify-center gap-1.5 h-10 rounded-xl text-white text-sm font-semibold overflow-hidden"
               style={{ backgroundColor: primaryColor }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
             >
               <span className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12"
                 style={{ background: 'linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent)' }} />
-              <svg className="relative w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="relative w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              <span className="relative">
+              <span className="relative whitespace-nowrap">
                 Ajouter — {formatPrice(parseFloat(product.basePrice.toString()) * qty, currencySymbol)}
               </span>
             </motion.button>
@@ -651,7 +651,7 @@ function CartDrawer({
 }) {
   // Si QR code (dine_in), on force le mode "sur place" et on le verrouille
   const isDineIn = !!tableNumber;
-  const [orderType, setOrderType] = useState<OrderType>(isDineIn ? 'dine_in' : 'takeaway');
+  const [orderType, setOrderType] = useState<OrderType>(isDineIn ? 'dine_in' : 'online');
   const [name, setName]                   = useState('');
   const [phone, setPhone]                 = useState('');
   const [notes, setNotes]                 = useState('');
@@ -693,6 +693,10 @@ function CartDrawer({
       setError('Veuillez saisir votre nom');
       return;
     }
+    if (needsName && !phone.trim()) {
+      setError('Veuillez saisir votre numéro de téléphone');
+      return;
+    }
     if (needsTableInput && !manualTableNumber.trim()) {
       setError('Veuillez saisir le numéro de table');
       return;
@@ -715,7 +719,7 @@ function CartDrawer({
         body: JSON.stringify({
           type:           orderType,
           customer_name:  needsName ? name.trim() : undefined,
-          customer_phone: needsName ? (phone.trim() || undefined) : undefined,
+          customer_phone: needsName ? phone.trim() : undefined,
           table_number:   tableNum,
           notes:          notes.trim() || undefined,
           items: cart.map((item) => ({
@@ -1067,7 +1071,7 @@ function CartDrawer({
                 </div>
 
                 <div>
-                  <label className="text-xs text-[#9A9692] mb-1.5 block">Téléphone (optionnel)</label>
+                  <label className="text-xs text-[#9A9692] mb-1.5 block">Téléphone *</label>
                   <input
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}

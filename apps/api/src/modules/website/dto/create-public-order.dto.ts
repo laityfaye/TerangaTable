@@ -1,11 +1,13 @@
 import {
   IsArray,
   IsEnum,
+  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
   IsUUID,
   Min,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -38,8 +40,10 @@ export class CreatePublicOrderDto {
   @IsString()
   customer_name?: string;
 
+  /** Obligatoire en livraison (type "online") pour pouvoir contacter le client */
   @ApiPropertyOptional()
-  @IsOptional()
+  @ValidateIf((o: CreatePublicOrderDto) => o.type === 'online')
+  @IsNotEmpty({ message: 'Le numéro de téléphone est requis pour une livraison' })
   @IsString()
   customer_phone?: string;
 
