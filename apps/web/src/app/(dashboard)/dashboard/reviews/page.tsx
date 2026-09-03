@@ -124,7 +124,7 @@ const RATING_TABS = [5, 4, 3, 2, 1] as const;
 export default function ReviewsPage() {
   const [ratingFilter, setRatingFilter] = useState<number | undefined>(undefined);
 
-  const { data, isLoading } = useReviews({ rating: ratingFilter, limit: 50 });
+  const { data, isLoading, error } = useReviews({ rating: ratingFilter, limit: 50 });
   const reviews = data?.data ?? [];
   const avgRating = data?.meta.avg_rating ?? 0;
   const reviewCount = data?.meta.review_count ?? 0;
@@ -178,7 +178,14 @@ export default function ReviewsPage() {
       </div>
 
       {/* Liste */}
-      {isLoading ? (
+      {error ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-2xl border border-red-100">
+          <p className="text-red-600 font-medium">
+            {(error as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+              'Impossible de charger les avis'}
+          </p>
+        </div>
+      ) : isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="bg-white rounded-xl border border-slate-100 p-4 animate-pulse space-y-2">
