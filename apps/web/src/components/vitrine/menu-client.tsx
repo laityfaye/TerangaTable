@@ -1269,7 +1269,6 @@ export default function MenuClient({
   const [cart, setCart]                         = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen]                 = useState(false);
   const [searchQuery, setSearchQuery]           = useState('');
-  const [searchOpen, setSearchOpen]             = useState(false);
 
   const sectionRefs    = useRef<Record<string, HTMLElement | null>>({});
   const navRef         = useRef<HTMLDivElement>(null);
@@ -1372,15 +1371,10 @@ export default function MenuClient({
 
   const isSearching = searchQuery.trim().length > 0;
 
-  // Open search → focus input on next frame
-  const openSearch = useCallback(() => {
-    setSearchOpen(true);
-    setTimeout(() => searchInputRef.current?.focus(), 80);
-  }, []);
-
+  // Le champ de recherche est toujours affiché : « fermer » = vider la requête
   const closeSearch = useCallback(() => {
     setSearchQuery('');
-    setSearchOpen(false);
+    searchInputRef.current?.blur();
   }, []);
 
   return (
@@ -1505,79 +1499,66 @@ export default function MenuClient({
         >
           <div className="max-w-6xl mx-auto">
 
-            {/* ── Search bar (animated expand) ── */}
-            <AnimatePresence>
-              {searchOpen && (
-                <motion.div
-                  key="search-bar"
-                  className="px-4 sm:px-6 pt-3 pb-2"
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.28, ease: EASE }}
-                  style={{ overflow: 'hidden' }}
-                >
-                  <div
-                    className="flex items-center gap-3 px-4 py-2.5 rounded-2xl"
-                    style={{
-                      background: 'rgba(255,255,255,0.07)',
-                      border: `1px solid ${isSearching ? primaryColor + '60' : 'rgba(255,255,255,0.12)'}`,
-                      transition: 'border-color 0.2s',
-                    }}
+            {/* ── Barre de recherche — toujours visible ── */}
+            <div className="px-4 sm:px-6 pt-3 pb-1">
+              <div
+                className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 h-11 rounded-2xl"
+                style={{
+                  background: isSearching ? `${primaryColor}14` : 'rgba(255,255,255,0.09)',
+                  border: `1px solid ${isSearching ? primaryColor + '70' : 'rgba(255,255,255,0.16)'}`,
+                  transition: 'border-color 0.2s, background-color 0.2s',
+                }}
+              >
+                {/* Loupe */}
+                <svg className="w-[18px] h-[18px] shrink-0"
+                  style={{ color: isSearching ? primaryColor : 'rgba(255,255,255,0.55)' }}
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+
+                <input
+                  ref={searchInputRef}
+                  type="search"
+                  enterKeyHint="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Escape' && closeSearch()}
+                  placeholder="Rechercher un plat, une catégorie…"
+                  aria-label="Rechercher dans le menu"
+                  className="flex-1 min-w-0 bg-transparent text-sm text-[#F7F4F0] placeholder-white/40 focus:outline-none
+                             [&::-webkit-search-cancel-button]:appearance-none"
+                />
+
+                {/* Compteur de résultats */}
+                {isSearching && (
+                  <motion.span
+                    key={searchResults.length}
+                    initial={{ scale: 0.7, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="text-xs font-mono px-2 py-0.5 rounded-full shrink-0"
+                    style={{ backgroundColor: `${primaryColor}25`, color: primaryColor }}
                   >
-                    {/* Loupe */}
-                    <svg className="w-4 h-4 shrink-0" style={{ color: isSearching ? primaryColor : '#6A6A68' }}
-                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    {searchResults.length}
+                  </motion.span>
+                )}
+
+                {/* Effacer */}
+                {searchQuery && (
+                  <button onClick={closeSearch} aria-label="Effacer la recherche"
+                    className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors">
+                    <svg className="w-3.5 h-3.5 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
+                  </button>
+                )}
+              </div>
+            </div>
 
-                    <input
-                      ref={searchInputRef}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Escape' && closeSearch()}
-                      placeholder="Rechercher un plat, une catégorie, un tag…"
-                      className="flex-1 bg-transparent text-sm text-[#F7F4F0] placeholder-white/30 focus:outline-none"
-                    />
-
-                    {/* Count badge */}
-                    {isSearching && (
-                      <motion.span
-                        key={searchResults.length}
-                        initial={{ scale: 0.7, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className="text-xs font-mono px-2 py-0.5 rounded-full shrink-0"
-                        style={{ backgroundColor: `${primaryColor}25`, color: primaryColor }}
-                      >
-                        {searchResults.length}
-                      </motion.span>
-                    )}
-
-                    {/* Clear */}
-                    {searchQuery && (
-                      <button onClick={() => setSearchQuery('')}
-                        className="shrink-0 w-5 h-5 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors">
-                        <svg className="w-3 h-3 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    )}
-
-                    {/* Close search mode */}
-                    <button onClick={closeSearch}
-                      className="shrink-0 text-xs text-white/40 hover:text-white/70 transition-colors ml-1">
-                      Annuler
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* ── Category tabs + search toggle ── */}
-            <div className={`flex items-center ${searchOpen ? 'opacity-40 pointer-events-none' : ''} transition-opacity duration-200`}>
+            {/* ── Category tabs ── */}
+            <div className={`flex items-center ${isSearching ? 'opacity-40 pointer-events-none' : ''} transition-opacity duration-200`}>
               <motion.div ref={navRef}
-                className="flex-1 flex items-center gap-1 overflow-x-auto scrollbar-hide px-4 sm:px-6 pt-3 pb-1"
+                className="flex-1 flex items-center gap-1 overflow-x-auto scrollbar-hide px-4 sm:px-6 pt-1 pb-1"
                 variants={navContainer} initial="hidden" animate={navReady ? 'visible' : 'hidden'}>
                 {categories.map((cat) => {
                   const isActive = activeCategoryId === cat.id;
@@ -1599,27 +1580,10 @@ export default function MenuClient({
                   );
                 })}
               </motion.div>
-
-              {/* Search toggle button */}
-              <motion.button
-                onClick={openSearch}
-                className="shrink-0 mr-4 sm:mr-6 w-9 h-9 flex items-center justify-center rounded-xl transition-colors"
-                style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.10)' }}
-                whileHover={{ scale: 1.07, backgroundColor: 'rgba(255,255,255,0.12)' }}
-                whileTap={{ scale: 0.93 }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: navReady ? 1 : 0 }}
-                aria-label="Rechercher"
-              >
-                <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </motion.button>
             </div>
 
             {/* ── Diet filters (hidden during search) ── */}
-            {!searchOpen && (
+            {!isSearching && (
               <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide px-4 sm:px-6 pb-3">
                 {FILTERS.map((f) => {
                   const isActive = activeFilter === f.key;
