@@ -41,11 +41,12 @@ cmd_init() {
 
   log ""
   log "✓ TérangaTable containers are up!"
-  log "  Web listens on : 127.0.0.1:3000"
-  log "  API listens on : 127.0.0.1:3001"
+  log "  Web listens on : 127.0.0.1:3020"
+  log "  API listens on : 127.0.0.1:3021"
   log ""
-  log "  Next step: configure your host nginx vhosts and obtain SSL certs."
-  log "  See infrastructure/nginx/nginx.vhost.conf for the template."
+  log "  Next step: configure the host nginx vhost and install the Cloudflare"
+  log "  Origin CA certificate (15-year, no renewal — do NOT use certbot here)."
+  log "  See infrastructure/nginx/nginx.vhost.conf for the full procedure."
 }
 
 cmd_update() {
