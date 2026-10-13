@@ -123,9 +123,12 @@ Créés automatiquement à l'onboarding par `TenantsService.createDefaultWorkflo
 | Marquer servie | `ready` | `served` | serveur |
 | Confirmer | `new` | `confirmed` | caissier, manager |
 | Préparer | `confirmed` | `in_preparation` | cuisinier |
-| Partir en livraison | `in_preparation` | `in_delivery` | livreur |
+| Marquer prête | `in_preparation` | `ready` | cuisinier |
+| Partir en livraison | `ready` | `in_delivery` | livreur |
 | Marquer livrée | `in_delivery` | `delivered` | livreur |
 | Annuler | `*` (null) | `cancelled` | manager, restaurant_owner |
+
+> Règle imposée par le code (`WorkflowEngine`), quel que soit le workflow configuré : une commande ne peut passer en `in_delivery` que depuis `ready` — le livreur ne récupère que des commandes prêtes. Le statut de livraison `picked_up` exige de même une commande `ready` (ou déjà `in_delivery`). Pour les tenants créés avant cette règle : `npx ts-node prisma/fix-delivery-workflow.ts`.
 
 ### Workflow "Cycle de vie réservation" (`entity_type: "reservation"`)
 

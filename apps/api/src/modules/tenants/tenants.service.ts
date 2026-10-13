@@ -572,7 +572,9 @@ export class TenantsService {
       // Livraison
       { from: 'new', to: 'confirmed', name: 'Confirmer', roles: ['caissier', 'manager'] },
       { from: 'confirmed', to: 'in_preparation', name: 'Préparer', roles: ['cuisinier'] },
-      { from: 'in_preparation', to: 'in_delivery', name: 'Partir en livraison', roles: ['livreur'] },
+      { from: 'in_preparation', to: 'ready', name: 'Marquer prête', roles: ['cuisinier'] },
+      // Le livreur ne récupère que des commandes prêtes (règle aussi imposée par WorkflowEngine)
+      { from: 'ready', to: 'in_delivery', name: 'Partir en livraison', roles: ['livreur'] },
       { from: 'in_delivery', to: 'delivered', name: 'Marquer livrée', roles: ['livreur'] },
       // Commun
       { from: null, to: 'cancelled', name: 'Annuler', roles: ['manager', 'restaurant_owner'] },

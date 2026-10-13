@@ -1,6 +1,17 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
+/**
+ * Règle métier indépendante du workflow (personnalisable par restaurant) :
+ * un livreur ne peut récupérer une commande que si elle est prête.
+ */
+const PICKUP_STATE_SLUG = 'in_delivery';
+const READY_STATE_SLUG = 'ready';
+
+function isPickupBeforeReady(currentSlug: string | null | undefined, toSlug: string | null | undefined) {
+  return toSlug === PICKUP_STATE_SLUG && currentSlug !== READY_STATE_SLUG;
+}
+
 export interface AvailableTransition {
   id: string;
   name: string;
@@ -23,6 +34,7 @@ export class WorkflowEngine {
     if (!order) throw new NotFoundException('Commande introuvable');
 
     const workflowId = await this.resolveWorkflowId(order.workflowStateId);
+    const currentSlug = await this.resolveStateSlug(order.workflowStateId);
 
     const userRoles = await this.prisma.userRole.findMany({
       where: { userId, tenantId },
@@ -40,19 +52,20 @@ export class WorkflowEngine {
         toState: { tenantId },
       },
       include: {
-        toState: { select: { id: true, name: true, color: true } },
+        toState: { select: { id: true, name: true, color: true, slug: true } },
       },
     });
 
     return transitions
       .filter((t) => {
+        if (isPickupBeforeReady(currentSlug, t.toState.slug)) return false;
         if (t.allowedRoles.length === 0) return true;
         return t.allowedRoles.some((r) => roleSlugs.includes(r));
       })
       .map((t) => ({
         id: t.id,
         name: t.name,
-        toState: t.toState,
+        toState: { id: t.toState.id, name: t.toState.name, color: t.toState.color },
       }));
   }
 
@@ -79,11 +92,15 @@ export class WorkflowEngine {
           { fromStateId: null },
         ],
       },
-      include: { toState: { select: { id: true, name: true, triggersAlert: true } } },
+      include: { toState: { select: { id: true, name: true, slug: true, triggersAlert: true } } },
     });
 
     if (!transition) {
       throw new BadRequestException('Cette transition n\'est pas disponible depuis l\'état actuel de la commande');
+    }
+
+    if (isPickupBeforeReady(await this.resolveStateSlug(order.workflowStateId), transition.toState.slug)) {
+      throw new BadRequestException('La commande doit être prête avant d\'être récupérée par le livreur');
     }
 
     if (transition.allowedRoles.length > 0) {
@@ -121,5 +138,14 @@ export class WorkflowEngine {
       select: { workflowId: true },
     });
     return state?.workflowId ?? null;
+  }
+
+  private async resolveStateSlug(workflowStateId: string | null): Promise<string | null> {
+    if (!workflowStateId) return null;
+    const state = await this.prisma.workflowState.findUnique({
+      where: { id: workflowStateId },
+      select: { slug: true },
+    });
+    return state?.slug ?? null;
   }
 }

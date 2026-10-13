@@ -15,6 +15,9 @@ const STATUS_TRANSITIONS: Record<string, string[]> = {
   en_route: ['delivered', 'failed'],
 };
 
+// États de commande à partir desquels la livraison peut être "récupérée"
+const PICKUP_ALLOWED_ORDER_SLUGS = ['ready', 'in_delivery'];
+
 @Injectable()
 export class DeliveryService {
   constructor(private readonly prisma: PrismaService) {}
@@ -173,6 +176,7 @@ export class DeliveryService {
   async updateStatus(tenantId: string, deliveryId: string, status: string, notes?: string) {
     const delivery = await this.prisma.delivery.findFirst({
       where: { id: deliveryId, tenantId },
+      include: { order: { select: { workflowState: { select: { slug: true } } } } },
     });
     if (!delivery) throw new NotFoundException('Livraison introuvable');
 
@@ -181,6 +185,12 @@ export class DeliveryService {
       throw new BadRequestException(
         `Transition invalide : ${delivery.status} → ${status}`,
       );
+    }
+
+    // Le livreur ne récupère que des commandes prêtes
+    const orderSlug = delivery.order.workflowState?.slug;
+    if (status === 'picked_up' && !PICKUP_ALLOWED_ORDER_SLUGS.includes(orderSlug ?? '')) {
+      throw new BadRequestException('La commande doit être prête avant d\'être récupérée par le livreur');
     }
 
     const timestamps: Record<string, unknown> = {};

@@ -14,6 +14,8 @@ const makePrisma = () => ({
   order: { findFirst: jest.fn(), update: jest.fn() },
   userRole: { findMany: jest.fn() },
   workflowTransition: { findMany: jest.fn(), findFirst: jest.fn() },
+  // État courant de la commande (workflow + slug) — "new" par défaut
+  workflowState: { findUnique: jest.fn().mockResolvedValue({ workflowId: 'wf-1', slug: 'new' }) },
 });
 
 describe('WorkflowEngine', () => {
@@ -239,6 +241,51 @@ describe('WorkflowEngine', () => {
       const result = await engine.executeTransition(ORDER_ID, TRANSITION_ID, USER_ID, TENANT_ID);
 
       expect(result.newStateId).toBe(STATE_B);
+    });
+  });
+
+  // ── Récupération livreur : uniquement les commandes prêtes ──────────────────
+
+  describe('pickup only when ready', () => {
+    const pickupTransition = {
+      id: TRANSITION_ID,
+      name: 'Partir en livraison',
+      toStateId: STATE_B,
+      allowedRoles: [],
+      toState: { id: STATE_B, name: 'En livraison', color: '#F97316', slug: 'in_delivery', triggersAlert: true },
+    };
+
+    it('refuses to move an order to "in_delivery" when it is not ready', async () => {
+      prisma.order.findFirst.mockResolvedValue({ id: ORDER_ID, workflowStateId: STATE_A });
+      prisma.workflowState.findUnique.mockResolvedValue({ workflowId: 'wf-1', slug: 'in_preparation' });
+      prisma.workflowTransition.findFirst.mockResolvedValue(pickupTransition);
+
+      await expect(
+        engine.executeTransition(ORDER_ID, TRANSITION_ID, USER_ID, TENANT_ID),
+      ).rejects.toThrow(BadRequestException);
+      expect(prisma.order.update).not.toHaveBeenCalled();
+    });
+
+    it('allows moving a ready order to "in_delivery"', async () => {
+      prisma.order.findFirst.mockResolvedValue({ id: ORDER_ID, workflowStateId: STATE_A });
+      prisma.workflowState.findUnique.mockResolvedValue({ workflowId: 'wf-1', slug: 'ready' });
+      prisma.workflowTransition.findFirst.mockResolvedValue(pickupTransition);
+      prisma.order.update.mockResolvedValue({});
+
+      const result = await engine.executeTransition(ORDER_ID, TRANSITION_ID, USER_ID, TENANT_ID);
+
+      expect(result.newStateId).toBe(STATE_B);
+    });
+
+    it('hides the pickup transition while the order is not ready', async () => {
+      prisma.order.findFirst.mockResolvedValue({ workflowStateId: STATE_A });
+      prisma.workflowState.findUnique.mockResolvedValue({ workflowId: 'wf-1', slug: 'in_preparation' });
+      prisma.userRole.findMany.mockResolvedValue([]);
+      prisma.workflowTransition.findMany.mockResolvedValue([pickupTransition]);
+
+      const result = await engine.getAvailableTransitions(ORDER_ID, USER_ID, TENANT_ID);
+
+      expect(result).toHaveLength(0);
     });
   });
 });
