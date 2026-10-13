@@ -21,32 +21,62 @@ import {
   type DeliveryDriver,
   type CreateDriverPayload,
 } from '@/hooks/delivery/use-delivery';
+import { useUsers } from '@/hooks/use-users';
 
 // ── Driver modal ───────────────────────────────────────────────────────────────
+
+const DRIVER_ROLE_SLUGS = ['livreur', 'delivery_driver'];
 
 interface DriverModalProps {
   initial?: DeliveryDriver | null;
   zones: { id: string; name: string }[];
+  takenUserIds: string[];
   onClose: () => void;
   onSave: (payload: CreateDriverPayload & { id?: string }) => Promise<void>;
   saving: boolean;
 }
 
-function DriverModal({ initial, zones, onClose, onSave, saving }: DriverModalProps) {
+function DriverModal({ initial, zones, takenUserIds, onClose, onSave, saving }: DriverModalProps) {
   const [userId, setUserId] = useState(initial?.user_id ?? '');
   const [name, setName] = useState(initial?.name ?? '');
   const [phone, setPhone] = useState(initial?.phone ?? '');
   const [zoneId, setZoneId] = useState(initial?.zone?.id ?? '');
+  const [error, setError] = useState<string | null>(null);
+
+  const { data: users = [], isLoading: usersLoading } = useUsers();
+  const candidates = users.filter(
+    (u) =>
+      u.isActive &&
+      DRIVER_ROLE_SLUGS.includes(u.role?.slug ?? '') &&
+      !takenUserIds.includes(u.id),
+  );
+
+  const handleSelectUser = (id: string) => {
+    setUserId(id);
+    const user = candidates.find((u) => u.id === id);
+    if (user) {
+      setName(`${user.firstName} ${user.lastName}`.trim());
+      setPhone(user.phone ?? '');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSave({
-      ...(initial ? { id: initial.id } : {}),
-      user_id: userId,
-      name,
-      phone: phone || undefined,
-      zone_id: zoneId || undefined,
-    });
+    setError(null);
+    try {
+      await onSave({
+        ...(initial ? { id: initial.id } : {}),
+        user_id: userId,
+        name,
+        phone: phone || undefined,
+        zone_id: zoneId || undefined,
+      });
+    } catch (err) {
+      setError(
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+          'Une erreur est survenue',
+      );
+    }
   };
 
   return (
@@ -65,17 +95,40 @@ function DriverModal({ initial, zones, onClose, onSave, saving }: DriverModalPro
           {!initial && (
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
-                ID utilisateur (UUID) *
+                Compte du livreur *
               </label>
-              <input
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              <select
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white disabled:bg-gray-50"
                 value={userId}
-                onChange={(e) => setUserId(e.target.value)}
-                placeholder="uuid de l'utilisateur…"
+                onChange={(e) => handleSelectUser(e.target.value)}
+                disabled={usersLoading || candidates.length === 0}
                 required
-              />
+              >
+                <option value="">
+                  {usersLoading
+                    ? 'Chargement…'
+                    : candidates.length === 0
+                      ? 'Aucun compte livreur disponible'
+                      : '— Choisir un membre —'}
+                </option>
+                {candidates.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.firstName} {u.lastName} · {u.email}
+                  </option>
+                ))}
+              </select>
               <p className="mt-1 text-xs text-gray-400">
-                L&apos;utilisateur doit exister dans le système.
+                {!usersLoading && candidates.length === 0 ? (
+                  <>
+                    Créez d&apos;abord un utilisateur avec le rôle « Livreur » dans{' '}
+                    <Link href="/dashboard/settings/users" className="text-indigo-600 hover:underline">
+                      Paramètres → Utilisateurs
+                    </Link>
+                    .
+                  </>
+                ) : (
+                  'Seuls les membres actifs avec le rôle « Livreur » sont proposés.'
+                )}
               </p>
             </div>
           )}
@@ -117,6 +170,10 @@ function DriverModal({ initial, zones, onClose, onSave, saving }: DriverModalPro
               ))}
             </select>
           </div>
+
+          {error && (
+            <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+          )}
 
           <div className="flex justify-end gap-2 pt-2">
             <button
@@ -367,6 +424,7 @@ export default function DeliveryDriversPage() {
         <DriverModal
           initial={editing}
           zones={zones}
+          takenUserIds={drivers.map((d) => d.user_id)}
           onClose={closeModal}
           onSave={handleSave}
           saving={saving}

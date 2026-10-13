@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateDriverDto } from './dto/create-driver.dto';
 import { UpdateDriverDto } from './dto/update-driver.dto';
@@ -42,6 +48,20 @@ export class DriversService {
   }
 
   async create(tenantId: string, dto: CreateDriverDto) {
+    // Le compte lié doit appartenir à ce restaurant : sans ce contrôle, un UUID
+    // d'un autre tenant permettait de rattacher un livreur à un compte étranger.
+    const user = await this.prisma.user.findFirst({
+      where: { id: dto.user_id, tenantId, isActive: true },
+      select: { id: true },
+    });
+    if (!user) throw new BadRequestException('Utilisateur introuvable dans ce restaurant');
+
+    const existing = await this.prisma.deliveryAgent.findFirst({
+      where: { tenantId, userId: dto.user_id },
+      select: { id: true },
+    });
+    if (existing) throw new ConflictException('Cet utilisateur est déjà enregistré comme livreur');
+
     const driver = await this.prisma.deliveryAgent.create({
       data: {
         tenantId,
