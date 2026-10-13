@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Prisma } from '@terangatable/database';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RedisCacheService } from '../../common/services/redis-cache.service';
@@ -61,6 +62,7 @@ export class WebsiteService {
     private readonly ordersGateway: OrdersGateway,
     private readonly config: ConfigService,
     private readonly reviewsService: ReviewsService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   // ── Public endpoints ───────────────────────────────────────────────────────
@@ -408,6 +410,11 @@ export class WebsiteService {
 
     // Emit real-time event so the dashboard updates instantly
     this.ordersGateway.emitOrderCreated(tenant.id, mapped);
+
+    // Sur la vitrine, "online" = Livraison : on propose la course aux livreurs
+    if (order.type === 'online') {
+      this.eventEmitter.emit('delivery.requested', { tenantId: tenant.id, orderId: order.id });
+    }
 
     return {
       id:           mapped.id,

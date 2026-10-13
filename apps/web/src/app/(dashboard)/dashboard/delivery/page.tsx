@@ -18,8 +18,14 @@ import {
   useDeliveryKpis,
   useActiveDeliveries,
   useUpdateDeliveryStatus,
+  useDeliveryDrivers,
+  useAssignDelivery,
   type DeliveryRecord,
+  type DeliveryDriver,
 } from '@/hooks/delivery/use-delivery';
+import { useAuthStore } from '@/stores/auth.store';
+
+const MANAGER_ROLES = ['manager', 'restaurant_owner', 'super_admin'];
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -32,8 +38,9 @@ const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }
   failed: { label: 'Échec', color: 'text-red-700', bg: 'bg-red-100' },
 };
 
+// "En attente" → "Assignée" se fait en choisissant un livreur (ou quand un livreur accepte l'offre)
 const STATUS_NEXT: Record<string, string | null> = {
-  pending: 'assigned',
+  pending: null,
   assigned: 'picked_up',
   picked_up: 'en_route',
   en_route: 'delivered',
@@ -127,9 +134,15 @@ function StatusBadge({ status }: { status: string }) {
 function DeliveryRow({
   delivery,
   onAdvance,
+  drivers,
+  canReassign,
+  onReassign,
 }: {
   delivery: DeliveryRecord;
   onAdvance: (id: string, status: string) => void;
+  drivers: DeliveryDriver[];
+  canReassign: boolean;
+  onReassign: (orderId: string, agentId: string) => void;
 }) {
   const nextStatus = STATUS_NEXT[delivery.status];
   const address = delivery.order?.delivery_address as
@@ -174,7 +187,25 @@ function DeliveryRow({
         )}
       </td>
       <td className="px-4 py-3 text-sm text-gray-700">
-        {delivery.agent ? (
+        {canReassign ? (
+          <select
+            value={delivery.agent?.id ?? ''}
+            onChange={(e) => e.target.value && onReassign(delivery.order_id, e.target.value)}
+            className={`max-w-[160px] rounded-lg border px-2 py-1 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+              delivery.agent ? 'border-gray-200 text-gray-700' : 'border-amber-300 text-amber-700'
+            }`}
+            title="Seul un manager peut attribuer ou réattribuer une livraison"
+          >
+            <option value="" disabled>
+              En attente d&apos;un livreur
+            </option>
+            {drivers.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name}
+              </option>
+            ))}
+          </select>
+        ) : delivery.agent ? (
           <div className="flex items-center gap-1.5">
             <Truck size={13} className="text-gray-400" />
             {delivery.agent.name}
@@ -295,7 +326,24 @@ export default function DeliveryPage() {
   const { data: kpis } = useDeliveryKpis();
   const { data: deliveries = [], isLoading, refetch } = useActiveDeliveries();
   const updateStatus = useUpdateDeliveryStatus();
+  const assignDelivery = useAssignDelivery();
+  const currentUser = useAuthStore((s) => s.user);
+  const canReassign = currentUser?.roles.some((r) => MANAGER_ROLES.includes(r)) ?? false;
+  const { data: drivers = [] } = useDeliveryDrivers();
   const [advancingId, setAdvancingId] = useState<string | null>(null);
+
+  const handleReassign = (orderId: string, agentId: string) => {
+    assignDelivery.mutate(
+      { order_id: orderId, agent_id: agentId },
+      {
+        onError: (err) =>
+          alert(
+            (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+              'Impossible d\'attribuer la livraison',
+          ),
+      },
+    );
+  };
 
   const handleAdvance = async (id: string, status: string) => {
     setAdvancingId(id);
@@ -399,6 +447,9 @@ export default function DeliveryPage() {
                       key={d.id}
                       delivery={d}
                       onAdvance={advancingId ? () => {} : handleAdvance}
+                      drivers={drivers}
+                      canReassign={canReassign}
+                      onReassign={handleReassign}
                     />
                   ))}
                 </tbody>

@@ -3,6 +3,14 @@ import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 @Injectable()
 export class MailService implements OnModuleInit {
   private readonly logger = new Logger(MailService.name);
@@ -169,6 +177,31 @@ export class MailService implements OnModuleInit {
         <p>Vous avez été invité(e) à rejoindre <strong>${tenantName}</strong> en tant que <strong>${roleName}</strong> sur TérangaTable.</p>
         <p><a href="${joinUrl}">Accepter l'invitation →</a></p>
         <p>Ce lien est valable pendant 48 heures.</p>
+        <br/>
+        <p>L'équipe TérangaTable</p>
+      `,
+    });
+  }
+
+  async sendDeliveryOffer(
+    to: string,
+    offer: {
+      agentName: string;
+      restaurantName: string;
+      orderNumber: string;
+      address: string | null;
+      acceptUrl: string;
+    },
+  ) {
+    await this.send({
+      to,
+      subject: `Nouvelle livraison à prendre — ${offer.orderNumber}`,
+      html: `
+        <p>Bonjour ${escapeHtml(offer.agentName)},</p>
+        <p><strong>${escapeHtml(offer.restaurantName)}</strong> a une nouvelle commande à livrer (<strong>${escapeHtml(offer.orderNumber)}</strong>).</p>
+        ${offer.address ? `<p>Destination : ${escapeHtml(offer.address)}</p>` : ''}
+        <p><a href="${offer.acceptUrl}">Voir la commande et l'accepter →</a></p>
+        <p>La livraison est attribuée au premier livreur qui l'accepte. Ce lien est valable 12 heures.</p>
         <br/>
         <p>L'équipe TérangaTable</p>
       `,

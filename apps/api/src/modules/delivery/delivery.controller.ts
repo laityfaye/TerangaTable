@@ -11,13 +11,17 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TenantGuard } from '../../common/guards/tenant.guard';
 import { ModuleGuard } from '../../common/guards/module.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
 import { CurrentTenant } from '../../common/decorators/current-tenant.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { RequireModule } from '../../common/decorators/require-permission.decorator';
 import { DeliveryService } from './delivery.service';
 import { AssignDeliveryDto } from './dto/assign-delivery.dto';
 import { UpdateDeliveryStatusDto } from './dto/update-status.dto';
 
 interface TenantCtx { id: string }
+
+const MANAGER_ROLES = ['manager', 'restaurant_owner', 'super_admin'];
 
 @ApiTags('Delivery')
 @ApiBearerAuth()
@@ -39,14 +43,19 @@ export class DeliveryController {
     return this.deliveryService.findActive(tenant.id);
   }
 
+  // Une fois la livraison acceptée par un livreur, seul un manager peut la réattribuer.
   @Post('assign')
-  @ApiOperation({ summary: 'Assigner manuellement un livreur à une commande' })
+  @UseGuards(RolesGuard)
+  @Roles(...MANAGER_ROLES)
+  @ApiOperation({ summary: 'Assigner / réattribuer manuellement un livreur (manager uniquement)' })
   assign(@CurrentTenant() tenant: TenantCtx, @Body() dto: AssignDeliveryDto) {
     return this.deliveryService.assign(tenant.id, dto);
   }
 
   @Post('auto-assign/:orderId')
-  @ApiOperation({ summary: 'Auto-assigner le livreur le moins chargé' })
+  @UseGuards(RolesGuard)
+  @Roles(...MANAGER_ROLES)
+  @ApiOperation({ summary: 'Auto-assigner le livreur le moins chargé (manager uniquement)' })
   autoAssign(@CurrentTenant() tenant: TenantCtx, @Param('orderId') orderId: string) {
     return this.deliveryService.autoAssign(tenant.id, orderId);
   }

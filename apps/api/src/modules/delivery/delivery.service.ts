@@ -7,7 +7,9 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AssignDeliveryDto } from './dto/assign-delivery.dto';
 
 const STATUS_TRANSITIONS: Record<string, string[]> = {
-  pending: ['assigned', 'failed'],
+  // pending → assigned passe uniquement par assign() / l'acceptation d'une offre
+  // (qui fixent le livreur) — jamais par un simple changement de statut.
+  pending: ['failed'],
   assigned: ['picked_up', 'failed'],
   picked_up: ['en_route', 'failed'],
   en_route: ['delivered', 'failed'],
